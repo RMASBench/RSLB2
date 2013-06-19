@@ -1,0 +1,11 @@
+# Log files
+run/logs
+
+# Compiled classes
+build
+
+# Generated jar
+dist
+
+# Private netbeans stuff
+nbproject/private

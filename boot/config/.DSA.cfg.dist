@@ -1,0 +1,5 @@
+!include common.cfg
+
+assignment_class: DSA
+base_package: RSLBench
+assignment_group: AAMAS12

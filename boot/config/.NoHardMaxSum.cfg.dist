@@ -1,0 +1,5 @@
+!include common.cfg
+
+assignment_class: NoHardMaxSum
+base_package: RSLBench
+assignment_group: AAMAS12

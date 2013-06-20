@@ -8,6 +8,7 @@ supplement/log4j.properties
 boot/logs
 boot/results
 boot/*.png
+boot/**/*.cfg
 
 # Log files
 run/logs

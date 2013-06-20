@@ -71,4 +71,10 @@
     nbproject/build-impl.xml file. 
 
     -->
+    <target name="-post-init">
+        <copy todir="." >
+            <fileset dir="." />
+            <globmapper from="*.dist" to="*" />
+        </copy>
+    </target>
 </project>

@@ -1,3 +1,11 @@
+# Non-distributable scenarios
+scenarios/**/*.xml
+
+# Run results
+boot/logs
+boot/results
+boot/*.png
+
 # Log files
 run/logs
 

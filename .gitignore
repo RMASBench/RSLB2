@@ -1,6 +1,9 @@
 # Non-distributable scenarios
 scenarios/**/*.xml
 
+# Local logging setup
+supplement/log4j.properties
+
 # Run results
 boot/logs
 boot/results

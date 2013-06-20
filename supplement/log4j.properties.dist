@@ -1,0 +1,13 @@
+log4j.rootLogger=TRACE, console
+
+log4j.appender.console = org.apache.log4j.ConsoleAppender
+log4j.appender.console.target = System.out
+log4j.appender.console.layout = org.apache.log4j.PatternLayout
+
+# Low details
+log4j.appender.console.layout.ConversionPattern = %d{[mm:ss]} %p %c{1} - %m%n
+# High details
+#log4j.appender.console.layout.ConversionPattern = %d{[dd.MM.yyyy] [HH:mm:ss]} %p [%t] %c (%F:%L) - %m%n
+
+log4j.logger.com.infomatiq.jsi.rtree=OFF
+log4j.logger.RSLBench.PlatoonFireAgent=OFF

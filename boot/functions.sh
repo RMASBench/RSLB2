@@ -16,6 +16,7 @@ function printUsage {
     echo "      --think-time <millis>     Set the max. agent think time in millis. Default is 10000."
     echo "-s    --scenario  <scenario>    Set the scenario to run. Default is \"example\" (.xml appended automatically)."
     echo "-v    --viewer                  Enable the viewer."
+    echo "-vv   --kernel-viewer           Enable the kernel viewer."
 }
 
 # Process arguments
@@ -68,6 +69,10 @@ function processArgs {
                 ;;
             -v | --viewer)
                 VIEWER=true
+                shift 1
+                ;;
+            -vv | --kernel-viewer)
+                KERNEL_VIEWER=true
                 shift 1
                 ;;
 

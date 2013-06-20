@@ -23,10 +23,11 @@ package RSLBench.Helpers;
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
 public class Logger {
+    
     //font attributes
-
     String FT_BOLD = "\033[1m";
     final static String FT_UNDERLINE = "\033[4m";
+    
     //background color
     public final static String BG_RED = "\033[41m";
     public final static String BG_GREEN = "\033[42m";
@@ -35,6 +36,7 @@ public class Logger {
     public final static String BG_MAGENTA = "\033[45m";
     public final static String BG_BLUE = "\033[46m";
     public final static String BG_WHITE = "\033[47m";
+    
     // foreground color
     public final static String FG_BLACK = "\033[30m";
     public final static String FG_RED = "\033[31m";
@@ -98,6 +100,17 @@ public class Logger {
     public static void trace(String msg) {
         rescuecore2.log.Logger.trace(msg);
     }
+    
+    /**
+     * Log a colored trace level message.
+     *
+     * @param msg The message to log.
+     * @param color The color of the log line.
+     */
+    public static void traceColor(String msg, String color) {
+        msg = color + msg + FG_NORM;
+        rescuecore2.log.Logger.trace(msg);
+    }
 
     /**
      * Log a trace level message along with a throwable.
@@ -119,9 +132,10 @@ public class Logger {
     }
 
     /**
-     * Log a debug level message.
+     * Log a colored debug level message.
      *
      * @param msg The message to log.
+     * @param color The color of the log line.
      */
     public static void debugColor(String msg, String color) {
         msg = color + msg + FG_NORM;

@@ -26,6 +26,15 @@ import java.util.HashSet;
  */
 public class AssignmentSolver
 {
+    /** Config key to the (fully qualified) class of the solver to run */
+    public static final String CONF_KEY_SOLVER_CLASS = "solver.class";
+    
+    /** Config key to the results path */
+    public static final String CONF_KEY_RESULTS_PATH = "results.path";
+    
+    /** Config key to the results filename */
+    public static final String CONF_KEY_RESULTS_FILE = "results.file";
+    
     private String _assignmentSolverClassName = "";
     private String _logFileName = "no_logfile_name.dat";
     private AssignmentInterface _solver = null;;
@@ -38,40 +47,35 @@ public class AssignmentSolver
      */
     public AssignmentSolver(StandardWorldModel world, Config config)
     {
-        
-        // Initialize mandatory parameters
-    	/*if (!Params.OVERWRITE_FROM_COMMANDLINE) {
-    		Params.START_EXPERIMENT_TIME = config.getIntValue("experiment_start_time");               
-    		Params.simulatedCommunicationRange = (int) config.getFloatValue("simulated_com_range") * 1000; // convert to mm         
-    		Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY = config.getFloatValue("trade_off_factor_travel_cost_and_utility");         		
-    	}*/
+        //String basePackage = config.getValue("base_package");
+        //String className = config.getValue("assignment_class");
+        //String groupName = config.getValue("assignment_group");
+        _assignmentSolverClassName = config.getValue(CONF_KEY_SOLVER_CLASS);
+        String className = _assignmentSolverClassName.substring(
+                _assignmentSolverClassName.lastIndexOf('.')+1);
 
-		String basePackage = config.getValue("base_package");
-		String className = config.getValue("assignment_class");
-		String groupName = config.getValue("assignment_group");
-                
-                Params.START_EXPERIMENT_TIME = config.getIntValue("experiment_start_time", 25);
-                Params.END_EXPERIMENT_TIME = config.getIntValue("experiment_end_time", 300);
-                Params.IGNORE_AGENT_COMMANDS_KEY_UNTIL = config.getIntValue("ignore_agents_commands_until", 3);
-                Params.SIMULATED_COMMUNICATION_RANGE = config.getIntValue("simulated_communication_range", 10000) * 1000;
-                Params.ONLY_ACT_ON_ASSIGNED_TARGETS = config.getBooleanValue("only_assigned_targets", false);
-                Params.OPTIMIZE_ASSIGNMENT = config.getBooleanValue("optimize_assignment", true);
-                Params.AREA_COVERED_BY_FIRE_BRIGADE = config.getFloatValue("area_covered_by_fire_brigade", 100.0);
-                Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY = config.getFloatValue("trade_off_factor_travel_cost_and_utility", 1.0);
-                Params.AGENT_SELECT_IDLE_TARGET = config.getBooleanValue("select_idle_target", true);
-                //Params.LOCAL_UTILITY_MATRIX_LENGTH = config.getIntValue("number_of_considered_targets", -1);
-                Params.MAX_ITERATIONS = config.getIntValue("max_iterations", 100);
-                
-                Params.setLocalParams(config, className);
+        Params.START_EXPERIMENT_TIME = config.getIntValue("experiment_start_time", 25);
+        Params.END_EXPERIMENT_TIME = config.getIntValue("experiment_end_time", 300);
+        Params.IGNORE_AGENT_COMMANDS_KEY_UNTIL = config.getIntValue("ignore_agents_commands_until", 3);
+        Params.SIMULATED_COMMUNICATION_RANGE = config.getIntValue("simulated_communication_range", 10000) * 1000;
+        Params.ONLY_ACT_ON_ASSIGNED_TARGETS = config.getBooleanValue("only_assigned_targets", false);
+        Params.OPTIMIZE_ASSIGNMENT = config.getBooleanValue("optimize_assignment", true);
+        Params.AREA_COVERED_BY_FIRE_BRIGADE = config.getFloatValue("area_covered_by_fire_brigade", 100.0);
+        Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY = config.getFloatValue("trade_off_factor_travel_cost_and_utility", 1.0);
+        Params.AGENT_SELECT_IDLE_TARGET = config.getBooleanValue("select_idle_target", true);
+        //Params.LOCAL_UTILITY_MATRIX_LENGTH = config.getIntValue("number_of_considered_targets", -1);
+        Params.MAX_ITERATIONS = config.getIntValue("max_iterations", 100);
 
-        _assignmentSolverClassName = basePackage + "." + groupName + "." + className;
-        _logFileName = "logs/" + basePackage + "_" + groupName + "_" + className + ".dat";
-        System.out.println("Writing ouput to log: " +  _logFileName);
+        Params.setLocalParams(config, className);
+
+        _logFileName = config.getValue(CONF_KEY_RESULTS_PATH) + '/' + config.getValue(CONF_KEY_RESULTS_FILE);
+        //_logFileName = "logs/" + basePackage + "_" + groupName + "_" + className + ".dat";
+        System.out.println("Writing results to " + _logFileName);
         // Initialize Assignment
         /*Logger.debugColor("Starting decentralized solver with com_range: " 
-        		  + Params.simulatedCommunicationRange + " startTime: "  
-        		  + Params.START_EXPERIMENT_TIME + " cost_trade_off: " 
-        		  + Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY, Logger.BG_GREEN);*/
+         + Params.simulatedCommunicationRange + " startTime: "  
+         + Params.START_EXPERIMENT_TIME + " cost_trade_off: " 
+         + Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY, Logger.BG_GREEN);*/
         //TEMPORARY
         _com = new ComSimulator(Params.SIMULATED_COMMUNICATION_RANGE);
         _solver = new DecentralizedAssignmentSimulator(_assignmentSolverClassName, _com);

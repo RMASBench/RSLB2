@@ -201,7 +201,8 @@ function startSims {
 
 function startRslb2 {
     JVM_OPTS="-Xmx2G -Dlog4j.configuration=file://$BASEDIR/supplement/log4j.properties"
-    java $JVM_OPTS -jar $BASEDIR/dist/RSLB2.jar -c $CONFIGDIR/$ALGORITHM.cfg
+    OPTS="-c $CONFIGDIR/$ALGORITHM.cfg --results.file=$ALGORITHM-$$.dat"
+    java $JVM_OPTS -jar $BASEDIR/dist/RSLB2.jar $OPTS
 }
 
 # Wait for a regular expression to appear in a file.

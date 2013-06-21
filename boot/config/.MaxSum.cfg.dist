@@ -1,0 +1,7 @@
+!include common.cfg
+
+assignment_class: BinaryMaxSum
+base_package: RSLBench
+assignment_group: AAMAS12
+
+MaxSum_NUMBER_OF_NEIGHBOURS: 4

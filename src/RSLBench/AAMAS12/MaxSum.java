@@ -9,7 +9,7 @@ import RSLBench.Assignment.DecentralAssignment;
 import RSLBench.Comm.AbstractMessage;
 import RSLBench.Comm.ComSimulator;
 
-import RSLBench.Helpers.UtilityMatrix;
+import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Params;
 import java.util.Collection;
 import java.util.HashSet;
@@ -139,7 +139,7 @@ public class MaxSum implements DecentralAssignment {
             int count = 0;
             ArrayList<EntityID> myTarget = new ArrayList<EntityID>();
             int tarID = nodeTarget.getId();
-            EntityID target = _utilityM.getTargetID(tarID);
+            EntityID target = new EntityID(tarID);
             myTarget.add(target);
             ArrayList<EntityID> bestAgents = (ArrayList<EntityID>) _utilityM.getNBestAgents(_utilityM.getNumAgents(), myTarget);
             //System.out.println("");
@@ -276,14 +276,14 @@ public class MaxSum implements DecentralAssignment {
                 _FGMexBytes += 2*4;
                 _nMexForFG += 2;
                 HashSet<NodeFunction> assignedToMe = tempVar.getNeighbour();
-                EntityID worstTarget = _utilityM.getTargetID(tarID);
+                EntityID worstTarget = new EntityID(tarID);
                 double targetUtility = _utilityM.getUtility(agent, worstTarget);
                 double worstUtility = targetUtility;
                 for (NodeFunction assigned : assignedToMe) {
-                    double oldUtility = _utilityM.getUtility(agent, _utilityM.getTargetID(assigned.getId()));
+                    double oldUtility = _utilityM.getUtility(agent, new EntityID(assigned.getId()));
                     if (oldUtility < worstUtility) {
                         worstUtility = oldUtility;
-                        worstTarget = _utilityM.getTargetID(assigned.getId());
+                        worstTarget = new EntityID(assigned.getId());
                     }
                 }
 
@@ -327,11 +327,11 @@ public class MaxSum implements DecentralAssignment {
                         countAgent++;
                         NodeVariable var = (NodeVariable) prova.next();
                         //System.out.print(var.getId());
-                        cost = cost + _utilityM.getUtility((EntityID) _utilityM.getAgentIDFromNumericID(var.getId()), _utilityM.getTargetID(targetID));
+                        cost = cost + _utilityM.getUtility(new EntityID(var.getId()), new EntityID(targetID));
                     }
                 }
                 cost = cost * 1000000000;
-                if (countAgent > _utilityM.getRequiredAgentCount(_utilityM.getTargetID(targetID))) {
+                if (countAgent > _utilityM.getRequiredAgentCount(new EntityID(targetID))) {
                     cost = -BIGNUMBER;
                 }
                 //System.out.println("");

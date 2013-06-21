@@ -5,7 +5,7 @@
 package RSLBench.AAMAS12;
 import RSLBench.Assignment.DecentralAssignment;
 import rescuecore2.worldmodel.EntityID;
-import RSLBench.Helpers.UtilityMatrix;
+import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Comm.AbstractMessage;
 import RSLBench.Assignment.Assignment;
 import RSLBench.Comm.ComSimulator;

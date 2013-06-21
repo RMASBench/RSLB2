@@ -1,6 +1,6 @@
 package RSLBench.Assignment;
 
-import RSLBench.Helpers.UtilityMatrix;
+import RSLBench.Helpers.Utility.UtilityMatrix;
 
 /**
  * This interface represents the executor of the computation.

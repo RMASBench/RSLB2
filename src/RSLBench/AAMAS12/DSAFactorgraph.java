@@ -6,7 +6,7 @@ package RSLBench.AAMAS12;
 
 import RSLBench.Assignment.Assignment;
 import RSLBench.Helpers.SimpleID;
-import RSLBench.Helpers.UtilityMatrix;
+import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Params;
 import RSLBench.maxSumAdapters.RMASNodeFunctionUtility;
 import java.util.*;

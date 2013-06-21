@@ -44,7 +44,7 @@ import rescuecore2.worldmodel.EntityID;
 import RSLBench.Assignment.DecentralAssignment;
 import RSLBench.Comm.AbstractMessage;
 import RSLBench.Comm.ComSimulator;
-import RSLBench.Helpers.UtilityMatrix;
+import RSLBench.Helpers.Utility.UtilityMatrix;
 import es.csic.iiia.maxsum.CardinalityFactor;
 
 import es.csic.iiia.maxsum.CommunicationAdapter;

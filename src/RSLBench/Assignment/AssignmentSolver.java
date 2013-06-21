@@ -12,7 +12,7 @@ import RSLBench.Comm.ComSimulator;
 import RSLBench.Comm.SimpleProtocolToServer;
 import RSLBench.Helpers.Logger;
 import RSLBench.Helpers.Stats;
-import RSLBench.Helpers.UtilityMatrix;
+import RSLBench.Helpers.Utility.UtilityMatrix;
 import java.util.HashMap;
 import java.util.HashSet;
 

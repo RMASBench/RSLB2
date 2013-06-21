@@ -11,7 +11,7 @@ import RSLBench.Comm.ComSimulator;
 import RSLBench.Helpers.Logger;
 import RSLBench.Helpers.SimpleID;
 import RSLBench.Helpers.Stats;
-import RSLBench.Helpers.UtilityMatrix;
+import RSLBench.Helpers.Utility.UtilityMatrix;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.StringTokenizer;

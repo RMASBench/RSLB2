@@ -6,7 +6,7 @@ import RSLBench.Comm.AbstractMessage;
 import RSLBench.Comm.AssignmentMessage;
 import RSLBench.Comm.ComSimulator;
 import RSLBench.Helpers.Logger;
-import RSLBench.Helpers.UtilityMatrix;
+import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Helpers.SimpleID;
 import RSLBench.Params;
 

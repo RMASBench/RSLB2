@@ -5,7 +5,7 @@ import java.util.Collection;
 import rescuecore2.worldmodel.EntityID;
 
 import RSLBench.Comm.AbstractMessage;
-import RSLBench.Helpers.UtilityMatrix;
+import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Comm.ComSimulator;
 /**
  * This interface implements the actions that a single agent can perform in a DCOP algorithm.

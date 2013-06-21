@@ -25,7 +25,6 @@ function processArgs {
     MAP="paris"
     TEAM=""
     CONFIGDIR="$DIR/config"
-    ALGORITHM="MaxSum"
     SCENARIO="example"
     THINK_TIME=1000
 
@@ -117,6 +116,13 @@ function processArgs {
     fi
     LOGDIR=$(cd $LOGDIR; pwd)
 
+    # Check that the user has specified some algorithm to run
+    if [ -z "$ALGORITHM" ]; then
+        echo "You must specify which algorithm to run."
+        printUsage
+        exit 1
+    fi
+    
     # Check that there exists a configuration file for the requested algorithm
     if [ ! -f "$CONFIGDIR/$ALGORITHM.cfg" ]; then
         echo "Unable to read file \"$DIR/config/$ALGORITHM.cfg\"."

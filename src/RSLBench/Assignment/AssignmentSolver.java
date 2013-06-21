@@ -12,6 +12,7 @@ import RSLBench.Comm.ComSimulator;
 import RSLBench.Comm.SimpleProtocolToServer;
 import RSLBench.Helpers.Logger;
 import RSLBench.Helpers.Stats;
+import RSLBench.Helpers.Utility.UtilityFactory;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,6 +29,9 @@ public class AssignmentSolver
 {
     /** Config key to the (fully qualified) class of the solver to run */
     public static final String CONF_KEY_SOLVER_CLASS = "solver.class";
+    
+    /** Config key to the (fully qualified) class of the solver to run */
+    public static final String CONF_KEY_UTILITY_CLASS = "utility.class";
     
     /** Config key to the results path */
     public static final String CONF_KEY_RESULTS_PATH = "results.path";
@@ -53,6 +57,9 @@ public class AssignmentSolver
         _assignmentSolverClassName = config.getValue(CONF_KEY_SOLVER_CLASS);
         String className = _assignmentSolverClassName.substring(
                 _assignmentSolverClassName.lastIndexOf('.')+1);
+        
+        String utilityClassName = config.getValue(CONF_KEY_UTILITY_CLASS);
+        UtilityFactory.setClass(utilityClassName);
 
         Params.START_EXPERIMENT_TIME = config.getIntValue("experiment_start_time", 25);
         Params.END_EXPERIMENT_TIME = config.getIntValue("experiment_end_time", 300);

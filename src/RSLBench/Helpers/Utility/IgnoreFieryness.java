@@ -6,9 +6,7 @@ package RSLBench.Helpers.Utility;
 
 import RSLBench.Helpers.Logger;
 import RSLBench.Params;
-import java.util.HashMap;
 import rescuecore2.standard.entities.Building;
-import rescuecore2.standard.entities.StandardWorldModel;
 import rescuecore2.worldmodel.EntityID;
 
 /**
@@ -16,7 +14,7 @@ import rescuecore2.worldmodel.EntityID;
  * 
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
-public class FirstUtilityFunction extends AbstractUtilityFunction {
+public class IgnoreFieryness extends AbstractUtilityFunction {
 
     @Override
     public double getUtility(EntityID agent, EntityID target) {
@@ -39,13 +37,18 @@ public class FirstUtilityFunction extends AbstractUtilityFunction {
         
         double area = (double) b.getTotalArea();
         double neededAgents = Math.ceil(area / (double) Params.AREA_COVERED_BY_FIRE_BRIGADE);
-        double base = neededAgents;
-        if (b.getFieryness() == 1) {
-            neededAgents *= 1.5; //1.5 previously
-        } else if (b.getFieryness() >= 2) {
-            neededAgents *= 3.0; //3.0       
+        
+        // The fireyness only indicates wether the building is burning or not,
+        // and for how long (despite the suggestive names).
+        switch(b.getFierynessEnum()) {
+            case HEATING:
+            case BURNING:
+            case INFERNO:
+                break;
+            default:
+                neededAgents = 0;
+                break;
         }
-        Logger.debugColor("BASE: " + base + " | FIERYNESS: " + b.getFieryness() + " | NEEEDED AGENTS: " + neededAgents, Logger.BG_RED);
 
         return (int) Math.round(neededAgents);
     }

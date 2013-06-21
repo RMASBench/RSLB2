@@ -27,3 +27,6 @@ experiment_start_time: 5
 # Number of cycles to run for each iteration
 # For instance, DSA agents will run for 50 cycles before making a decision
 number_of_cycles: 50
+
+# Utility function to use
+utility.class: RSLBench.Helpers.Utility.FirstUtilityFunction

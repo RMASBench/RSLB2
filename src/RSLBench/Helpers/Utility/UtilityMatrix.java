@@ -42,7 +42,7 @@ public class UtilityMatrix {
         _world = world;
         _agentLocations = agentLocations;
 
-        utilityFunction = new FirstUtilityFunction();
+        utilityFunction = UtilityFactory.buildFunction();
         utilityFunction.setAgentLocations(agentLocations);
         utilityFunction.setWorld(world);
         Logger.debugColor("UM has been initialized!", Logger.BG_MAGENTA);

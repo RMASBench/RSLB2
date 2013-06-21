@@ -41,7 +41,6 @@ public class DSA implements DecentralAssignment {
     private Map<EntityID, Set<EntityID>> inRange;
 
     public DSA() {
-        inRange = new HashMap<>();
         _random = new Random(0);
     }
 
@@ -67,7 +66,7 @@ public class DSA implements DecentralAssignment {
 
         Logger.debugColor("A [" + SimpleID.conv(agentID) + "] init done!", Logger.BG_LIGHTBLUE);
 
-        inRange.clear();
+        inRange = new HashMap<>();
         inRange.put(_agentID, new HashSet<EntityID>());
         this.update();
     }
@@ -191,11 +190,16 @@ public class DSA implements DecentralAssignment {
                 Logger.debugColor("ERROR could not find cluster of agent " + _agentID, Logger.BG_RED);
             }
             
-            Logger.traceColor("Agent " + SimpleID.conv(id) + " has the following group of " + inRange.get(id).size() + " neighbors : ", Logger.BG_GREEN);
-            for (EntityID a : inRange.get(id)) {
-                System.out.print(SimpleID.conv(a) + ",");
+            // Just trace information
+            StringBuilder buf = new StringBuilder();
+            buf.append("Agent ").append(SimpleID.conv(_agentID))
+                    .append("\" has the following group of \"")
+                    .append(inRange.get(_agentID).size())
+                    .append(" neighbors : \n");
+            for (EntityID a : inRange.get(_agentID)) {
+                buf.append(SimpleID.conv(a)).append(",");
             }
-            System.out.println(SimpleID.conv(id) + ",");
+            Logger.traceColor(buf.toString(), Logger.BG_GREEN);   
         }
     }
 

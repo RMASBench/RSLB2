@@ -78,6 +78,8 @@ public class Params {
      * the agent selects a target on his own (rather than doing nothing)
      */
 
+    /** Hysteresis factor to prevent target switching due to pathing isssues. */
+    public static double HYSTERESIS_FACTOR = 1.2;
      
      /**
       * The probability that an agent changes his assigned target.

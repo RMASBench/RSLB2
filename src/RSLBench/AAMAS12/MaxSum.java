@@ -14,14 +14,11 @@ import RSLBench.Params;
 import java.util.Collection;
 import java.util.HashSet;
 import rescuecore2.worldmodel.EntityID;
-import java.util.LinkedList;
-import maxsum.Agent;
 
 import messages.MessageQ;
 import messages.MessageR;
 
 import exception.PostServiceNotSetException;
-import exception.VariableNotSetException;
 import messages.MailMan;
 import messages.MessageFactory;
 import messages.MessageFactoryArrayDouble;

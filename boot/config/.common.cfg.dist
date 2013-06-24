@@ -30,3 +30,6 @@ number_of_cycles: 50
 
 # Utility function to use
 utility.class: RSLBench.Helpers.Utility.FirstUtilityFunction
+
+# Hysteresis factor to prevent target switching due to pathing issues
+hysteresis_factor: 1.2

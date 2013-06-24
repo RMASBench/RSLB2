@@ -44,6 +44,8 @@ public class AssignmentSolver
     private AssignmentInterface _solver = null;;
     private ComSimulator _com = null;
     
+    private Assignment lastAssignment = new Assignment();
+    
     /**
      * Creates the assignment solver and initializes some of the simulation parameters
      * @param world: the model of the world
@@ -72,6 +74,7 @@ public class AssignmentSolver
         Params.AGENT_SELECT_IDLE_TARGET = config.getBooleanValue("select_idle_target", true);
         //Params.LOCAL_UTILITY_MATRIX_LENGTH = config.getIntValue("number_of_considered_targets", -1);
         Params.MAX_ITERATIONS = config.getIntValue("max_iterations", 100);
+        Params.HYSTERESIS_FACTOR = config.getFloatValue("hysteresis_factor", 1.2);
 
         Params.setLocalParams(config, className);
 
@@ -128,25 +131,25 @@ public class AssignmentSolver
         }
 
         Logger.debugColor(_assignmentSolverClassName + ": assigning " + agents.size() + " agents to " + targets.size() + " targets", Logger.BG_GREEN);
-        UtilityMatrix utility = new UtilityMatrix(agents, targets, agentLocations, world);
+        UtilityMatrix utility = new UtilityMatrix(agents, targets, lastAssignment, agentLocations, world);
         long start = System.currentTimeMillis();
-        Assignment A = _solver.compute(utility);
+        lastAssignment = _solver.compute(utility);
         long end = System.currentTimeMillis();
         long computationTime = end-start;
         long messagesInBytes = _solver.getTotalMessagesBytes();
         int totalMessages = _solver.getTotalMessages();
         int averageNccc = _solver.getAverageNccc();
         int notAssignmentMessages = _solver.getOtherMessages();
-        if (A != null) {
+        if (lastAssignment != null) {
         	// Count violated constraints
         	int violatedConstraints = 0;
         	for (EntityID a: agents) {
-        		EntityID targetID = A.getAssignment(a);
-        		violatedConstraints += Math.abs(A.getTargetSelectionCount(targetID) - utility.getRequiredAgentCount(targetID));         		
+        		EntityID targetID = lastAssignment.getAssignment(a);
+        		violatedConstraints += Math.abs(lastAssignment.getTargetSelectionCount(targetID) - utility.getRequiredAgentCount(targetID));         		
         	}
                 
         	Stats.writeStatsToFile(_logFileName, time, world, violatedConstraints, computationTime, messagesInBytes, averageNccc, totalMessages, notAssignmentMessages);
-        	return SimpleProtocolToServer.buildAssignmentMessage(A, true);
+        	return SimpleProtocolToServer.buildAssignmentMessage(lastAssignment, true);
         }
         else
         {

@@ -1,6 +1,8 @@
 package RSLBench.Helpers.Utility;
 
+import RSLBench.Assignment.Assignment;
 import RSLBench.Helpers.Logger;
+import RSLBench.Params;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -26,21 +28,24 @@ public class UtilityMatrix {
     private ArrayList<EntityID> _agents;
     private ArrayList<EntityID> _targets;
     private StandardWorldModel _world;
+    private Assignment lastAssignment;
     HashMap<EntityID, EntityID> _agentLocations;
 
     /**
      * It creates a utility matrix
      *
-     * @param agents: a list of agents
-     * @param targets: a list of targets
-     * @param agentLocations: the agent locations
-     * @param world: the model of the world
+     * @param agents a list of agents
+     * @param targets a list of targets
+     * @param lastAssignment the assignment computed in the last iteration
+     * @param agentLocations the agent locations
+     * @param world the model of the world
      */
-    public UtilityMatrix(ArrayList<EntityID> agents, ArrayList<EntityID> targets, HashMap<EntityID, EntityID> agentLocations, StandardWorldModel world) {
+    public UtilityMatrix(ArrayList<EntityID> agents, ArrayList<EntityID> targets, Assignment lastAssignment, HashMap<EntityID, EntityID> agentLocations, StandardWorldModel world) {
         _agents = agents;
         _targets = targets;
         _world = world;
         _agentLocations = agentLocations;
+        this.lastAssignment = lastAssignment;
 
         utilityFunction = UtilityFactory.buildFunction();
         utilityFunction.setAgentLocations(agentLocations);
@@ -61,7 +66,11 @@ public class UtilityMatrix {
             System.exit(1);
         }
 
-        return utilityFunction.getUtility(agentID, targetID);
+        double utility = utilityFunction.getUtility(agentID, targetID);
+        if (lastAssignment.getAssignment(agentID) == targetID) {
+            utility *= Params.HYSTERESIS_FACTOR;
+        }
+        return utility;
     }
 
     /**
@@ -91,14 +100,14 @@ public class UtilityMatrix {
      * @return a list of EntityID of targets ordered by utility value
      */
     public List<EntityID> getNBestTargets(int N, ArrayList<EntityID> agents) {
-        Map<EntityID, Double> map = new HashMap<EntityID, Double>();
+        Map<EntityID, Double> map = new HashMap<>();
         for (EntityID agent : agents) {
             for (EntityID target : _targets) {
                 map.put(target, getUtility(agent, target));
             }
         }
         List<EntityID> res = sortByValue(map);
-        ArrayList<EntityID> list = new ArrayList<EntityID>();
+        ArrayList<EntityID> list = new ArrayList<>();
         int c = 0;
         for (EntityID id : res) {
             list.add(id);
@@ -118,14 +127,14 @@ public class UtilityMatrix {
      * @return a list of EntityID of agents ordered by utility value
      */
     public List<EntityID> getNBestAgents(int N, ArrayList<EntityID> targets) {
-        Map<EntityID, Double> map = new HashMap<EntityID, Double>();
+        Map<EntityID, Double> map = new HashMap<>();
         for (EntityID target : targets) {
             for (EntityID agent : _agents) {
                 map.put(agent, getUtility(agent, target));
             }
         }
         List<EntityID> res = sortByValue(map);
-        ArrayList<EntityID> list = new ArrayList<EntityID>();
+        ArrayList<EntityID> list = new ArrayList<>();
         int c = 0;
         for (EntityID id : res) {
             list.add(id);
@@ -144,18 +153,17 @@ public class UtilityMatrix {
      * @return The sorted list
      */
     public static List<EntityID> sortByValue(final Map<EntityID, Double> m) {
-        List<EntityID> keys = new ArrayList<EntityID>();
+        List<EntityID> keys = new ArrayList<>();
         keys.addAll(m.keySet());
-        Collections.sort(keys, new Comparator() {
-            public int compare(Object o1, Object o2) {
-                Object v1 = m.get(o1);
-                Object v2 = m.get(o2);
+        Collections.sort(keys, new Comparator<EntityID>() {
+            @Override
+            public int compare(EntityID o1, EntityID o2) {
+                Double v1 = m.get(o1);
+                Double v2 = m.get(o2);
                 if (v1 == null) {
                     return (v2 == null) ? 0 : 1;
-                } else if (v1 instanceof Comparable) {
-                    return -1 * ((Comparable) v1).compareTo(v2);
                 } else {
-                    return 0;
+                    return -1 * v1.compareTo(v2);
                 }
             }
         });

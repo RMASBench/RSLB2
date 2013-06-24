@@ -37,21 +37,10 @@ public class FirstUtilityFunction extends AbstractUtilityFunction {
         
         double area = (double) b.getTotalArea();
         double neededAgents = Math.ceil(area / (double) Params.AREA_COVERED_BY_FIRE_BRIGADE);
-        
-        // The fireyness only indicates wether the building is burning or not,
-        // and for how long.
-        switch(b.getFierynessEnum()) {
-            case HEATING:
-            case BURNING:
-            case INFERNO:
-                break;
-            default:
-                neededAgents = 0;
-                break;
-        }
+
         if (b.getFieryness() == 1) {
             neededAgents *= 1.5;
-        } else if (b.getFieryness() > 2) {
+        } else if (b.getFieryness() == 2) {
             neededAgents *= 3.0;
         }
         //Logger.debugColor("BASE: " + base + " | FIERYNESS: " + b.getFieryness() + " | NEEEDED AGENTS: " + neededAgents, Logger.BG_RED);

@@ -20,5 +20,9 @@ fi
 
 waitUntilFinished $PIDS
 
+if [ -n "$PLOT" ]; then
+    results/plot.sh "results/$ALGORITHM-$$.dat"
+fi
+
 # Cleanup
 kill $PIDS 2>/dev/null

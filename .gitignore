@@ -9,6 +9,7 @@ boot/logs
 boot/results
 boot/*.png
 boot/**/*.cfg
+boot/*.gps
 
 # Log files
 run/logs

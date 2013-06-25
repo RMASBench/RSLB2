@@ -12,6 +12,7 @@ function printUsage {
     echo '-n    --no-rslb2                Do not run RSLB2 (useful if you want to run it externaly with a debugger)'
     echo "-l    --log       <logdir>      Set the log directory. Default is \"logs/$PID\""
     echo "-c    --config    <configdir>   Set the config directory. Default is \"config\""
+    echo "-p    --plot                    Plot the run results."
     echo "-t    --team      <teamname>    Set the team name. Default is \"\""
     echo "      --think-time <millis>     Set the max. agent think time in millis. Default is 10000."
     echo "-s    --scenario  <scenario>    Set the scenario to run. Default is \"example\" (.xml appended automatically)."
@@ -45,6 +46,10 @@ function processArgs {
             -l | --log)
                 LOGDIR="$2"
                 shift 2
+                ;;
+            -p | --plot)
+                PLOT=true
+                shift 1
                 ;;
             -t | --team)
                 TEAM="$2"
@@ -262,7 +267,7 @@ function waitUntilFinished {
                 return 1
             fi
         done
-        if grep 'Kernel has shut down' $LOGDIR/kernel.log; then
+        if grep -q 'Kernel has shut down' $LOGDIR/kernel.log; then
             return 0
         fi
         sleep $SLEEP_TIME

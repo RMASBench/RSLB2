@@ -152,8 +152,13 @@ function launch {
 function startKernel {
     echo "Using config $SCONFIGDIR/kernel.cfg"
     KERNEL_OPTIONS="-c $SCONFIGDIR/kernel.cfg --kernel.agents.think-time=$THINK_TIME --gis.map.dir=$MAP --gis.map.scenario=$SCENARIO --kernel.logname=$LOGDIR/rescue.log $*"
+    if [ -z "$KERNEL_VIEWER" ]; then
+        JVM_OPTS="-Djava.awt.headless=true"
+    else
+        JVM_OPTS=""
+    fi
     makeClasspath $RSL_SIM_PATH/jars $RSL_SIM_PATH/lib
-    launch -cp $CP kernel.StartKernel $KERNEL_OPTIONS 2>&1 >$LOGDIR/kernel-out.log &
+    launch $JVM_OPTS -cp $CP kernel.StartKernel $KERNEL_OPTIONS 2>&1 >$LOGDIR/kernel-out.log &
     PIDS="$PIDS $!"
     # Wait for the kernel to start
     waitFor $LOGDIR/kernel.log "Listening for connections" $!

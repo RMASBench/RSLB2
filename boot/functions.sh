@@ -129,7 +129,7 @@ function processArgs {
 }
 
 function launch {
-    java -Dlogdir=$LOGDIR $@
+    java -Dlog4j.log.dir=$LOGDIR $@
 }
 
 # Start the kernel

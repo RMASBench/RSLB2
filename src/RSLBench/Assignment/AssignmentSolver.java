@@ -56,9 +56,6 @@ public class AssignmentSolver
      */
     public AssignmentSolver(StandardWorldModel world, Config config)
     {
-        //String basePackage = config.getValue("base_package");
-        //String className = config.getValue("assignment_class");
-        //String groupName = config.getValue("assignment_group");
         _assignmentSolverClassName = config.getValue(CONF_KEY_SOLVER_CLASS);
         String className = _assignmentSolverClassName.substring(
                 _assignmentSolverClassName.lastIndexOf('.')+1);
@@ -71,10 +68,8 @@ public class AssignmentSolver
         Params.IGNORE_AGENT_COMMANDS_KEY_UNTIL = config.getIntValue("ignore_agents_commands_until", 3);
         Params.SIMULATED_COMMUNICATION_RANGE = config.getIntValue("simulated_communication_range", 10000) * 1000;
         Params.ONLY_ACT_ON_ASSIGNED_TARGETS = config.getBooleanValue("only_assigned_targets", false);
-        Params.OPTIMIZE_ASSIGNMENT = config.getBooleanValue("optimize_assignment", true);
         Params.AREA_COVERED_BY_FIRE_BRIGADE = config.getFloatValue("area_covered_by_fire_brigade", 100.0);
         Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY = config.getFloatValue("trade_off_factor_travel_cost_and_utility", 1.0);
-        //Params.LOCAL_UTILITY_MATRIX_LENGTH = config.getIntValue("number_of_considered_targets", -1);
         Params.MAX_ITERATIONS = config.getIntValue("max_iterations", 100);
         Params.HYSTERESIS_FACTOR = config.getFloatValue("hysteresis_factor", 1.2);
 
@@ -82,17 +77,11 @@ public class AssignmentSolver
 
         resultsFile = config.getValue(CONF_KEY_RESULTS_PATH) + '/' + config.getValue(CONF_KEY_RESULTS_FILE);
         //_logFileName = "logs/" + basePackage + "_" + groupName + "_" + className + ".dat";
-        Logger.info("Writing results to " + resultsFile);
-        // Initialize Assignment
-        /*Logger.debugColor("Starting decentralized solver with com_range: " 
-         + Params.simulatedCommunicationRange + " startTime: "  
-         + Params.START_EXPERIMENT_TIME + " cost_trade_off: " 
-         + Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY, Logger.BG_GREEN);*/
-        //TEMPORARY
-        _com = new ComSimulator(Params.SIMULATED_COMMUNICATION_RANGE);
+        _com = new ComSimulator();
         _solver = new DecentralizedAssignmentSimulator(_assignmentSolverClassName, _com);
 
         // Write statistics header to results file
+        Logger.info("Writing results to " + resultsFile);
         Stats.writeHeader(resultsFile);
     }
 

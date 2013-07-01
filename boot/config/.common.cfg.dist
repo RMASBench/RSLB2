@@ -13,10 +13,6 @@ only_assigned_targets: true
 # search_class: AStar
 search_class: BreadthFirstSearch
 
-# This parameter defines the maximal communication
-# range in meters during the decentralized simulation
-simulated_communication_range: 50000
-
 # This parameter basically controls the influence of distance
 # the bigger the value the bigger the influence.
 trade_off_factor_travel_cost_and_utility: 100.0

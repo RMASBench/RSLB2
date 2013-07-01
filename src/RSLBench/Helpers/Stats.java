@@ -19,10 +19,10 @@ import rescuecore2.standard.entities.StandardWorldModel;
  */
 public class Stats
 {
-    private static ArrayList<Integer> violatedConstraintsHistory = new ArrayList<Integer>();
-    private static ArrayList<Long> computationTimeHistory = new ArrayList<Long>();
-    private static ArrayList<Long> messagesInBytesHistory = new ArrayList<Long>();
-    private static ArrayList<Integer> NCCCHistory = new ArrayList<Integer>();
+    private static ArrayList<Integer> violatedConstraintsHistory = new ArrayList<>();
+    private static ArrayList<Long> computationTimeHistory = new ArrayList<>();
+    private static ArrayList<Long> messagesInBytesHistory = new ArrayList<>();
+    private static ArrayList<Integer> NCCCHistory = new ArrayList<>();
     private static int windowSize = 20;
     
     /**
@@ -92,15 +92,10 @@ public class Stats
         }
         totalAreaDestroyed = totalAreaDestroyed / (1000.0);
 
-        try
-        {
-            BufferedWriter out = new BufferedWriter(new FileWriter(fileName, true));
-            writeLine(out, time + " " + numBuildings + " " + numBurning + " " + numOnceBurned + " " + numDestroyed + " " + totalAreaDestroyed + " " + violatedConstraints + " " + computeMovingAverage(violatedConstraintsHistory) + " " + computationTime + " " + computeMovingAverage(computationTimeHistory) + " " + nMessages + " " + messagesInBytes + " "+ + computeMovingAverage(messagesInBytesHistory) + " " + averageNccc + " " + computeMovingAverage(NCCCHistory) + " " + nOtherMessages);
-            out.close();
-        } catch (IOException e)
-        {
-            System.out.println("IOException:");
-            e.printStackTrace();
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(fileName, true))) {
+            writeLine(out, time + " " + numBuildings + " " + numBurning + " " + numOnceBurned + " " + numDestroyed + " " + totalAreaDestroyed + " " + violatedConstraints + " " + computeMovingAverage(violatedConstraintsHistory) + " " + computationTime + " " + computeMovingAverage(computationTimeHistory) + " " + nMessages + " " + messagesInBytes + " " + +computeMovingAverage(messagesInBytesHistory) + " " + averageNccc + " " + computeMovingAverage(NCCCHistory) + " " + nOtherMessages);
+        } catch (IOException e) {
+            Logger.error(e.getLocalizedMessage(), e);
         }
     }
 

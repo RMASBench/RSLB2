@@ -41,12 +41,8 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
     private int maxPower;
     private int firstTimeToAct;
     private int assignedTarget = -1;
-    private boolean overwriteStartTime = false;
 
-    public PlatoonFireAgent(boolean overwriteStartTime, int start_time) {
-    	this.overwriteStartTime = overwriteStartTime;
-    	if (overwriteStartTime)
-    		Params.START_EXPERIMENT_TIME = start_time;
+    public PlatoonFireAgent() {
     	Logger.debug(Markers.BLUE, "Platoon Fire Agent CREATED");
     }
 
@@ -61,8 +57,6 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         model.indexClass(StandardEntityURN.BUILDING, StandardEntityURN.REFUGE);
         maxWater = config.getIntValue(MAX_WATER_KEY);
         maxDistance = config.getIntValue(MAX_DISTANCE_KEY);
-        if (!overwriteStartTime)
-        	Params.START_EXPERIMENT_TIME = config.getIntValue("experiment_start_time", 25);
         firstTimeToAct = Math.max(config.getIntValue(IGNORE_ACT_UNTIL) + 1,
                 Params.START_EXPERIMENT_TIME);
         maxPower = config.getIntValue(MAX_POWER_KEY);
@@ -213,7 +207,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
     private Collection<EntityID> getBurningBuildings() {
         Collection<StandardEntity> e = model
                 .getEntitiesOfType(StandardEntityURN.BUILDING);
-        List<Building> result = new ArrayList<Building>();
+        List<Building> result = new ArrayList<>();
         for (StandardEntity next : e) {
             if (next instanceof Building) {
                 Building b = (Building) next;

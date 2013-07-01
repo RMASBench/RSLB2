@@ -36,15 +36,8 @@ public class CenterAgent extends StandardAgent<Building>
     private ArrayList<EntityID> agents = new ArrayList<EntityID>();
     private HashMap<EntityID, EntityID> agentLocations = new HashMap<EntityID, EntityID>(); 
 
-    protected CenterAgent(boolean overwriteParams, int maxRange, int startTime, double costTradeOff) {
+    protected CenterAgent() {
     	Logger.info(Markers.BLUE, "Center Agent CREATED");
-    	/*if (overwriteParams) {
-    		Params.OVERWRITE_FROM_COMMANDLINE = true;
-    		Params.START_EXPERIMENT_TIME = startTime;
-    		Params.SIMULATED_COMMUNICATION_RANGE = maxRange;
-    		Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY = costTradeOff;
-    	}*/
-
     }
 
     

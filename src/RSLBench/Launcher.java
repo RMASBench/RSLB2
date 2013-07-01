@@ -29,17 +29,9 @@ public final class Launcher {
     private static final String FIRE_BRIGADE_FLAG = "-fb";
     private static final String POLICE_FORCE_FLAG = "-pf";
     private static final String AMBULANCE_TEAM_FLAG = "-at";
-    private static final String COMM_RANGE = "-ra";
-    private static final String START_TIME = "-st";
-    private static final String COST_TRADE_OFF_FACTOR = "-cf";
   //  private static final String CIVILIAN_FLAG = "-cv";
 
     private Launcher() {}
-
-    private static int comm_range = -1;
-    private static int start_time = -1;
-    private static double cost_trade_off = -1;
-    private static boolean overwriteFromCommandLine = false;
 
     
     /**
@@ -74,21 +66,6 @@ public final class Launcher {
                 else if (args[i].equals(AMBULANCE_TEAM_FLAG)) {
                     //at = Integer.parseInt(args[++i]);
                 	Logger.warn("Ambulances are not supported yet!");
-                }
-                else if (args[i].equals(COMM_RANGE)) {
-                    comm_range = Integer.parseInt(args[++i]);
-                	Logger.info(Markers.GREEN, "Will use range="+comm_range);
-                	overwriteFromCommandLine = true;
-                }
-                else if (args[i].equals(START_TIME)) {
-                    start_time = Integer.parseInt(args[++i]);
-                	Logger.info(Markers.GREEN, "Will use start_time="+start_time);
-                	overwriteFromCommandLine = true;
-                }
-                else if (args[i].equals(COST_TRADE_OFF_FACTOR)) {
-                    cost_trade_off = Double.parseDouble(args[++i]);
-                	Logger.info(Markers.GREEN, "Will use cost_trade_off_fac=" + cost_trade_off);
-                	overwriteFromCommandLine = true;
                 }
                 else {
                     Logger.warn("Unrecognised option: " + args[i]);
@@ -128,10 +105,7 @@ public final class Launcher {
         try {
             while (fb-- != 0) {
                 Logger.info("Connecting fire brigade " + (i++) + "...");
-                if (overwriteFromCommandLine) 
-                	launcher.connect(new PlatoonFireAgent(true, start_time));
-                else
-                	launcher.connect(new PlatoonFireAgent(false, 0)); 
+                launcher.connect(new PlatoonFireAgent());
                 Logger.info("success");
             }
         }
@@ -162,10 +136,7 @@ public final class Launcher {
         try {
             while (true) {
                 Logger.info("Connecting center " + (i++) + "...");
-                if (overwriteFromCommandLine) 
-                	launcher.connect(new CenterAgent(true, comm_range, start_time, cost_trade_off));
-                else
-                	launcher.connect(new CenterAgent(false, 0, 0, 0 ));              
+                launcher.connect(new CenterAgent());
                 Logger.info("success");
             }
         }

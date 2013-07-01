@@ -43,7 +43,7 @@ public class AssignmentSolver
     public static final String CONF_KEY_RESULTS_FILE = "results.file";
     
     private String _assignmentSolverClassName = "";
-    private String _logFileName = "no_logfile_name.dat";
+    private String resultsFile = "no_logfile_name.dat";
     private AssignmentInterface _solver = null;;
     private ComSimulator _com = null;
     
@@ -80,9 +80,9 @@ public class AssignmentSolver
 
         Params.setLocalParams(config, className);
 
-        _logFileName = config.getValue(CONF_KEY_RESULTS_PATH) + '/' + config.getValue(CONF_KEY_RESULTS_FILE);
+        resultsFile = config.getValue(CONF_KEY_RESULTS_PATH) + '/' + config.getValue(CONF_KEY_RESULTS_FILE);
         //_logFileName = "logs/" + basePackage + "_" + groupName + "_" + className + ".dat";
-        Logger.info("Writing results to " + _logFileName);
+        Logger.info("Writing results to " + resultsFile);
         // Initialize Assignment
         /*Logger.debugColor("Starting decentralized solver with com_range: " 
          + Params.simulatedCommunicationRange + " startTime: "  
@@ -92,9 +92,8 @@ public class AssignmentSolver
         _com = new ComSimulator(Params.SIMULATED_COMMUNICATION_RANGE);
         _solver = new DecentralizedAssignmentSimulator(_assignmentSolverClassName, _com);
 
-        // Delete old log file
-        File f1 = new File(_logFileName);
-        f1.delete();
+        // Write statistics header to results file
+        Stats.writeHeader(resultsFile);
     }
 
     /**
@@ -112,11 +111,6 @@ public class AssignmentSolver
     		Logger.error("Got empty StandardWorldModel !!!");
     		System.exit(-1);
     	}
-
-        // Write statistics header to file
-        if (time == 7) {
-            Stats.writeHeader(_logFileName);
-        }
 
         // Check whether there is something to do at all
         if (targets.isEmpty() || agents.isEmpty()) {
@@ -152,12 +146,12 @@ public class AssignmentSolver
         		violatedConstraints += Math.abs(lastAssignment.getTargetSelectionCount(targetID) - utility.getRequiredAgentCount(targetID));         		
         	}
                 
-        	Stats.writeStatsToFile(_logFileName, time, world, violatedConstraints, computationTime, messagesInBytes, averageNccc, totalMessages, notAssignmentMessages);
+        	Stats.writeStatsToFile(resultsFile, time, world, violatedConstraints, computationTime, messagesInBytes, averageNccc, totalMessages, notAssignmentMessages);
         	return SimpleProtocolToServer.buildAssignmentMessage(lastAssignment, true);
         }
         else
         {
-        	Stats.writeStatsToFile(_logFileName, time, world, -1, computationTime, messagesInBytes, averageNccc, totalMessages, notAssignmentMessages);
+        	Stats.writeStatsToFile(resultsFile, time, world, -1, computationTime, messagesInBytes, averageNccc, totalMessages, notAssignmentMessages);
         	return null;
         }
     }

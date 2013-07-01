@@ -31,16 +31,12 @@ public class Stats
      */
     public static void writeHeader(String fileName)
     {
-        try
-        {
-            BufferedWriter out = new BufferedWriter(new FileWriter(fileName, true));
+         try (BufferedWriter out = new BufferedWriter(new FileWriter(fileName, false))) {
             writeLine(out, "# experiment_start_time: " + Params.START_EXPERIMENT_TIME);
             writeLine(out, "# experiment_end_time: " + Params.END_EXPERIMENT_TIME);
             writeLine(out, "# simulated_communication_range: " + Params.SIMULATED_COMMUNICATION_RANGE);
             writeLine(out, "# CostTradeOff: " + Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY);
-            out.write("Time  NumBuildings  NumBurining  numOnceBurned  numDestroyed  totalAreaDestroyed violatedConstraints MAViolatedConstraints computationTime MAComputationTime numberOfMessages messagesInBytes MAMessageInBytes averageNCCC MAAverageNCCC messagesForFactorgraph ");
-            out.newLine();
-            out.close();
+            writeLine(out, "Time  NumBuildings  NumBurining  numOnceBurned  numDestroyed  totalAreaDestroyed violatedConstraints MAViolatedConstraints computationTime MAComputationTime numberOfMessages messagesInBytes MAMessageInBytes averageNCCC MAAverageNCCC messagesForFactorgraph ");
         } catch (IOException e) {
             Logger.error(e.getLocalizedMessage(), e);
         }
@@ -99,8 +95,7 @@ public class Stats
         try
         {
             BufferedWriter out = new BufferedWriter(new FileWriter(fileName, true));
-            out.write(time + " " + numBuildings + " " + numBurning + " " + numOnceBurned + " " + numDestroyed + " " + totalAreaDestroyed + " " + violatedConstraints + " " + computeMovingAverage(violatedConstraintsHistory) + " " + computationTime + " " + computeMovingAverage(computationTimeHistory) + " " + nMessages + " " + messagesInBytes + " "+ + computeMovingAverage(messagesInBytesHistory) + " " + averageNccc + " " + computeMovingAverage(NCCCHistory) + " " + nOtherMessages);
-            out.newLine();
+            writeLine(out, time + " " + numBuildings + " " + numBurning + " " + numOnceBurned + " " + numDestroyed + " " + totalAreaDestroyed + " " + violatedConstraints + " " + computeMovingAverage(violatedConstraintsHistory) + " " + computationTime + " " + computeMovingAverage(computationTimeHistory) + " " + nMessages + " " + messagesInBytes + " "+ + computeMovingAverage(messagesInBytesHistory) + " " + averageNccc + " " + computeMovingAverage(NCCCHistory) + " " + nOtherMessages);
             out.close();
         } catch (IOException e)
         {

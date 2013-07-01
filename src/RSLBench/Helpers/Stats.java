@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.ArrayList;
 
 import RSLBench.Params;
+import rescuecore2.log.Logger;
 
 import rescuecore2.standard.entities.Building;
 import rescuecore2.standard.entities.StandardEntity;
@@ -33,21 +34,21 @@ public class Stats
         try
         {
             BufferedWriter out = new BufferedWriter(new FileWriter(fileName, true));
-            out.write("#"
-            		  + " StartTime: " + Params.START_EXPERIMENT_TIME 
-            		  + " EndTime: " + Params.END_EXPERIMENT_TIME  
-            		  + " Range: " + 	Params.SIMULATED_COMMUNICATION_RANGE
-            		  + " CostTradeOff: " + Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY
-                      + " SelectTargets when Idle: " + Params.AGENT_SELECT_IDLE_TARGET);
-            out.newLine();
+            writeLine(out, "# experiment_start_time: " + Params.START_EXPERIMENT_TIME);
+            writeLine(out, "# experiment_end_time: " + Params.END_EXPERIMENT_TIME);
+            writeLine(out, "# simulated_communication_range: " + Params.SIMULATED_COMMUNICATION_RANGE);
+            writeLine(out, "# CostTradeOff: " + Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY);
             out.write("Time  NumBuildings  NumBurining  numOnceBurned  numDestroyed  totalAreaDestroyed violatedConstraints MAViolatedConstraints computationTime MAComputationTime numberOfMessages messagesInBytes MAMessageInBytes averageNCCC MAAverageNCCC messagesForFactorgraph ");
             out.newLine();
             out.close();
-        } catch (IOException e)
-        {
-            System.out.println("IOException:");
-            e.printStackTrace();
+        } catch (IOException e) {
+            Logger.error(e.getLocalizedMessage(), e);
         }
+    }
+    
+    private static void writeLine(BufferedWriter out, String line) throws IOException {
+        out.write(line);
+        out.newLine();
     }
     
     

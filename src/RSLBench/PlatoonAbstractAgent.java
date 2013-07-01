@@ -149,11 +149,11 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
         if (randomExplorationGoal != null)
         {
             int distance = model.getDistance(position, randomExplorationGoal);
-            //Logger.debugColor("RANDOM_EXPLORATION: distance to goal: " + distance, Logger.BG_BLUE);
+            Logger.debug(Markers.BLUE, "RANDOM_EXPLORATION: distance to goal: " + distance);
             if (distance <= 20000)
             {
                 randomExplorationGoal = null;
-                //Logger.debugColor("RANDOM_EXPLORATION: goal reached", Logger.BG_BLUE);
+                Logger.debug(Markers.BLUE, "RANDOM_EXPLORATION: goal reached");
             }
         }
         
@@ -173,7 +173,7 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
                 if (model.getDistance(position, entity.getID()) > 20000)
                 {
                     randomExplorationGoal = entity.getID();
-                    //Logger.debugColor("RANDOM_EXPLORATION: new goal selected", Logger.BG_BLUE);
+                    Logger.debug(Markers.BLUE, "RANDOM_EXPLORATION: new goal selected");
                 }
             }
         }

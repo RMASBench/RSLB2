@@ -44,7 +44,6 @@ public class Params {
     /**
      * Used in the utility calculation in the UtilityMatrix
      */
-    public static double TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY;
     public static boolean OPTIMIZE_ASSIGNMENT;
     public static boolean ONLY_ACT_ON_ASSIGNED_TARGETS;
     public static boolean AGENT_SELECT_IDLE_TARGET;
@@ -67,7 +66,7 @@ public class Params {
      * utility for targets. As bigger as the factor as bigger the
      * influence.
      */
-    
+    public static double TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY;
     
     /**
      *  prioritize recently ignited buildings (should always be on) 

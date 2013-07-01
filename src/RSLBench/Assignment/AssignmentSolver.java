@@ -74,7 +74,6 @@ public class AssignmentSolver
         Params.OPTIMIZE_ASSIGNMENT = config.getBooleanValue("optimize_assignment", true);
         Params.AREA_COVERED_BY_FIRE_BRIGADE = config.getFloatValue("area_covered_by_fire_brigade", 100.0);
         Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY = config.getFloatValue("trade_off_factor_travel_cost_and_utility", 1.0);
-        Params.AGENT_SELECT_IDLE_TARGET = config.getBooleanValue("select_idle_target", true);
         //Params.LOCAL_UTILITY_MATRIX_LENGTH = config.getIntValue("number_of_considered_targets", -1);
         Params.MAX_ITERATIONS = config.getIntValue("max_iterations", 100);
         Params.HYSTERESIS_FACTOR = config.getFloatValue("hysteresis_factor", 1.2);
@@ -83,7 +82,7 @@ public class AssignmentSolver
 
         _logFileName = config.getValue(CONF_KEY_RESULTS_PATH) + '/' + config.getValue(CONF_KEY_RESULTS_FILE);
         //_logFileName = "logs/" + basePackage + "_" + groupName + "_" + className + ".dat";
-        System.out.println("Writing results to " + _logFileName);
+        Logger.info("Writing results to " + _logFileName);
         // Initialize Assignment
         /*Logger.debugColor("Starting decentralized solver with com_range: " 
          + Params.simulatedCommunicationRange + " startTime: "  

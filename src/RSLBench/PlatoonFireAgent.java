@@ -141,106 +141,63 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         // Find all buildings that are on fire
         Collection<EntityID> burning = getBurningBuildings();
 
-        if (Params.ONLY_ACT_ON_ASSIGNED_TARGETS) {
-            // Try to plan to assigned target
-            // ///////////////////////////////
-            if (assignedTarget != -1) {
-                EntityID target = new EntityID(assignedTarget);
-                if (!burning.contains(target)) {
-                    assignedTarget = -1;
-                    return;
-                }
-
-                // extinguish if in range
-                if (model.getDistance(me().getPosition(), target) <= maxDistance) {
-                    // Logger.debugColor("Extinguishing ASSIGNED " + target,
-                    // //Logger.FG_MAGENTA);
-                    sendExtinguish(time, target, maxPower);
-                    // sendSpeak(time, 1, ("Extinguishing " + next).getBytes());
-                    return;
-                }
-
-                // move to assigned target
-                List<EntityID> path = planPathToFire(target);
-                if (path != null) {
-                    // Logger.debugColor("Moving to ASSIGNED target",
-                    // //Logger.FG_MAGENTA);
-                    sendMove(time, path);
-                    return;
-                } else {
-                    // Logger.debugColor("Cannot move to ASSIGNED target",
-                    // //Logger.FG_RED);
-                    path = randomWalk();
-                    // Logger.debugColor("Moving randomly",
-                    // //Logger.FG_MAGENTA);
-                    sendMove(time, path);
-                    return;
-                }
-            } else {
-                // Logger.debugColor("Couldn't plan a path to a refuge.",
-                // //Logger.BG_RED);
-                List<EntityID> path = randomWalk();
-                // Logger.debugColor("Moving randomly", //Logger.FG_MAGENTA);
-                sendMove(time, path);
-                return;
-            }
-        }
-
         // Try to plan to assigned target
         // ///////////////////////////////
+        
+        // Ensure that the assigned target is still burning, and unassign the
+        // agent if it is not.
+        if (assignedTarget != -1 && !burning.contains(new EntityID(assignedTarget))) {
+            assignedTarget = -1;
+        }
+
         if (assignedTarget != -1) {
             EntityID target = new EntityID(assignedTarget);
-            if (!burning.contains(target)) {
-                assignedTarget = -1;
-                return;
-            }
 
-            // if we are in range: extinguish
+            // Extinguish if the assigned target is in range
             if (model.getDistance(me().getPosition(), target) <= maxDistance) {
-                // Logger.debugColor("Extinguishing " + target,
-                // //Logger.FG_MAGENTA);
+                Logger.debug(Markers.MAGENTA, "Agent {} extinguishing ASSIGNED target {}", getID(), target);
                 sendExtinguish(time, target, maxPower);
                 // sendSpeak(time, 1, ("Extinguishing " + next).getBytes());
                 return;
             }
 
-            // else drive to target
+            // Try to approach the target (if we are here, it is not yet in range)
             List<EntityID> path = planPathToFire(target);
             if (path != null) {
-                //Logger.debugColor("Moving to ASSIGNED target " + assignedTarget ,Logger.FG_MAGENTA);
+                Logger.debug(Markers.MAGENTA, "Agent {} approaching ASSIGNED target {}", getID(), target);
                 sendMove(time, path);
-                return;
             } else {
-                Logger.debug(Markers.RED, "Have no ASSIGNED target");
-                if (Params.AGENT_SELECT_IDLE_TARGET) {
-                    assignedTarget = -1;
+                Logger.warn(Markers.RED, "Agent {} can't find a path to ASSIGNED target {}. Moving randomly.", getID(), target);
+                sendMove(time, randomWalk());
+            }
+            return;
+        } 
+        
+        // If agents can independently choose targets, do it
+        if (!Params.ONLY_ACT_ON_ASSIGNED_TARGETS) {
+            for (EntityID next : burning) {
+                List<EntityID> path = planPathToFire(next);
+                if (path != null) {
+                    Logger.info(Markers.MAGENTA, "Unassigned agent {} choses target {} by itself", getID(), next);
+                    sendMove(time, path);
+                    return;
                 }
-                return;
+            }
+            if (!burning.isEmpty()) {
+                Logger.info(Markers.MAGENTA, "Unassigned agent {} can't reach any of the {} burning buildings", getID(), burning.size());
             }
         }
         
-        // Plan a path to nearest fire
-        // /////////////////////////////////////////
-        for (EntityID next : burning) {
-            List<EntityID> path = planPathToFire(next);
-            if (path != null) {
-                //Logger.debugColor("Moving to nearest target (like sample agents)", Logger.FG_MAGENTA);
-                sendMove(time, path);
-                return;
-            }
-        }
-        // if (burning.size() == 0)
-        // Logger.debugColor("No more buildings to extinguish!",
-        // //Logger.FG_GREEN);
-        // else
-        // Logger.debugColor("Couldn't plan a path to one of the " +
-        // burning.size() + " fires.", //Logger.FG_RED);
-        List<EntityID> path = null;
-        path = randomExplore();
-        if (path == null) {
+        // If the agen't can do nothing else, try to explore or just randomly
+        // walk around.
+        List<EntityID> path = randomExplore();
+        if (path != null) {
+            Logger.debug(Markers.MAGENTA, "Agent {0} exploring", getID());
+        } else {
             path = randomWalk();
+            Logger.debug(Markers.MAGENTA, "Agent {0} moving randomly", getID());
         }
-        Logger.debug(Markers.MAGENTA, "Moving randomly");
+        
         sendMove(time, path);
     }
 

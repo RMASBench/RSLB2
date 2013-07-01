@@ -1,6 +1,6 @@
 package RSLBench;
 
-import RSLBench.Helpers.Logger;
+import RSLBench.Helpers.Logging.Markers;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,6 +12,8 @@ import RSLBench.Search.BreadthFirstSearch;
 import RSLBench.Search.DistanceInterface;
 import RSLBench.Search.Graph;
 import RSLBench.Search.SearchAlgorithm;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import rescuecore2.Constants;
 import rescuecore2.config.NoSuchConfigOptionException;
@@ -31,6 +33,8 @@ import rescuecore2.worldmodel.EntityID;
    @param <E> The subclass of StandardEntity this agent wants to control.
  */
 public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends StandardAgent<E> {
+    private static final Logger Logger = LogManager.getLogger(PlatoonAbstractAgent.class);
+    
     private static final int RANDOM_WALK_LENGTH = 50;
         
     //private static final String SAY_COMMUNICATION_MODEL = StandardCommunicationModel.class.getName();
@@ -197,26 +201,26 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
             if (object instanceof SearchAlgorithm)
             {
                 instance = (SearchAlgorithm) object;
-                Logger.debugColor("Using for search: " + searchClassName, Logger.FG_LIGHTBLUE);                
+                Logger.info(Markers.LIGHT_BLUE, "Using search class: " + searchClassName);                
             }
             else
             {
-                Logger.debugColor(searchClassName + " is not a SearchAlgorithm.", Logger.BG_RED);
+                Logger.error(Markers.RED, searchClassName + " is not a SearchAlgorithm.");
             }
         } catch (NoSuchConfigOptionException e)
         {
-            Logger.debugColor("SearchAlgorithm config not found. Using BreadthFirstSearch.", Logger.BG_BLUE);
+            Logger.warn("SearchAlgorithm config not found. Using BreadthFirstSearch.");
         } catch (ClassNotFoundException e)
         {
-            Logger.debugColor("SearchAlgorithm could not be found: " + searchClassName, Logger.BG_RED);
+            Logger.error(Markers.RED, "SearchAlgorithm could not be found: " + searchClassName);
 //            e.printStackTrace();
         } catch (InstantiationException e)
         {
-            Logger.debugColor("SearchAlgorithm " + searchClassName + " could not be instantiated. (abstract?!)", Logger.BG_RED);
+            Logger.error(Markers.RED, "SearchAlgorithm " + searchClassName + " could not be instantiated. (abstract?!)");
 //            e.printStackTrace();
         } catch (IllegalAccessException e)
         {
-            Logger.debugColor("SearchAlgorithm " + searchClassName + " must have an empty constructor.", Logger.BG_RED);
+            Logger.error(Markers.RED, "SearchAlgorithm " + searchClassName + " must have an empty constructor.");
 //            e.printStackTrace();
         }
         

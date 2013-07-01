@@ -1,8 +1,11 @@
+# Folder to store dependency sources
+dependencies
+
 # Non-distributable scenarios
 scenarios/**/*.xml
 
 # Local logging setup
-supplement/log4j.properties
+supplement/*.xml
 
 # Run results
 boot/logs

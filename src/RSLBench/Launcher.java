@@ -1,7 +1,9 @@
 package RSLBench;
 
-import RSLBench.Helpers.Logger;
+import RSLBench.Helpers.Logging.Markers;
 import java.io.IOException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import rescuecore2.components.ComponentLauncher;
 import rescuecore2.components.TCPComponentLauncher;
@@ -22,6 +24,8 @@ import rescuecore2.standard.messages.StandardMessageFactory;
  * agents as possible, all using one connection.
  */
 public final class Launcher {
+    private static final Logger Logger = LogManager.getLogger(Launcher.class);
+    
     private static final String FIRE_BRIGADE_FLAG = "-fb";
     private static final String POLICE_FORCE_FLAG = "-pf";
     private static final String AMBULANCE_TEAM_FLAG = "-at";
@@ -44,7 +48,6 @@ public final class Launcher {
      */
     public static void main(String[] args) {
 
-        Logger.setLogContext("RSLBench");
         Logger.info("Started!");
         try {
             Registry.SYSTEM_REGISTRY.registerEntityFactory(StandardEntityFactory.INSTANCE);
@@ -62,7 +65,7 @@ public final class Launcher {
             for (int i = 0; i < args.length; ++i) {
                 if (args[i].equals(FIRE_BRIGADE_FLAG)) {
                     fb = Integer.parseInt(args[++i]);
-                    Logger.debugColor("fb="+fb, Logger.BG_GREEN);
+                    Logger.debug(Markers.GREEN, "fb="+fb);
                 }
                 else if (args[i].equals(POLICE_FORCE_FLAG)) {
                     //pf = Integer.parseInt(args[++i]);
@@ -74,17 +77,17 @@ public final class Launcher {
                 }
                 else if (args[i].equals(COMM_RANGE)) {
                     comm_range = Integer.parseInt(args[++i]);
-                	Logger.debugColor("Will use range="+comm_range, Logger.BG_GREEN);
+                	Logger.info(Markers.GREEN, "Will use range="+comm_range);
                 	overwriteFromCommandLine = true;
                 }
                 else if (args[i].equals(START_TIME)) {
                     start_time = Integer.parseInt(args[++i]);
-                	Logger.debugColor("Will use start_time="+start_time, Logger.BG_GREEN);
+                	Logger.info(Markers.GREEN, "Will use start_time="+start_time);
                 	overwriteFromCommandLine = true;
                 }
                 else if (args[i].equals(COST_TRADE_OFF_FACTOR)) {
                     cost_trade_off = Double.parseDouble(args[++i]);
-                	Logger.debugColor("Will use cost_trade_off_fac=" + cost_trade_off, Logger.BG_GREEN);
+                	Logger.info(Markers.GREEN, "Will use cost_trade_off_fac=" + cost_trade_off);
                 	overwriteFromCommandLine = true;
                 }
                 else {

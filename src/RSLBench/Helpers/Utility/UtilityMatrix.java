@@ -1,7 +1,6 @@
 package RSLBench.Helpers.Utility;
 
 import RSLBench.Assignment.Assignment;
-import RSLBench.Helpers.Logger;
 import RSLBench.Params;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,6 +8,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import rescuecore2.standard.entities.StandardWorldModel;
 import rescuecore2.worldmodel.EntityID;
@@ -23,6 +24,7 @@ import rescuecore2.worldmodel.EntityID;
  *
  */
 public class UtilityMatrix {
+    private static final Logger Logger = LogManager.getLogger(UtilityMatrix.class);
 
     private UtilityFunction utilityFunction;
     private ArrayList<EntityID> _agents;
@@ -50,7 +52,7 @@ public class UtilityMatrix {
         utilityFunction = UtilityFactory.buildFunction();
         utilityFunction.setAgentLocations(agentLocations);
         utilityFunction.setWorld(world);
-        Logger.debugColor("UM has been initialized!", Logger.BG_MAGENTA);
+        Logger.debug("UM has been initialized!");
     }
 
     /**
@@ -62,7 +64,7 @@ public class UtilityMatrix {
      */
     public double getUtility(EntityID agentID, EntityID targetID) {
         if (utilityFunction == null) {
-            Logger.fatal("Utility matrix has not been initialized!!");
+            Logger.error("Utility matrix has not been initialized!!");
             System.exit(1);
         }
 
@@ -198,7 +200,7 @@ public class UtilityMatrix {
      */
     public int getRequiredAgentCount(EntityID targetID) {
         if (utilityFunction == null) {
-            Logger.fatal("Utility matrix has not been initialized!!");
+            Logger.error("Utility matrix has not been initialized!!");
             System.exit(1);
         }
         

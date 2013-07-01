@@ -3,18 +3,13 @@ package RSLBench.Assignment;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import java.util.Iterator;
 import RSLBench.Params;
 import RSLBench.Comm.AbstractMessage;
 import RSLBench.Comm.ComSimulator;
-import RSLBench.Helpers.Logger;
-import RSLBench.Helpers.SimpleID;
-import RSLBench.Helpers.Stats;
+import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Utility.UtilityMatrix;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.StringTokenizer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import rescuecore2.worldmodel.EntityID;
 
@@ -23,6 +18,8 @@ import rescuecore2.worldmodel.EntityID;
  */
 public class DecentralizedAssignmentSimulator implements AssignmentInterface
 {
+    private static final Logger Logger = LogManager.getLogger(DecentralizedAssignmentSimulator.class);
+    
     private String _className;
     private List<DecentralAssignment> _simulatedAgents;
     private ComSimulator _com;
@@ -45,12 +42,12 @@ public class DecentralizedAssignmentSimulator implements AssignmentInterface
      	long start = System.currentTimeMillis();
         initializeAgents(utility);        
 
-        Logger.debugColor("starting DA Simulator", Logger.BG_YELLOW);
+        Logger.debug("starting DA Simulator");
         boolean done = false;
         int iterations = 0;
         int totalNccc = 0;
         int initialConflicts = 0;
-        int finalConflicts = 0;
+        int finalConflicts;
         int MAX_ITERATIONS = Params.MAX_ITERATIONS;
         long byteMessage = 0;
         int assignmentMessages = 0;
@@ -123,15 +120,15 @@ public class DecentralizedAssignmentSimulator implements AssignmentInterface
         }
         
         this._nOtherMessages = this._nMessages-assignmentMessages;
-        Logger.debugColor("Done with iterations. Needed: " + iterations , Logger.BG_WHITE);
+        Logger.debug(Markers.WHITE, "Done with iterations. Needed: " + iterations);
         
      	long end = System.currentTimeMillis();
-     	Logger.debugColor("Total computation time for " + _className + " was "+(end-start)+" ms.", Logger.BG_YELLOW);
+     	Logger.info("Total computation time for " + _className + " was "+(end-start)+" ms.");
 
         
         finalConflicts = countConflicts(utility);
-        Logger.debugColor("DA Simulation complete initial conflicts = " + initialConflicts +
-        		" final conflicts = " + finalConflicts, Logger.BG_YELLOW);
+        Logger.info("DA Simulation complete initial conflicts = " + initialConflicts +
+        		" final conflicts = " + finalConflicts);
 
         // Combine assignments
         Assignment assignments = new Assignment();
@@ -140,15 +137,15 @@ public class DecentralizedAssignmentSimulator implements AssignmentInterface
            if (agent.getTargetID() != Assignment.UNKNOWN_TARGET_ID)
             assignments.assign(agent.getAgentID(), agent.getTargetID());
            
-           System.err.println("FILTER | Agent " + agent.getAgentID() + "\t" + agent.getTargetID() + "\t" + 
+           /*System.err.println("FILTER | Agent " + agent.getAgentID() + "\t" + agent.getTargetID() + "\t" + 
                    utility.getUtility(agent.getAgentID(), agent.getTargetID()) +
                    "\t" + utility.getWorld().getDistance(agent.getTargetID(), 
                                 utility.getAgentLocations().get(agent.getAgentID())
-                   ));
+                   ));*/
         }
         
         _time++;
-        Logger.debugColor("Combin Ass done", Logger.BG_MAGENTA);
+        Logger.debug("DA Simulator done");
 
         return assignments;
     }
@@ -181,48 +178,28 @@ public class DecentralizedAssignmentSimulator implements AssignmentInterface
     private void initializeAgents(UtilityMatrix utilityM)
     {
         // initialize simulated agents
-        _simulatedAgents = new ArrayList<DecentralAssignment>();
+        _simulatedAgents = new ArrayList<>();
         try
         {
             Class<?> daClass = Class.forName(_className);
             for (EntityID agentID : utilityM.getAgents()) 
             {
                 DecentralAssignment agent = (DecentralAssignment) daClass.newInstance();
-                UtilityMatrix localUM;
-                
                 // TODO: if required give only local utility matrix to each agent!!!
-                
-                //if (Params.LOCAL_UTILITY_MATRIX_LENGTH == -1)
-                    localUM = utilityM;
-                /*else 
-                    convertToLocal(agentID, utilityM);*/
-                    
-                    
-                Logger.debugColor("Agent " + SimpleID.conv(agentID) + " has local UM with " + localUM.getNumAgents() + " agents and " + 
-                			       localUM.getNumTargets() + " targets. Agents: ", Logger.BG_MAGENTA);
-                //for (EntityID a : localUM.getAgents()) {
-                //	System.out.println(SimpleID.conv(a) + "," );
-                //}
-                //System.out.println();
-                	
-                //agent.resetStructures();
-                agent.initialize(agentID, localUM);
+                agent.initialize(agentID, utilityM);
                 _simulatedAgents.add(agent);
             }
         } catch (ClassNotFoundException e)
         {
-            Logger.debugColor("SolverClass could not be found: " + _className, Logger.BG_RED);
-            e.printStackTrace();
+            Logger.error(Markers.RED, "SolverClass could not be found: " + _className, e);
         } catch (InstantiationException e)
         {
-            Logger.debugColor("SolverClass " + _className + " could not be instantiated. (abstract?!)", Logger.BG_RED);
-            e.printStackTrace();
+            Logger.error(Markers.RED, "SolverClass " + _className + "could not be isntantiated.", e);
         } catch (IllegalAccessException e)
         {
-            Logger.debugColor("SolverClass " + _className + " must have an empty constructor.", Logger.BG_RED);
-            e.printStackTrace();
+            Logger.error(Markers.RED, "SolverClass " + _className + " must have an empty constructor.", e);
         }
-        Logger.debugColor("Initialized " + _simulatedAgents.size() + " agents of class " + _className, Logger.BG_BLUE);
+        Logger.debug(Markers.BLUE, "Initialized " + _simulatedAgents.size() + " agents of class " + _className);
     }
     
     /**

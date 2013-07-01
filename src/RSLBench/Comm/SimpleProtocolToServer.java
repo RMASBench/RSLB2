@@ -5,28 +5,31 @@ import java.util.ArrayList;
 import rescuecore2.standard.entities.Human;
 import rescuecore2.worldmodel.EntityID;
 import RSLBench.Assignment.Assignment;
-import RSLBench.Helpers.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * A class that converts messages in bytes allowing the kernel to read them.
  */
 public class SimpleProtocolToServer
 {
+    private static final Logger Logger = LogManager.getLogger(SimpleProtocolToServer.class);
+    
     public static final byte POS_MESSAGE = 0x10;
     public static final byte STATION_ASSIGNMENT_MESSAGE = 0x20;
     
     private static final boolean DEBUG_SP = false;
 
-    static public byte[] getPosMessage(Human agent)
-    {
+    static public byte[] getPosMessage(Human agent) {
         int pos = agent.getPosition().getValue();
         byte[] posB = intToByteArray(pos);
         byte[] message = new byte[1 + 1 * 4];
         message[0] = POS_MESSAGE;
-        for (int i = 0; i < posB.length; i++)
-            message[i + 1] = posB[i];
-        if (DEBUG_SP)
-        	Logger.debugColor("Sending POSITION: Agent " + agent.getID().getValue() + " located at " + pos, Logger.FG_GREEN);
+        System.arraycopy(posB, 0, message, 1, posB.length);
+
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("Sending POSITION: Agent " + agent.getID().getValue() + " located at " + pos);
+        }
         return message;
     }
 
@@ -52,7 +55,7 @@ public class SimpleProtocolToServer
     /*
      * Convert INT value to BYTE array
      */
-    public static final byte[] intToByteArray(int value)
+    public static byte[] intToByteArray(int value)
     {
         return new byte[] { (byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8), (byte) value };
     }
@@ -60,7 +63,7 @@ public class SimpleProtocolToServer
     /*
      * Convert BYTE array to INT value
      */
-    public static final int byteArrayToInt(byte[] b)
+    public static int byteArrayToInt(byte[] b)
     {
         return (b[0] << 24) | ((b[1] & 0xFF) << 16) | ((b[2] & 0xFF) << 8) | (b[3] & 0xFF);
     }
@@ -68,7 +71,7 @@ public class SimpleProtocolToServer
     /*
      * Convert BYTE array to INT array - Here we use 4 byte for each int
      */
-    public static final int[] byteArrayToIntArray(byte[] b, boolean ignoreFirstByte)
+    public static int[] byteArrayToIntArray(byte[] b, boolean ignoreFirstByte)
     {
         int length = b.length / 4;
         int startOffs = 0;
@@ -89,7 +92,7 @@ public class SimpleProtocolToServer
     /*
      * Convert BYTE array to INT array - Here we use 4 byte for each int
      */
-    public static final byte[] intArrayToByteArray(int[] iarray, int startIndexOffset)
+    public static byte[] intArrayToByteArray(int[] iarray, int startIndexOffset)
     {
         int length = iarray.length;
         byte[] b = new byte[length * 4 + startIndexOffset];
@@ -116,8 +119,9 @@ public class SimpleProtocolToServer
             EntityID target = A.getAssignment(agents.get(i));
             if (target == Assignment.UNKNOWN_TARGET_ID)
                 continue;
-            if (DEBUG_SP)
-            	Logger.debugColor("A " + agent.getValue() + " ---> T " + target.getValue(), Logger.BG_BLUE);
+            if (Logger.isDebugEnabled()) {
+            	Logger.debug("A " + agent.getValue() + " ---> T " + target.getValue());
+            }
             intArray[i * 2] = agent.getValue();
             intArray[i * 2 + 1] = target.getValue();
         }

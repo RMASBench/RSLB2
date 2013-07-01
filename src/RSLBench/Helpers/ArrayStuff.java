@@ -7,9 +7,12 @@ import rescuecore2.worldmodel.EntityID;
 import rescuecore2.standard.entities.Building;
 import rescuecore2.standard.entities.StandardWorldModel;
 import RSLBench.Params;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ArrayStuff
 {
+    private static final Logger Logger = LogManager.getLogger(ArrayStuff.class);
 
     /*
      * Transpose Matrix
@@ -187,7 +190,7 @@ public class ArrayStuff
             if (target >= 0) {
                 ass[a] = target;
             } else {
-                Logger.warnC("HAVE NO TARGET FOR AGENT " + a);
+                Logger.warn("HAVE NO TARGET FOR AGENT " + a);
             }
         }
         return ass;

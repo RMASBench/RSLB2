@@ -4,8 +4,9 @@
  */
 package RSLBench.Helpers.Utility;
 
-import RSLBench.Helpers.Logger;
 import RSLBench.Params;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import rescuecore2.standard.entities.Building;
 import rescuecore2.worldmodel.EntityID;
 
@@ -15,7 +16,8 @@ import rescuecore2.worldmodel.EntityID;
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
 public class FirstUtilityFunction extends AbstractUtilityFunction {
-
+    private static final Logger Logger = LogManager.getLogger(FirstUtilityFunction.class);
+    
     @Override
     public double getUtility(EntityID agent, EntityID target) {
         EntityID location = agentLocations.get(agent);
@@ -31,7 +33,7 @@ public class FirstUtilityFunction extends AbstractUtilityFunction {
     public int getRequiredAgentCount(EntityID target) {
         Building b = (Building) world.getEntity(target);
         if (b == null) {
-            Logger.fatal("Requested the agent count of a non-building target.");
+            Logger.error("Requested the agent count of a non-building target.");
             System.exit(1);
         }
         

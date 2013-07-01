@@ -1,19 +1,13 @@
 package RSLBench.Comm;
 
-import RSLBench.Helpers.Logger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import RSLBench.Helpers.SimpleID;
-
-import RSLBench.Params;
-
-import rescuecore2.standard.entities.StandardWorldModel;
 import rescuecore2.worldmodel.EntityID;
 
 /**
@@ -27,6 +21,7 @@ import rescuecore2.worldmodel.EntityID;
  */
 public class ComSimulator
 {
+    private static final Logger Logger = LogManager.getLogger(ComSimulator.class);
    
     private List<EntityID> agents;
 
@@ -51,7 +46,7 @@ public class ComSimulator
      */
     public void initialize(List<EntityID> agents)
     {
-        Logger.debugColor("initialize Com for "+agents.size()+" agents", Logger.BG_BLUE);
+        Logger.debug("initialize Com for "+agents.size()+" agents");
         this.agents = agents;
         messageInboxes = new HashMap<EntityID, List<AbstractMessage>>();
        // inRange = new HashMap<EntityID, Set<EntityID>>();

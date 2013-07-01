@@ -142,10 +142,12 @@ function processArgs {
         printUsage
         exit 1
     fi
+
+    JVM_OPTS=""
 }
 
 function launch {
-    java -Dlog4j.log.dir=$LOGDIR $@
+    java $JVM_OPTS -Dlog4j.log.dir=$LOGDIR $@
 }
 
 # Start the kernel
@@ -155,10 +157,10 @@ function startKernel {
     if [ -z "$KERNEL_VIEWER" ]; then
         JVM_OPTS="-Djava.awt.headless=true"
     else
-        JVM_OPTS=""
+        JVM_OPTS="-Djava.awt.headless=false"
     fi
     makeClasspath $RSL_SIM_PATH/jars $RSL_SIM_PATH/lib
-    launch $JVM_OPTS -cp $CP kernel.StartKernel $KERNEL_OPTIONS 2>&1 >$LOGDIR/kernel-out.log &
+    launch -cp $CP kernel.StartKernel $KERNEL_OPTIONS 2>&1 >$LOGDIR/kernel-out.log &
     PIDS="$PIDS $!"
     # Wait for the kernel to start
     waitFor $LOGDIR/kernel.log "Listening for connections" $!
@@ -166,17 +168,19 @@ function startKernel {
 
 # Start the viewer and simulators
 function startSims {
+    JVM_OPTS="-Xmx256m -Djava.awt.headless=true"
+
     makeClasspath $RSL_SIM_PATH/lib
     # Simulators
-    launch -Xmx256m -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/misc.jar rescuecore2.LaunchComponents misc.MiscSimulator -c $SCONFIGDIR/misc.cfg $* 2>&1 >$LOGDIR/misc-out.log &
+    launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/misc.jar rescuecore2.LaunchComponents misc.MiscSimulator -c $SCONFIGDIR/misc.cfg $* 2>&1 >$LOGDIR/misc-out.log &
     PIDS="$PIDS $!"
     PID_MISC=$!
 
-    launch -Xmx256m -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/traffic3.jar rescuecore2.LaunchComponents traffic3.simulator.TrafficSimulator -c $SCONFIGDIR/traffic3.cfg $* 2>&1 >$LOGDIR/traffic-out.log &
+    launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/traffic3.jar rescuecore2.LaunchComponents traffic3.simulator.TrafficSimulator -c $SCONFIGDIR/traffic3.cfg $* 2>&1 >$LOGDIR/traffic-out.log &
     PIDS="$PIDS $!"
     PID_TRAFFIC=$!
 
-    launch -Xmx256m -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/resq-fire.jar:$RSL_SIM_PATH/oldsims/firesimulator/lib/commons-logging-1.1.1.jar rescuecore2.LaunchComponents firesimulator.FireSimulatorWrapper -c $SCONFIGDIR/resq-fire.cfg $* 2>&1 > $LOGDIR/fire-out.log &
+    launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/resq-fire.jar:$RSL_SIM_PATH/oldsims/firesimulator/lib/commons-logging-1.1.1.jar rescuecore2.LaunchComponents firesimulator.FireSimulatorWrapper -c $SCONFIGDIR/resq-fire.cfg $* 2>&1 > $LOGDIR/fire-out.log &
     PIDS="$PIDS $!"
     PID_FIRE=$!
 
@@ -208,7 +212,8 @@ function startSims {
         if [ ! -z "$TEAM" ]; then
             TEAM_NAME_ARG="\"--viewer.team-name=$TEAM\"";
         fi
-        launch -Xmx256m -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/sample.jar rescuecore2.LaunchComponents sample.SampleViewer -c $SCONFIGDIR/viewer.cfg $TEAM_NAME_ARG 2>&1 >$LOGDIR/viewer-out.log &
+        JVM_OPTS="-Xmx256m -Djava.awt.headless=false"
+        launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/sample.jar rescuecore2.LaunchComponents sample.SampleViewer -c $SCONFIGDIR/viewer.cfg $TEAM_NAME_ARG 2>&1 >$LOGDIR/viewer-out.log &
         PIDS="$PIDS $!"
 
         waitFor $LOGDIR/viewer.log "connected" $!
@@ -216,9 +221,9 @@ function startSims {
 }
 
 function startRslb2 {
-    JVM_OPTS="-Xmx2G -Dlog4j.configuration=file://$BASEDIR/supplement/log4j.properties"
+    JVM_OPTS="-Xmx2G -Dlog4j.configurationFile=file://$BASEDIR/supplement/log4j2.xml -Djava.awt.headless=true"
     OPTS="-c $CONFIGDIR/$ALGORITHM.cfg --results.file=$ALGORITHM-$$.dat"
-    java $JVM_OPTS -jar $BASEDIR/dist/RSLB2.jar $OPTS
+    launch -jar $BASEDIR/dist/RSLB2.jar $OPTS
 }
 
 # Wait for a regular expression to appear in a file.

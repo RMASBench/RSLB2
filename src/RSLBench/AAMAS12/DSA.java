@@ -5,7 +5,7 @@ import RSLBench.Assignment.DecentralAssignment;
 import RSLBench.Comm.AbstractMessage;
 import RSLBench.Comm.AssignmentMessage;
 import RSLBench.Comm.ComSimulator;
-import RSLBench.Helpers.Logger;
+import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Helpers.SimpleID;
 import RSLBench.Params;
@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Random;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import rescuecore2.standard.entities.StandardWorldModel;
 import rescuecore2.worldmodel.EntityID;
@@ -28,6 +30,8 @@ import rescuecore2.worldmodel.EntityID;
  */
 public class DSA implements DecentralAssignment {
 
+    private static final Logger Logger = LogManager.getLogger(DSA.class);
+    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(DSA.class.getName());
     protected UtilityMatrix _utilityM = null;
     protected EntityID _agentID;
     protected EntityID _targetID;
@@ -35,7 +39,6 @@ public class DSA implements DecentralAssignment {
     protected TargetScores _targetScores = null;
     protected static Random _random;
     private int _nccc = 0;
-    
     // Communication
     private int maxCommunicationRange = Params.SIMULATED_COMMUNICATION_RANGE;
     private Map<EntityID, Set<EntityID>> inRange;
@@ -51,7 +54,7 @@ public class DSA implements DecentralAssignment {
         _targetScores = new TargetScores();
         _targetID = Assignment.UNKNOWN_TARGET_ID;
 
-        Logger.debugColor("A [" + SimpleID.conv(agentID) + "] initializing with " + _utilityM.getNumTargets() + " targets.", Logger.BG_LIGHTBLUE);
+        Logger.debug(Markers.LIGHT_BLUE, "A [" + SimpleID.conv(agentID) + "] initializing with " + _utilityM.getNumTargets() + " targets.");
 
         // Find the target with the highest utility and initialize required agents for each target 
         double bestTargetUtility = 0;
@@ -64,7 +67,7 @@ public class DSA implements DecentralAssignment {
             }
         }
 
-        Logger.debugColor("A [" + SimpleID.conv(agentID) + "] init done!", Logger.BG_LIGHTBLUE);
+        Logger.debug(Markers.LIGHT_BLUE, "A [" + SimpleID.conv(agentID) + "] init done!");
 
         inRange = new HashMap<>();
         inRange.put(_agentID, new HashSet<EntityID>());
@@ -74,10 +77,11 @@ public class DSA implements DecentralAssignment {
     @Override
     public boolean improveAssignment() {
 
-        Logger.debugColor("[" + SimpleID.conv(_agentID) + "] improveAssignment", Logger.BG_LIGHTBLUE);
-
-        Logger.debugColor("[" + SimpleID.conv(_agentID) + "]  received neighbor messages: "
-                + _neighborAssignments.size(), Logger.BG_LIGHTBLUE);
+        if (Logger.isDebugEnabled()) {
+            Logger.debug(Markers.LIGHT_BLUE, "[" + SimpleID.conv(_agentID) + "] improveAssignment");
+            Logger.debug(Markers.LIGHT_BLUE, "[" + SimpleID.conv(_agentID) + "] received neighbor messages: "
+                    + _neighborAssignments.size());
+        }
 
         _targetScores.resetAssignments();
         for (AbstractMessage message : _neighborAssignments) {
@@ -95,7 +99,7 @@ public class DSA implements DecentralAssignment {
             bestScore = Double.NEGATIVE_INFINITY;
         }
         EntityID bestTarget = _targetID;
-        //Logger.debugColor("["+ _agentID +"]  BEFORE -> target: " + _targetID +" score: "+bestScore, Logger.BG_LIGHTBLUE);
+        //Logger.debugColor(Markers.LIGHT_BLUE, "["+ _agentID +"]  BEFORE -> target: " + _targetID +" score: "+bestScore);
         _nccc = 0;
         for (EntityID t : _utilityM.getTargets()) {
             double score = _targetScores.computeScore(t, _utilityM.getUtility(_agentID, t));
@@ -106,14 +110,16 @@ public class DSA implements DecentralAssignment {
             _nccc++;
         }
 
-        Logger.debugColor("[" + SimpleID.conv(_agentID) + "]  AFTER -> target: " + bestTarget.getValue()
-                + " score: " + bestScore + " " + bestScore, Logger.BG_LIGHTBLUE);
+        if (Logger.isDebugEnabled()) {
+            Logger.debug(Markers.LIGHT_BLUE, "[" + SimpleID.conv(_agentID) + "]  AFTER -> target: " + bestTarget.getValue()
+                    + " score: " + bestScore + " " + bestScore);
+        }
 
         if (bestTarget != _targetID) {
-            Logger.debugColor("[" + SimpleID.conv(_agentID) + "] assignment can be improved", Logger.BG_LIGHTBLUE);
+            Logger.debug(Markers.LIGHT_BLUE, "[" + SimpleID.conv(_agentID) + "] assignment can be improved");
             // improvement possible
             if (_random.nextDouble() <= Params.DSA_CHANGE_VALUE_PROBABILITY) {
-                Logger.debugColor("[" + SimpleID.conv(_agentID) + "] assignment improved", Logger.BG_GREEN);
+                Logger.debug(Markers.GREEN, "[" + SimpleID.conv(_agentID) + "] assignment improved");
                 // change target
                 _targetID = bestTarget;
                 return true;
@@ -122,6 +128,7 @@ public class DSA implements DecentralAssignment {
         return false;
     }
 
+    @Override
     public int getNccc() {
         return _nccc;
     }
@@ -169,7 +176,7 @@ public class DSA implements DecentralAssignment {
     }
 
     public void update() {
-        
+
         // Initialize Clusters with minimal distance
         List<EntityID> agents = new ArrayList<>();
         //agents.add(_agentID);
@@ -187,19 +194,21 @@ public class DSA implements DecentralAssignment {
                 }
             }
             if (!found) {
-                Logger.debugColor("ERROR could not find cluster of agent " + _agentID, Logger.BG_RED);
+                Logger.debug(Markers.RED, "ERROR could not find cluster of agent " + _agentID);
             }
-            
+
             // Just trace information
-            StringBuilder buf = new StringBuilder();
-            buf.append("Agent ").append(SimpleID.conv(_agentID))
-                    .append("\" has the following group of \"")
-                    .append(inRange.get(_agentID).size())
-                    .append(" neighbors : \n");
-            for (EntityID a : inRange.get(_agentID)) {
-                buf.append(SimpleID.conv(a)).append(",");
+            if (Logger.isTraceEnabled()) {
+                StringBuilder buf = new StringBuilder();
+                buf.append("Agent ").append(SimpleID.conv(_agentID))
+                        .append("\" has the following group of \"")
+                        .append(inRange.get(_agentID).size())
+                        .append(" neighbors : \n");
+                for (EntityID a : inRange.get(_agentID)) {
+                    buf.append(SimpleID.conv(a)).append(",");
+                }
+                Logger.trace(Markers.GREEN, buf.toString());
             }
-            Logger.traceColor(buf.toString(), Logger.BG_GREEN);   
         }
     }
 
@@ -207,7 +216,7 @@ public class DSA implements DecentralAssignment {
         ArrayList<ArrayList<EntityID>> clusters = new ArrayList<ArrayList<EntityID>>();
         Set<EntityID> assigned = new HashSet<EntityID>();
 
-        Logger.debugColor("CLUSTERING START", Logger.BG_GREEN);
+        Logger.debug(Markers.GREEN, "CLUSTERING START");
         while (true) {
             int minDist = Integer.MAX_VALUE;
             EntityID bestA = new EntityID(-1), bestB = new EntityID(-1);
@@ -275,15 +284,21 @@ public class DSA implements DecentralAssignment {
 
 
         // Show Clusters
-        int count = 0;
-        for (ArrayList<EntityID> c : clusters) {
-            Logger.debugColor("Cluster " + count++ + ":", Logger.BG_GREEN);
-            for (EntityID id : c) {
-                System.out.print(id + ",");
+        if (Logger.isDebugEnabled()) {
+            int count = 0;
+            for (ArrayList<EntityID> c : clusters) {
+                StringBuilder buf = new StringBuilder("Cluster ");
+                String prefix = "";
+                buf.append(count++).append(": ");
+                for (EntityID id : c) {
+                    buf.append(prefix);
+                    prefix = ", ";
+                    buf.append(id);
+                }
+                Logger.debug(buf.toString());
             }
-            System.out.println();
+            Logger.debug(Markers.GREEN, "CLUSTERING END");
         }
-        Logger.debugColor("CLUSTERING END", Logger.BG_GREEN);
 
 
         return clusters;

@@ -10,12 +10,13 @@ import RSLBench.Params;
 import RSLBench.Comm.ComSimulator;
 //import RSLBench.Comm.ComSimulatorDSAFactorgraph;
 import RSLBench.Comm.SimpleProtocolToServer;
-import RSLBench.Helpers.Logger;
+import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Stats;
 import RSLBench.Helpers.Utility.UtilityFactory;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import java.util.HashMap;
-import java.util.HashSet;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This class represents a sort of "collection point" and acts as a layer of communication
@@ -27,6 +28,8 @@ import java.util.HashSet;
  */
 public class AssignmentSolver
 {
+    private static final Logger Logger = LogManager.getLogger(AssignmentSolver.class);
+    
     /** Config key to the (fully qualified) class of the solver to run */
     public static final String CONF_KEY_SOLVER_CLASS = "solver.class";
     
@@ -117,8 +120,8 @@ public class AssignmentSolver
         }
 
         // Check whether there is something to do at all
-        if (targets.size() == 0 || agents.size() == 0) {
-            Logger.debugColor("No agents or targets for assignment! targets=" + targets.size() + " agents:" + agents.size(), Logger.BG_YELLOW);
+        if (targets.isEmpty() || agents.isEmpty()) {
+            Logger.debug(Markers.YELLOW, "No agents or targets for assignment! targets=" + targets.size() + " agents:" + agents.size());
             return null;
         }
 
@@ -130,7 +133,9 @@ public class AssignmentSolver
         	_com.update();
         }
 
-        Logger.debugColor(_assignmentSolverClassName + ": assigning " + agents.size() + " agents to " + targets.size() + " targets", Logger.BG_GREEN);
+        if (Logger.isDebugEnabled()) {
+            Logger.debug(Markers.GREEN, _assignmentSolverClassName + ": assigning " + agents.size() + " agents to " + targets.size() + " targets");
+        }
         UtilityMatrix utility = new UtilityMatrix(agents, targets, lastAssignment, agentLocations, world);
         long start = System.currentTimeMillis();
         lastAssignment = _solver.compute(utility);

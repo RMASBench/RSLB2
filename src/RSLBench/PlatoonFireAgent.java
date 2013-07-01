@@ -19,7 +19,9 @@ import rescuecore2.worldmodel.ChangeSet;
 import rescuecore2.worldmodel.EntityID;
 import RSLBench.Comm.SimpleProtocolToServer;
 import RSLBench.Helpers.DistanceSorter;
-import RSLBench.Helpers.Logger;
+import RSLBench.Helpers.Logging.Markers;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 
 /**
@@ -27,6 +29,8 @@ import RSLBench.Helpers.Logger;
  */
 public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
 {
+    private static final Logger Logger = LogManager.getLogger(PlatoonFireAgent.class);
+    
     private static final String MAX_WATER_KEY = "fire.tank.maximum";
     private static final String MAX_DISTANCE_KEY = "fire.extinguish.max-distance";
     private static final String MAX_POWER_KEY = "fire.extinguish.max-sum";
@@ -39,13 +43,11 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
     private int assignedTarget = -1;
     private boolean overwriteStartTime = false;
 
-    private final boolean silent = true;
-
     public PlatoonFireAgent(boolean overwriteStartTime, int start_time) {
     	this.overwriteStartTime = overwriteStartTime;
     	if (overwriteStartTime)
     		Params.START_EXPERIMENT_TIME = start_time;
-    	Logger.debugColor("Platoon Fire Agent CREATED", Logger.BG_BLUE);
+    	Logger.debug(Markers.BLUE, "Platoon Fire Agent CREATED");
     }
 
     @Override
@@ -82,13 +84,11 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
                 byte content[] = speak.getContent();
                 EntityID eid = speak.getAgentID();
                 StandardEntity entity = model.getEntity(eid);
-                if (entity.getURN() == StandardEntityURN.FIRE_STATION.toString()) {
-                    if (!silent)
-                        Logger.debugColor("Heard FROM FIRE_STATION: " + next,Logger.FG_GREEN);
+                if (entity.getStandardURN() == StandardEntityURN.FIRE_STATION) {
+                    Logger.debug(Markers.GREEN, "Heard FROM FIRE_STATION: " + next);
                     processStationMessage(content, senderIdValue);
                 } 
-                else if (entity.getURN() == StandardEntityURN.FIRE_BRIGADE
-                        .toString()) {
+                else if (entity.getStandardURN() == StandardEntityURN.FIRE_BRIGADE) {
                     // Logger.debugColor("Heard FROM OTHER FIRE_BRIGADE: " +
                     // next,Logger.FG_LIGHTBLUE);
                 }
@@ -113,9 +113,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         // //////////////////////////////////////
         if (me.isWaterDefined() && me.getWater() < maxWater
                 && location() instanceof Refuge) {
-            if(!silent)
-                Logger.debugColor("Filling with water at " + location(),
-                    Logger.FG_MAGENTA);
+            Logger.debug(Markers.MAGENTA, "Filling with water at " + location());
             sendRest(time);
             return;
         }
@@ -213,7 +211,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
                 sendMove(time, path);
                 return;
             } else {
-                Logger.debugColor("Have no ASSIGNED target", Logger.FG_RED);
+                Logger.debug(Markers.RED, "Have no ASSIGNED target");
                 if (Params.AGENT_SELECT_IDLE_TARGET) {
                     assignedTarget = -1;
                 }
@@ -242,7 +240,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         if (path == null) {
             path = randomWalk();
         }
-        Logger.debugColor("Moving randomly", Logger.FG_MAGENTA);
+        Logger.debug(Markers.MAGENTA, "Moving randomly");
         sendMove(time, path);
     }
 

@@ -19,8 +19,9 @@ import rescuecore2.worldmodel.EntityID;
 import RSLBench.Assignment.AssignmentSolver;
 import RSLBench.Comm.SimpleProtocolToServer;
 import RSLBench.Helpers.DistanceSorter;
-import RSLBench.Helpers.Logger;
-import RSLBench.Params;
+import RSLBench.Helpers.Logging.Markers;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * It is a "fake" agent that does not appears in the graphic simulation, but that serves as a "station"
@@ -29,12 +30,14 @@ import RSLBench.Params;
  */
 public class CenterAgent extends StandardAgent<Building>
 {
+    private static final Logger Logger = LogManager.getLogger(CenterAgent.class);
+    
     private AssignmentSolver assignmentSolver = null;
     private ArrayList<EntityID> agents = new ArrayList<EntityID>();
     private HashMap<EntityID, EntityID> agentLocations = new HashMap<EntityID, EntityID>(); 
 
     protected CenterAgent(boolean overwriteParams, int maxRange, int startTime, double costTradeOff) {
-    	Logger.debugColor("Center Agent CREATED", Logger.BG_BLUE);
+    	Logger.info(Markers.BLUE, "Center Agent CREATED");
     	/*if (overwriteParams) {
     		Params.OVERWRITE_FROM_COMMANDLINE = true;
     		Params.START_EXPERIMENT_TIME = startTime;
@@ -60,16 +63,16 @@ public class CenterAgent extends StandardAgent<Building>
             assignmentSolver = new AssignmentSolver(model, config);
         }
         else if (model == null) {
-        	Logger.debugColor("Cannot run solver without world model! ", Logger.BG_RED);
-        	return;
+            Logger.error("Cannot run solver without world model! ");
+            return;
         }
 
+        // Print out time
+        Logger.info(Markers.WHITE, "CenterAgent: TIME IS " + time);
+        
         // Find all buildings that are on fire
         Collection<EntityID> burning = getBurningBuildings();
-        Logger.debugColor("Number of known BURNING buildings: " + burning.size(), Logger.BG_LIGHTBLUE);
-
-        // Print out time
-        Logger.debugColor("CenterAgent: TIME IS " + time, Logger.BG_WHITE);
+        Logger.info(Markers.LIGHT_BLUE, "Number of known BURNING buildings: " + burning.size());
         		
         // Subscribe to station channels
         if (time == Params.IGNORE_AGENT_COMMANDS_KEY_UNTIL) {
@@ -83,7 +86,7 @@ public class CenterAgent extends StandardAgent<Building>
                 EntityID senderId = speak.getAgentID();
 
                 // add fire brigade agents
-                if (model.getEntity(senderId).getURN() == StandardEntityURN.FIRE_BRIGADE.toString()) {
+                if (model.getEntity(senderId).getStandardURN() == StandardEntityURN.FIRE_BRIGADE) {
                     if (!agents.contains(senderId))
                         agents.add(senderId);
                     byte content[] = speak.getContent();
@@ -106,10 +109,13 @@ public class CenterAgent extends StandardAgent<Building>
         if (message != null)
         {
             int[] intArray = SimpleProtocolToServer.byteArrayToIntArray(message, true);
-            System.out.println("STATION SENDS AssignmentMessage: ");
-            for (int i = 0; i < intArray.length; i++)
-                System.out.print(intArray[i] + " ");
-            System.out.println();
+            if (Logger.isInfoEnabled()) {
+                StringBuilder buf = new StringBuilder("STATION SENDS AssignmentMessage: ");
+                for (int i = 0; i < intArray.length; i++) {
+                    buf.append(intArray[i]).append(" ");
+                }
+                Logger.info(buf.toString());
+            }
 
             sendSpeak(time, Params.STATION_CHANNEL, message);
         }
@@ -136,7 +142,7 @@ public class CenterAgent extends StandardAgent<Building>
     		agentLocations.put(agent.getID(), pos.getID());    		
     		break;
     	default:
-    		Logger.debugColor("Station: cannot parse message of type " + MESSAGE_TYPE + " Message size is " + content.length, Logger.BG_RED);
+    		Logger.warn(Markers.RED, "Station: cannot parse message of type " + MESSAGE_TYPE + " Message size is " + content.length);
     		break;
     	}
     }

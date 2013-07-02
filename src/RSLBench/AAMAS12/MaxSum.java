@@ -6,7 +6,7 @@ package RSLBench.AAMAS12;
 
 import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.DecentralAssignment;
-import RSLBench.Comm.AbstractMessage;
+import RSLBench.Comm.Message;
 import RSLBench.Comm.ComSimulator;
 
 import RSLBench.Helpers.Utility.UtilityMatrix;
@@ -417,18 +417,18 @@ public class MaxSum implements DecentralAssignment {
         return _targetID;
     }
 
-    public Collection<AbstractMessage> sendMessages(ComSimulator com) {
+    public Collection<Message> sendMessages(ComSimulator com) {
         _sizeMex = 0; //dimensione mex inviati
         _nMex = 0;
-        Collection<AbstractMessage> mexQ = new ArrayList<AbstractMessage>();
-        Collection<AbstractMessage> mexR = new ArrayList<AbstractMessage>();
-        Collection<AbstractMessage> allmex = new ArrayList<AbstractMessage>();
+        Collection<Message> mexQ = new ArrayList<Message>();
+        Collection<Message> mexR = new ArrayList<Message>();
+        Collection<Message> allmex = new ArrayList<Message>();
         try {
             //System.out.println("Stampa messaggi 1");
             mexQ = _maxSumAgent.sendQMessages();
             /* Send dei Q */
             MS_MessageQ messageQ = null;
-            Iterator<AbstractMessage> iteratorm = mexQ.iterator();
+            Iterator<Message> iteratorm = mexQ.iterator();
             while(iteratorm.hasNext()){
                 //usare com per i Q per ogni mex devo recuperare destinatario
                 messageQ = (MS_MessageQ)iteratorm.next();
@@ -497,10 +497,10 @@ public class MaxSum implements DecentralAssignment {
         return false;
     }
 
-    public void receiveMessages(Collection<AbstractMessage> messages) {
-        Collection<AbstractMessage> mexQ = new ArrayList<AbstractMessage>();
-        Collection<AbstractMessage> mexR = new ArrayList<AbstractMessage>();
-        Iterator<AbstractMessage> itermex = messages.iterator();
+    public void receiveMessages(Collection<Message> messages) {
+        Collection<Message> mexQ = new ArrayList<Message>();
+        Collection<Message> mexR = new ArrayList<Message>();
+        Iterator<Message> itermex = messages.iterator();
         MS_Message mex = null;
         while(itermex.hasNext()){ //leggo la lista dei mex
             mex = (MS_Message)itermex.next();

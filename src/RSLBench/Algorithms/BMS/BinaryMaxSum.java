@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import rescuecore2.worldmodel.EntityID;
 
 import RSLBench.Assignment.DecentralAssignment;
-import RSLBench.Comm.AbstractMessage;
+import RSLBench.Comm.Message;
 import RSLBench.Comm.ComSimulator;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import es.csic.iiia.maxsum.CardinalityFactor;
@@ -252,7 +252,7 @@ public class BinaryMaxSum implements DecentralAssignment {
     }
     
     @Override
-    public Collection<AbstractMessage> sendMessages(ComSimulator com) {
+    public Collection<Message> sendMessages(ComSimulator com) {
         // Fetch the messages that must be sent
         Collection<BinaryMaxSumMessage> messages = communicationAdapter.flushMessages();
         
@@ -264,7 +264,7 @@ public class BinaryMaxSum implements DecentralAssignment {
         
         // Hack to force java to understand that a collection of binary max sum
         // messages is *also* a collection of abstract messages
-        Collection<AbstractMessage> result = new ArrayList<>();
+        Collection<Message> result = new ArrayList<>();
         for (BinaryMaxSumMessage message : messages) {
             result.add(message);
         }
@@ -279,11 +279,11 @@ public class BinaryMaxSum implements DecentralAssignment {
      * @param messages messages to receive
      */
     @Override
-    public void receiveMessages(Collection<AbstractMessage> messages) {
+    public void receiveMessages(Collection<Message> messages) {
         if (messages == null) {
             return;
         }
-        for (AbstractMessage amessage : messages) {
+        for (Message amessage : messages) {
             if (amessage == null) {
                 continue;
             }
@@ -297,7 +297,7 @@ public class BinaryMaxSum implements DecentralAssignment {
      * 
      * @param amessage message to receive
      */
-    private void receiveMessage(AbstractMessage amessage) {
+    private void receiveMessage(Message amessage) {
         if (!(amessage instanceof BinaryMaxSumMessage)) {
             throw new IllegalArgumentException("Binary max-sum agents are only supposed to receive binary max-sum messages");
         }

@@ -31,7 +31,7 @@ import messages.MessageR;
 import messages.PostService;
 import misc.Utils;
 import olimpo.Athena;
-import RSLBench.Comm.AbstractMessage;
+import RSLBench.Comm.Message;
 import java.util.Collection;
 import java.util.ArrayList;
 
@@ -446,7 +446,7 @@ public class AgentMS_Sync {
     }
     
     
-    public boolean readRMessages(Collection<AbstractMessage> mexR) {
+    public boolean readRMessages(Collection<Message> mexR) {
         Iterator<NodeVariable> iteratorv = this.getVariables().iterator();
         NodeVariable variable; // = null;
         NodeFunction function = null;
@@ -472,7 +472,7 @@ public class AgentMS_Sync {
                 /**
          * Parte riservata ai mex in uscita che arrivano dal comunicator
          */
-        Iterator<AbstractMessage> itermex = mexR.iterator();
+        Iterator<Message> itermex = mexR.iterator();
         MS_MessageR m = null;
         while(itermex.hasNext()){
             m = (MS_MessageR)itermex.next();
@@ -482,7 +482,7 @@ public class AgentMS_Sync {
     }
 
   
-    public boolean readQMessages(Collection<AbstractMessage> mexQ) throws PostServiceNotSetException {
+    public boolean readQMessages(Collection<Message> mexQ) throws PostServiceNotSetException {
 
         if (this.postservice == null) {
             throw new PostServiceNotSetException();
@@ -515,7 +515,7 @@ public class AgentMS_Sync {
         /**
          * Parte riservata ai mex in uscita che arrivano dal comunicator
          */
-        Iterator<AbstractMessage> itermex = mexQ.iterator();
+        Iterator<Message> itermex = mexQ.iterator();
         MS_MessageQ m = null;
         while(itermex.hasNext()){
             m = (MS_MessageQ)itermex.next();
@@ -559,12 +559,12 @@ public class AgentMS_Sync {
      * @throws PostServiceNotSetException if ps not set.
      * @return true if at least one message has been updated
      */
-    public Collection<AbstractMessage> sendQMessages() throws PostServiceNotSetException {
+    public Collection<Message> sendQMessages() throws PostServiceNotSetException {
 
         if (this.postservice == null) {
             throw new PostServiceNotSetException();
         }
-        Collection<AbstractMessage> coll_mexQ = new ArrayList<AbstractMessage>();
+        Collection<Message> coll_mexQ = new ArrayList<Message>();
 
         boolean atLeastOneUpdated = false;
 
@@ -656,14 +656,14 @@ public class AgentMS_Sync {
      * @return true if at least one message has been updated
      */
     
-    public Collection<AbstractMessage> sendRMessages() throws PostServiceNotSetException {
+    public Collection<Message> sendRMessages() throws PostServiceNotSetException {
 
         if (this.postservice == null) {
             throw new PostServiceNotSetException();
         }
 
         boolean atLeastOneUpdated = false;
-        Collection<AbstractMessage> coll_mexR = new ArrayList<AbstractMessage>();
+        Collection<Message> coll_mexR = new ArrayList<Message>();
 
         switch (Athena.shuffleMessage) {
 

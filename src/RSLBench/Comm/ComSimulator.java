@@ -23,7 +23,7 @@ import rescuecore2.worldmodel.EntityID;
 public class ComSimulator {
 
     private static final Logger Logger = LogManager.getLogger(ComSimulator.class);
-    Map<EntityID, List<AbstractMessage>> messageInboxes;
+    Map<EntityID, List<Message>> messageInboxes;
     private boolean initialized;
 
     /**
@@ -44,7 +44,7 @@ public class ComSimulator {
         Logger.debug("initialize Com for " + agents.size() + " agents");
         messageInboxes = new HashMap<>();
         for (EntityID id : agents) {
-            messageInboxes.put(id, new ArrayList<AbstractMessage>());
+            messageInboxes.put(id, new ArrayList<Message>());
         }
         initialized = true;
     }
@@ -53,7 +53,7 @@ public class ComSimulator {
      * This method resets all the messageInboxes.
      */
     public void update() {
-        for (List<AbstractMessage> inbox : messageInboxes.values()) {
+        for (List<Message> inbox : messageInboxes.values()) {
             inbox.clear();
         }
     }
@@ -64,7 +64,7 @@ public class ComSimulator {
      * @param agentID: the id of the recipient
      * @param message: the message
      */
-    public void send(EntityID agentID, AbstractMessage message) {
+    public void send(EntityID agentID, Message message) {
         messageInboxes.get(agentID).add(message);
     }
 
@@ -74,8 +74,8 @@ public class ComSimulator {
      *
      * @param agentID: the id of the recipient
      */
-    public void send(EntityID agentID, Collection<AbstractMessage> messages) {
-        for (AbstractMessage message : messages) {
+    public void send(EntityID agentID, Collection<Message> messages) {
+        for (Message message : messages) {
             messageInboxes.get(agentID).add(message);
         }
     }
@@ -86,9 +86,9 @@ public class ComSimulator {
      * @param agentID: the id of the recipient
      * @return a list of alla the messages received
      */
-    public List<AbstractMessage> retrieveMessages(EntityID agentID) {
-        List<AbstractMessage> mesageInbox = messageInboxes.get(agentID);
-        messageInboxes.put(agentID, new ArrayList<AbstractMessage>());
+    public List<Message> retrieveMessages(EntityID agentID) {
+        List<Message> mesageInbox = messageInboxes.get(agentID);
+        messageInboxes.put(agentID, new ArrayList<Message>());
         return mesageInbox;
     }
 

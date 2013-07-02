@@ -2,7 +2,7 @@ package RSLBench.AAMAS12;
 
 import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.DecentralAssignment;
-import RSLBench.Comm.AbstractMessage;
+import RSLBench.Comm.Message;
 import RSLBench.Comm.AssignmentMessage;
 import RSLBench.Comm.ComSimulator;
 import RSLBench.Helpers.Logging.Markers;
@@ -31,7 +31,7 @@ public class DSA implements DecentralAssignment {
     protected UtilityMatrix _utilityM = null;
     protected EntityID _agentID;
     protected EntityID _targetID;
-    protected Collection<AbstractMessage> _neighborAssignments = null;
+    protected Collection<Message> _neighborAssignments = null;
     protected TargetScores _targetScores = null;
     protected static Random _random;
     private int _nccc = 0;
@@ -76,7 +76,7 @@ public class DSA implements DecentralAssignment {
         }
 
         _targetScores.resetAssignments();
-        for (AbstractMessage message : _neighborAssignments) {
+        for (Message message : _neighborAssignments) {
             if (message.getClass() == AssignmentMessage.class) {
                 _targetScores.increaseAgentCount(((AssignmentMessage) message).getTargetID());
                 _nccc++;
@@ -137,9 +137,9 @@ public class DSA implements DecentralAssignment {
     }
 
     @Override
-    public Collection<AbstractMessage> sendMessages(ComSimulator com) {
-        Collection<AbstractMessage> messages = new ArrayList<>();
-        Collection<AbstractMessage> totMessages = new ArrayList<>();
+    public Collection<Message> sendMessages(ComSimulator com) {
+        Collection<Message> messages = new ArrayList<>();
+        Collection<Message> totMessages = new ArrayList<>();
         AssignmentMessage mex = new AssignmentMessage(_agentID, _targetID);
         messages.add(mex);
 
@@ -153,7 +153,7 @@ public class DSA implements DecentralAssignment {
     }
 
     @Override
-    public void receiveMessages(Collection<AbstractMessage> messages) {
+    public void receiveMessages(Collection<Message> messages) {
         _neighborAssignments = messages;
     }
 

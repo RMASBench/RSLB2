@@ -3,7 +3,7 @@ package RSLBench.Comm;
 /**
  * This class is an empty class that allows to implement custom messages for different algorithms.
  */
-public interface AbstractMessage {
+public interface Message {
     
     /** Number of bytes used by an entity id */
     public static final int BYTES_ENTITY_ID = 4;

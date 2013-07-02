@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import RSLBench.Params;
-import RSLBench.Comm.AbstractMessage;
+import RSLBench.Comm.Message;
 import RSLBench.Comm.ComSimulator;
 import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Utility.UtilityMatrix;
@@ -57,10 +57,10 @@ public class DecentralizedAssignmentSimulator implements AssignmentInterface {
 
             // send messages
             for (DecentralAssignment agent : _simulatedAgents) {
-                Collection<AbstractMessage> messages = agent.sendMessages(_com);
+                Collection<Message> messages = agent.sendMessages(_com);
                 //collect the byte size of the messages exchanged between agents
                 assignmentMessages = assignmentMessages + messages.size();
-                for (AbstractMessage msg : messages) {
+                for (Message msg : messages) {
                     byteMessage += msg.getBytes();
                 }
             }

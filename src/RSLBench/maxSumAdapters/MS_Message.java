@@ -1,12 +1,12 @@
 package RSLBench.maxSumAdapters;
 
-import RSLBench.Comm.AbstractMessage;
+import RSLBench.Comm.Message;
 import factorgraph.NodeFunction;
 import factorgraph.NodeVariable;
 
 
 
-public abstract class MS_Message implements AbstractMessage{
+public abstract class MS_Message implements Message{
     
     private static final int BYTES_TYPE = 1;
     
@@ -34,7 +34,7 @@ public abstract class MS_Message implements AbstractMessage{
 
     @Override
     public int getBytes() {
-        return AbstractMessage.BYTES_ENTITY_ID*2 + BYTES_TYPE;
+        return Message.BYTES_ENTITY_ID*2 + BYTES_TYPE;
     }
     
     

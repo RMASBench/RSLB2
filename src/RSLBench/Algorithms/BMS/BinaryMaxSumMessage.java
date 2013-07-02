@@ -36,7 +36,7 @@
  */
 package RSLBench.Algorithms.BMS;
 
-import RSLBench.Comm.AbstractMessage;
+import RSLBench.Comm.Message;
 import rescuecore2.worldmodel.EntityID;
 
 /**
@@ -47,7 +47,7 @@ import rescuecore2.worldmodel.EntityID;
  * 
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
-public class BinaryMaxSumMessage implements AbstractMessage {
+public class BinaryMaxSumMessage implements Message {
 
     private final EntityID senderFactor;
     private final EntityID recipientFactor;
@@ -85,6 +85,6 @@ public class BinaryMaxSumMessage implements AbstractMessage {
 
     @Override
     public int getBytes() {
-        return AbstractMessage.BYTES_ENTITY_ID * 2 + AbstractMessage.BYTES_UTILITY_VALUE;
+        return Message.BYTES_ENTITY_ID * 2 + Message.BYTES_UTILITY_VALUE;
     }
 }

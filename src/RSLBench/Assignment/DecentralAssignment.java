@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import rescuecore2.worldmodel.EntityID;
 
-import RSLBench.Comm.AbstractMessage;
+import RSLBench.Comm.Message;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Comm.ComSimulator;
 /**
@@ -46,13 +46,13 @@ public interface DecentralAssignment
      * @param com: a communication simulator.
      * @return The set of messages that have been sent.
      */
-    public Collection<AbstractMessage> sendMessages(ComSimulator com);
+    public Collection<Message> sendMessages(ComSimulator com);
     
     /**
      * Receives a set of messages sent by some other agents.
      * @param messages: colletcion of messages received from other agents.
      */
-    public void receiveMessages(Collection<AbstractMessage> messages);
+    public void receiveMessages(Collection<Message> messages);
     
     /**
      * Returns the number of constraint checks performed during the latest

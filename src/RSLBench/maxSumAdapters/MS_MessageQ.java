@@ -1,6 +1,6 @@
 package RSLBench.maxSumAdapters;
 
-import RSLBench.Comm.AbstractMessage;
+import RSLBench.Comm.Message;
 import factorgraph.NodeFunction;
 import factorgraph.NodeVariable;
 import messages.MessageQ;
@@ -29,7 +29,7 @@ public class MS_MessageQ extends MS_Message{
 
     @Override
     public int getBytes() {
-        return getMessage().size() * AbstractMessage.BYTES_UTILITY_VALUE 
+        return getMessage().size() * Message.BYTES_UTILITY_VALUE 
                 + super.getBytes();
     }
     

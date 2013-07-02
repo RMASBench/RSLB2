@@ -6,7 +6,7 @@ import rescuecore2.worldmodel.EntityID;
  * This class represents the messages sent by some DCOP algorithms.
  * It contains two EntityID's: the agent id and the id of the target assigned to the agent. 
  */
-public class AssignmentMessage implements AbstractMessage {
+public class AssignmentMessage implements Message {
     private EntityID _agentID;
     private EntityID _targetID;
     
@@ -41,6 +41,6 @@ public class AssignmentMessage implements AbstractMessage {
 
     @Override
     public int getBytes() {
-        return AbstractMessage.BYTES_ENTITY_ID*2;
+        return Message.BYTES_ENTITY_ID*2;
     }
 }

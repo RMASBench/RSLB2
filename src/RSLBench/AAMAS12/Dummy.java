@@ -6,7 +6,7 @@ package RSLBench.AAMAS12;
 import RSLBench.Assignment.DecentralAssignment;
 import rescuecore2.worldmodel.EntityID;
 import RSLBench.Helpers.Utility.UtilityMatrix;
-import RSLBench.Comm.AbstractMessage;
+import RSLBench.Comm.Message;
 import RSLBench.Assignment.Assignment;
 import RSLBench.Comm.ComSimulator;
 
@@ -71,15 +71,15 @@ public class Dummy implements DecentralAssignment{
      * (i.e. those which are within communication range).
      * @return The set of messages to be send.
      */
-    public Collection<AbstractMessage> sendMessages(ComSimulator com){
-       return new LinkedList<AbstractMessage>();   
+    public Collection<Message> sendMessages(ComSimulator com){
+       return new LinkedList<Message>();   
     }
     
     /**
      * Receive messages of the neighbor agents.
      * @param collection of messages received from other agents near by.
      */
-    public void receiveMessages(Collection<AbstractMessage> messages){
+    public void receiveMessages(Collection<Message> messages){
         
     }
     /**

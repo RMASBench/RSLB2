@@ -67,6 +67,7 @@ public class DSA implements DecentralAssignment {
 
     @Override
     public boolean improveAssignment() {
+        _nccc = 0;
 
         if (Logger.isDebugEnabled()) {
             Logger.trace(Markers.LIGHT_BLUE, "[" + SimpleID.conv(_agentID) + "] improveAssignment");
@@ -78,6 +79,7 @@ public class DSA implements DecentralAssignment {
         for (AbstractMessage message : _neighborAssignments) {
             if (message.getClass() == AssignmentMessage.class) {
                 _targetScores.increaseAgentCount(((AssignmentMessage) message).getTargetID());
+                _nccc++;
             }
         }
         _neighborAssignments.clear();
@@ -86,12 +88,12 @@ public class DSA implements DecentralAssignment {
         double bestScore;
         try {
             bestScore = _targetScores.computeScore(_targetID, _utilityM.getUtility(_agentID, _targetID));
+            _nccc++;
         } catch (NullPointerException n) {
             bestScore = Double.NEGATIVE_INFINITY;
         }
         EntityID bestTarget = _targetID;
         //Logger.debugColor(Markers.LIGHT_BLUE, "["+ _agentID +"]  BEFORE -> target: " + _targetID +" score: "+bestScore);
-        _nccc = 0;
         for (EntityID t : _utilityM.getTargets()) {
             double score = _targetScores.computeScore(t, _utilityM.getUtility(_agentID, t));
             if (score > bestScore) {

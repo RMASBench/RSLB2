@@ -39,21 +39,12 @@ public class IgnoreFieryness extends AbstractUtilityFunction {
         }
         
         Building b = (Building)e;
+        if (!b.isOnFire()) {
+            return 0;
+        }
+        
         double area = b.getTotalArea();
         double neededAgents = Math.ceil(area / (double) Params.AREA_COVERED_BY_FIRE_BRIGADE);
-        
-        // The fireyness only indicates wether the building is burning or not,
-        // and for how long (despite the suggestive names).
-        switch(b.getFierynessEnum()) {
-            case HEATING:
-            case BURNING:
-            case INFERNO:
-                break;
-            default:
-                neededAgents = 0;
-                break;
-        }
-
         return (int) Math.round(neededAgents);
     }
     

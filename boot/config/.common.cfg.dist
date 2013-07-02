@@ -20,6 +20,11 @@ trade_off_factor_travel_cost_and_utility: 100.0
 # When should agents start acting
 experiment_start_time: 5
 
+# When should the experiment finish.
+# Note: if you use the included start.sh helper, this value will automatically
+#       override the kernel.timesteps setting from the roborescue configuration.
+experiment_end_time: 50
+
 # Number of cycles to run for each iteration
 # For instance, DSA agents will run for 50 cycles before making a decision
 number_of_cycles: 50

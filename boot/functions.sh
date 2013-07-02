@@ -14,7 +14,7 @@ function printUsage {
     echo "-c    --config    <configdir>   Set the config directory. Default is \"config\""
     echo "-p    --plot                    Plot the run results."
     echo "-t    --team      <teamname>    Set the team name. Default is \"\""
-    echo "      --think-time <millis>     Set the max. agent think time in millis. Default is 10000."
+    echo "      --think-time <millis>     Set the max. agent think time in millis. Default is 1000."
     echo "-s    --scenario  <scenario>    Set the scenario to run. Default is \"example\" (.xml appended automatically)."
     echo "-v    --viewer                  Enable the viewer."
     echo "-vv   --kernel-viewer           Enable the kernel viewer."
@@ -135,6 +135,7 @@ function processArgs {
         printUsage
         exit 1
     fi
+
     # ... and a set of configuration files for the simulator
     SCONFIGDIR="$CONFIGDIR/roborescue"
     if [ ! -f "$SCONFIGDIR/kernel.cfg" ]; then
@@ -146,14 +147,16 @@ function processArgs {
     JVM_OPTS=""
 }
 
-function launch {
-    java $JVM_OPTS -Dlog4j.log.dir=$LOGDIR $@
-}
-
 # Start the kernel
 function startKernel {
+    # Extract the number of steps from the configuration
+    STEPS=$(configFetchSetting $CONFIGDIR/$ALGORITHM.cfg "experiment_end_time")
+
     echo "Using config $SCONFIGDIR/kernel.cfg"
-    KERNEL_OPTIONS="-c $SCONFIGDIR/kernel.cfg --kernel.agents.think-time=$THINK_TIME --gis.map.dir=$MAP --gis.map.scenario=$SCENARIO --kernel.logname=$LOGDIR/rescue.log $*"
+    KERNEL_OPTIONS="-c $SCONFIGDIR/kernel.cfg"
+    KERNEL_OPTIONS="$KERNEL_OPTIONS --kernel.agents.think-time=$THINK_TIME --kernel.timesteps=$STEPS"
+    KERNEL_OPTIONS="$KERNEL_OPTIONS --gis.map.dir=$MAP --gis.map.scenario=$SCENARIO"
+    KERNEL_OPTIONS="$KERNEL_OPTIONS --kernel.logname=$LOGDIR/rescue.log $*"
     if [ -z "$KERNEL_VIEWER" ]; then
         JVM_OPTS="-Djava.awt.headless=true"
     else
@@ -222,9 +225,38 @@ function startSims {
 
 function startRslb2 {
     JVM_OPTS="-Xmx2G -Dlog4j.configurationFile=file://$BASEDIR/supplement/log4j2.xml -Djava.awt.headless=true"
-    OPTS="-c $CONFIGDIR/$ALGORITHM.cfg --results.file=$ALGORITHM-$$.dat"
+    OPTS="-c $SCONFIGDIR/kernel.cfg -c $CONFIGDIR/$ALGORITHM.cfg --results.file=$ALGORITHM-$$.dat"
+    OPTS="$OPTS --gis.map.dir=$MAP --gis.map.scenario=$SCENARIO"
     launch -jar $BASEDIR/dist/RSLB2.jar $OPTS
 }
+
+
+#################################################################################
+# Java-related helper functions
+#################################################################################
+
+# Launches a java program
+function launch {
+    java $JVM_OPTS -Dlog4j.log.dir=$LOGDIR $@
+}
+
+# Make a classpath argument by looking in a directory of jar files.
+# Positional parameters are the directories to look in
+function makeClasspath {
+    RESULT="../supplement"
+    while [[ ! -z "$1" ]]; do
+        for NEXT in $1/*.jar; do
+            RESULT="$RESULT:$NEXT"
+        done
+        shift
+    done
+    CP=${RESULT#:}
+}
+
+
+#################################################################################
+# Utilities to wait until a program is ready / has finished
+#################################################################################
 
 # Wait for a regular expression to appear in a file.
 # $1 is the log to check
@@ -284,18 +316,10 @@ function waitUntilFinished {
     done
 }
 
-# Make a classpath argument by looking in a directory of jar files.
-# Positional parameters are the directories to look in
-function makeClasspath {
-    RESULT="../supplement"
-    while [[ ! -z "$1" ]]; do
-        for NEXT in $1/*.jar; do
-            RESULT="$RESULT:$NEXT"
-        done
-        shift
-    done
-    CP=${RESULT#:}
-}
+
+#################################################################################
+# Utilities to manipulate paths
+#################################################################################
 
 # Outputs the absolute path of the input route (that must exist)
 function absPath {
@@ -343,4 +367,45 @@ function relPath {
     fi
 
     echo $result
+}
+
+#################################################################################
+# Utilities to parse the configuration file
+#################################################################################
+
+function configResolveIncludes {
+    P=$(dirname $1)
+    while egrep -q '^[^#]*!include[[:space:]]+' $1; do
+        #echo "Include found!"
+        line=$(nl -ba $1  | egrep -m1 '^[^#]*!include[[:space:]]+')
+        #echo "Line: $line"
+        numline=$(echo $line | awk '{print $1}')
+        file=$P/$(echo $line | awk '{print $3}')
+        #echo "Parsing included file $file..."
+        totallines=$(wc -l $1 | awk '{print $1}')
+        headline=$(($numline - 1))
+        tailline=$(($totallines - $numline))
+
+        # Head + input file + Tail
+        if [ $headline -gt 0 ]; then
+            head -n$headline $1 > $1.tmp
+        fi
+        cat $file >> $1.tmp
+        echo "" >> $1.tmp
+        tail -n$tailline $1 >> $1.tmp
+        mv $1.tmp $1
+    done
+}
+
+function configFetchSetting {
+    # We need to resolve the configuration includes, so use a temporary file for that
+    cp $1 $1.parsed
+    configResolveIncludes $1.parsed
+
+    # Now fetch (the latest value) for the given setting
+    VALUE=$(egrep '[^#]*'$2':' $1.parsed | tail -n1 | cut -d ':' -f2)
+    echo $VALUE
+
+    # Remove the temporary file when done
+    rm $1.parsed
 }

@@ -1,7 +1,6 @@
 package RSLBench;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,7 +30,6 @@ public class Params {
     public static int END_EXPERIMENT_TIME;
     public final static int STATION_CHANNEL = 1;
     public final static int PLATOON_CHANNEL = 1;
-    public static int SIMULATED_COMMUNICATION_RANGE;
     
     /**
      * When this is true, agents will only approach targets selected by the

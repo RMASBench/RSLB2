@@ -12,16 +12,12 @@ import RSLBench.Params;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import rescuecore2.standard.entities.StandardWorldModel;
 import rescuecore2.worldmodel.EntityID;
 
 /**
@@ -39,8 +35,6 @@ public class DSA implements DecentralAssignment {
     protected TargetScores _targetScores = null;
     protected static Random _random;
     private int _nccc = 0;
-    // Communication
-    private int maxCommunicationRange = Params.SIMULATED_COMMUNICATION_RANGE;
     private Set<EntityID> neighbors;
 
     public DSA() {

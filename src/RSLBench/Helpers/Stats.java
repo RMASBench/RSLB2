@@ -48,7 +48,6 @@ public class Stats
             writeLine(out, "# experiment_start_time: " + Params.START_EXPERIMENT_TIME);
             writeLine(out, "# experiment_end_time: " + Params.END_EXPERIMENT_TIME);
             writeLine(out, "# ignore_agents_commands_until: " + Params.IGNORE_AGENT_COMMANDS_KEY_UNTIL);
-            writeLine(out, "# simulated_communication_range: " + Params.SIMULATED_COMMUNICATION_RANGE);
             writeLine(out, "# only_assigned_targets: " + Params.ONLY_ACT_ON_ASSIGNED_TARGETS);
             writeLine(out, "# area_covered_by_fire_brigade: " + Params.AREA_COVERED_BY_FIRE_BRIGADE);
             writeLine(out, "# trade_off_factor_travel_cost_and_utility: " + Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY);

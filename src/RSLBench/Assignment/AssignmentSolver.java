@@ -66,7 +66,6 @@ public class AssignmentSolver
         Params.START_EXPERIMENT_TIME = config.getIntValue("experiment_start_time", 25);
         Params.END_EXPERIMENT_TIME = config.getIntValue("experiment_end_time", 300);
         Params.IGNORE_AGENT_COMMANDS_KEY_UNTIL = config.getIntValue("ignore_agents_commands_until", 3);
-        Params.SIMULATED_COMMUNICATION_RANGE = config.getIntValue("simulated_communication_range", 10000) * 1000;
         Params.ONLY_ACT_ON_ASSIGNED_TARGETS = config.getBooleanValue("only_assigned_targets", false);
         Params.AREA_COVERED_BY_FIRE_BRIGADE = config.getFloatValue("area_covered_by_fire_brigade", 100.0);
         Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY = config.getFloatValue("trade_off_factor_travel_cost_and_utility", 1.0);

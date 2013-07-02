@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package RSLBench.AAMAS12;
+package RSLBench.Algorithms.MS;
 
 import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.DecentralAssignment;
@@ -25,7 +25,6 @@ import messages.MessageFactoryArrayDouble;
 import factorgraph.NodeVariable;
 import factorgraph.NodeFunction;
 import factorgraph.NodeArgument;
-import RSLBench.maxSumAdapters.*;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;

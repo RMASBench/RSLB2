@@ -8,7 +8,7 @@ import RSLBench.Assignment.Assignment;
 import RSLBench.Helpers.SimpleID;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Params;
-import RSLBench.maxSumAdapters.RMASNodeFunctionUtility;
+import RSLBench.Algorithms.MS.RMASNodeFunctionUtility;
 import java.util.*;
 import rescuecore2.worldmodel.EntityID;
 /**

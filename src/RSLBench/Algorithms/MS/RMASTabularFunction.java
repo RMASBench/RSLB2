@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package RSLBench.maxSumAdapters;
+package RSLBench.Algorithms.MS;
 import function.TabularFunction;
 import factorgraph.NodeArgument;
 import factorgraph.NodeVariable;

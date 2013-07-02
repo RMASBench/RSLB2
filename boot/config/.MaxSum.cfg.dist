@@ -9,7 +9,7 @@
 ##
 
 # Fully qualified class of the solver
-solver.class: RSLBench.AAMAS12.MaxSum
+solver.class: RSLBench.Algorithms.MS.MaxSum
 
 # Path to the results folder
 results.path: results/

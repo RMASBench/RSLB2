@@ -1,4 +1,4 @@
-package RSLBench.maxSumAdapters;
+package RSLBench.Algorithms.MS;
 
 import RSLBench.Comm.Message;
 import factorgraph.NodeFunction;

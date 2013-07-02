@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package RSLBench.maxSumAdapters;
+package RSLBench.Algorithms.MS;
 
 import exception.OutOfAgentNumberException;
 import exception.PostServiceNotSetException;

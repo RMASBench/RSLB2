@@ -34,7 +34,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package RSLBench.AAMAS12;
+package RSLBench.Algorithms.BMS;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -57,14 +57,14 @@ import es.csic.iiia.maxsum.CardinalityFunction;
 import es.csic.iiia.maxsum.CompositeIndependentFactor;
 import es.csic.iiia.maxsum.IndependentFactor;
 import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This is a binary max-sum agent.
  */
 public class BinaryMaxSum implements DecentralAssignment {
-    private static final Logger LOG = Logger.getLogger(BinaryMaxSum.class.getName());
+    private static final Logger Logger = LogManager.getLogger(BinaryMaxSum.class);
     
     private static final double HARD_CONSTRAINT_UTILITY = -10000;
     private static final MaxOperator maxOperator = new Maximize();
@@ -76,6 +76,7 @@ public class BinaryMaxSum implements DecentralAssignment {
     private HashMap<EntityID, EntityID> factorLocations;
     private RSLBenchCommunicationAdapter communicationAdapter;
     private EntityID targetId;
+    private long constraintChecks;
     
     /**
      * Initialize this max-sum agent (firefighting team)
@@ -85,15 +86,15 @@ public class BinaryMaxSum implements DecentralAssignment {
      */
     @Override
     public void initialize(EntityID agentID, UtilityMatrix utilityM) {
-        LOG.log(Level.FINER, "Initializing agent {0}", agentID);
+        Logger.trace("Initializing agent {}", agentID);
         
         this.id = agentID;
         this.targetId = null;
         this.utilities = utilityM;
         
         // Reset internal structures
-        factors = new HashMap<EntityID, Factor<EntityID>>();
-        factorLocations = new HashMap<EntityID, EntityID>();
+        factors = new HashMap<>();
+        factorLocations = new HashMap<>();
         communicationAdapter = new RSLBenchCommunicationAdapter();
 
         // Build the variable node
@@ -105,7 +106,7 @@ public class BinaryMaxSum implements DecentralAssignment {
         // Finally, compute the location of each factor in the simulation
         computeFactorLocations();
         
-        LOG.log(Level.FINEST, "Agent {0} initialized.", agentID);
+        Logger.trace("Agent {} initialized.", agentID);
     }
     
     /**
@@ -122,14 +123,14 @@ public class BinaryMaxSum implements DecentralAssignment {
      * Creates a selector node for the agent's "variable".
      */
     private void addSelectorNode() {
-        this.variableNode = new SelectorFactor<EntityID>();
+        this.variableNode = new SelectorFactor<>();
         
         // The agent's factor is the selector plus the independent utilities
         // of this agent for each fire.
-        CompositeIndependentFactor<EntityID> agentFactor = new CompositeIndependentFactor<EntityID>();
+        CompositeIndependentFactor<EntityID> agentFactor = new CompositeIndependentFactor<>();
         agentFactor.setInnerFactor(variableNode);
         
-        IndependentFactor<EntityID> utils = new IndependentFactor<EntityID>();
+        IndependentFactor<EntityID> utils = new IndependentFactor<>();
         agentFactor.setIndependentFactor(utils);
         for (EntityID fire : utilities.getTargets()) {
             // Link the agent to each fire
@@ -137,7 +138,7 @@ public class BinaryMaxSum implements DecentralAssignment {
             // ... and populate the utilities
             final double value = utilities.getUtility(id, fire);
             utils.setPotential(fire, value);
-            LOG.log(Level.FINER, "Utility for {0} : {1}", new Object[]{fire, value});
+            Logger.trace("Utility for {}: {}", new Object[]{fire, value});
         }
         
         addFactor(id, agentFactor);
@@ -169,7 +170,7 @@ public class BinaryMaxSum implements DecentralAssignment {
             final EntityID fire = fires.get(i);
             
             // Build the utility node
-            CardinalityFactor<EntityID> f = new CardinalityFactor<EntityID>();
+            CardinalityFactor<EntityID> f = new CardinalityFactor<>();
             
             // Set the maximum number of agents that should be attending this
             // fire
@@ -224,17 +225,18 @@ public class BinaryMaxSum implements DecentralAssignment {
      */
     @Override
     public boolean improveAssignment() {
-        LOG.log(Level.FINEST, "improveAssignment start...");
+        Logger.trace("improveAssignment start...");
+        constraintChecks = 0;
+        
         // Let all factors run
         for (EntityID eid : factors.keySet()) {
-            Factor<EntityID> f = factors.get(eid);
-            f.run();
+            constraintChecks += factors.get(eid).run();
         }
         
         // Now extract our choice
         EntityID oldTarget = targetId;
         targetId = variableNode.select();
-        LOG.log(Level.FINEST, "improveAssignment end.");
+        Logger.trace("improveAssignment end.");
         //return targetId != oldTarget;
         return true;
     }
@@ -256,13 +258,13 @@ public class BinaryMaxSum implements DecentralAssignment {
         
         // Send them
         for (BinaryMaxSumMessage message : messages) {
-            EntityID recipientAgent = factorLocations.get(message.recipientFactor);
+            EntityID recipientAgent = factorLocations.get(message.getRecipientFactor());
             com.send(recipientAgent, message);
         }
         
         // Hack to force java to understand that a collection of binary max sum
         // messages is *also* a collection of abstract messages
-        Collection<AbstractMessage> result = new ArrayList<AbstractMessage>();
+        Collection<AbstractMessage> result = new ArrayList<>();
         for (BinaryMaxSumMessage message : messages) {
             result.add(message);
         }
@@ -301,16 +303,13 @@ public class BinaryMaxSum implements DecentralAssignment {
         }
 
         BinaryMaxSumMessage message = (BinaryMaxSumMessage)amessage;
-        Factor<EntityID> recipient = factors.get(message.recipientFactor);
-        recipient.receive(message.message, message.senderFactor);
+        Factor<EntityID> recipient = factors.get(message.getRecipientFactor());
+        recipient.receive(message.message, message.getSenderFactor());
     }
 
     @Override
-    /**
-     * @TODO: Implement this properly.
-     */
-    public int getNccc() {
-        return 0;
+    public long getConstraintChecks() {
+        return constraintChecks;
     }
 
     /**
@@ -341,47 +340,24 @@ public class BinaryMaxSum implements DecentralAssignment {
      */
     public class RSLBenchCommunicationAdapter implements CommunicationAdapter<EntityID> {
         
-        private ArrayList<BinaryMaxSumMessage> outgoingMessages = 
-                new ArrayList<BinaryMaxSumMessage>();
+        private ArrayList<BinaryMaxSumMessage> outgoingMessages;
+        
+        public RSLBenchCommunicationAdapter() {
+            this.outgoingMessages = new ArrayList<>();
+        }
         
         public Collection<BinaryMaxSumMessage> flushMessages() {
             Collection<BinaryMaxSumMessage> result = outgoingMessages;
-            outgoingMessages = new ArrayList<BinaryMaxSumMessage>();
+            outgoingMessages = new ArrayList<>();
             return result;
         }
 
         @Override
         public void send(double message, EntityID sender, EntityID recipient) {
-            LOG.log(Level.FINEST, "Message from {0} to {1} : {2}", new Object[]{sender, recipient, message});
+            Logger.trace("Message from {} to {} : {}", new Object[]{sender, recipient, message});
             outgoingMessages.add(new BinaryMaxSumMessage(message, sender, recipient));
         }
         
-    }
-
-    /**
-     * Message sent from a binary max-sum agent to another.
-     * <p/>
-     * The message includes the originating factor id, the intented recipient
-     * id, and the actual single-valued message.
-     */
-    public class BinaryMaxSumMessage extends AbstractMessage {
-        public final EntityID senderFactor;
-        public final EntityID recipientFactor;
-        public final double message;
-        
-        /**
-         * Build a new binary max-sum message.
-         * 
-         * @param message
-         * @param sender
-         * @param recipient 
-         */
-        public BinaryMaxSumMessage(double message, EntityID senderFactor, 
-                EntityID recipientFactor) {
-            this.senderFactor = senderFactor;
-            this.recipientFactor = recipientFactor;
-            this.message = message;
-        }
     }
     
 }

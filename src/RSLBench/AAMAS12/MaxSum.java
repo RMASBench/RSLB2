@@ -51,7 +51,7 @@ public class MaxSum implements DecentralAssignment {
     private static HashSet<NodeVariable> _variables = new HashSet<NodeVariable>();
     private static HashSet<NodeFunction> _functions = new HashSet<NodeFunction>();
     private static final int _targetPerAgent = 4;//numero di funzioni per agente
-    private static int _dependencies = Params.MaxSum_NUMBER_OF_NEIGHBOURS; //numero di variabili per funzione massimo e viceversa
+    private static int _dependencies = Params.MAXSUM_NUMBER_OF_NEIGHBOURS; //numero di variabili per funzione massimo e viceversa
     public static boolean toReset = false;
     private static int _initializedAgents = 0;
     private static int _localNumberOfTargets = 70;
@@ -619,7 +619,7 @@ public class MaxSum implements DecentralAssignment {
 
     }
 
-    public int getNccc() {
+    public long getConstraintChecks() {
         int totalnccc = 0;
         for (NodeFunction function : _functions) {
             totalnccc += ((RMASTabularFunction) function.getFunction()).getNCCC();

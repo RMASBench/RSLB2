@@ -87,7 +87,7 @@ public class Dummy implements DecentralAssignment{
      * 
      * @return 
      */
-    public int getNccc(){
+    public long getConstraintChecks(){
         return 0;
     }
     

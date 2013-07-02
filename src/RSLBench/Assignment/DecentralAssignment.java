@@ -55,10 +55,12 @@ public interface DecentralAssignment
     public void receiveMessages(Collection<AbstractMessage> messages);
     
     /**
-     * Returns the number of nccc (non concurrent constraint checks).
-     * @return the number of nccc 
+     * Returns the number of constraint checks performed during the latest
+     * iteration.
+     * 
+     * @return number of constraint checks
      */
-    public int getNccc();
+    public long getConstraintChecks();
     
     /**
      * Returns the number of messages exchanged by the agents

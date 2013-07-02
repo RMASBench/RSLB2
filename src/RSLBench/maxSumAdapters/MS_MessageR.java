@@ -27,5 +27,10 @@ public class MS_MessageR extends MS_Message{
         return _messageR;
     }
     
+    @Override
+    public int getBytes() {
+        return getMessage().size() * AbstractMessage.BYTES_UTILITY_VALUE 
+                + super.getBytes();
+    }
 
 }

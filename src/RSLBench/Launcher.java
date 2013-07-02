@@ -82,6 +82,10 @@ public final class Launcher {
         catch (ConfigException e) {
             Logger.error("Configuration error", e); 
         }
+        catch (OutOfMemoryError e) {
+            Logger.error("Memory exhausted!", e);
+            System.exit(0);
+        }
     }
     
     /**

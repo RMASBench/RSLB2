@@ -31,7 +31,6 @@ import messages.MessageR;
 import messages.PostService;
 import misc.Utils;
 import olimpo.Athena;
-import operation.Operator;
 import RSLBench.Comm.AbstractMessage;
 import java.util.Collection;
 import java.util.ArrayList;

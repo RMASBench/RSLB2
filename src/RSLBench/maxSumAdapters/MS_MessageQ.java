@@ -26,6 +26,12 @@ public class MS_MessageQ extends MS_Message{
     public MessageQ getMessage(){
         return _messageQ;
     }
+
+    @Override
+    public int getBytes() {
+        return getMessage().size() * AbstractMessage.BYTES_UTILITY_VALUE 
+                + super.getBytes();
+    }
     
 
 }

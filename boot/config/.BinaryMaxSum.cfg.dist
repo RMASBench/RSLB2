@@ -9,7 +9,7 @@
 ##
 
 # Fully qualified class of the solver
-solver.class: RSLBench.AAMAS12.BinaryMaxSum
+solver.class: RSLBench.Algorithms.BMS.BinaryMaxSum
 
 # Path to the results folder
 results.path: results/

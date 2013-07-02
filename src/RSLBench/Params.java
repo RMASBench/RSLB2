@@ -69,7 +69,7 @@ public class Params {
      * The number of neighbours of an agent in the factograph (the number of
      * considered targets).
      */
-    public static int MaxSum_NUMBER_OF_NEIGHBOURS = 3;
+    public static int MAXSUM_NUMBER_OF_NEIGHBOURS = 3;
 
     /**
      * It sets (some of) the params of the Params class according to the

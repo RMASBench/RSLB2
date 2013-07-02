@@ -9,13 +9,16 @@ import java.util.Iterator;
 import java.util.ArrayList;
 
 import RSLBench.Params;
+import rescuecore2.Timestep;
 import rescuecore2.config.Config;
 import rescuecore2.log.Logger;
 
 import rescuecore2.standard.entities.Building;
 import rescuecore2.standard.entities.StandardEntity;
+import rescuecore2.standard.entities.StandardEntityConstants;
 import rescuecore2.standard.entities.StandardEntityURN;
 import rescuecore2.standard.entities.StandardWorldModel;
+import rescuecore2.standard.score.BuildingDamageScoreFunction;
 /**
  * This class collects and writes the stats in the fileName file (default logs/basePackage_groupName_className.dat).
  */
@@ -27,9 +30,12 @@ public class Stats
     private ArrayList<Integer> NCCCHistory = new ArrayList<>();
     private int windowSize = 20;
     private Config config;
+    private BuildingDamageScoreFunction scoreFunction;
 
     public Stats(Config config) {
         this.config = config;
+        this.scoreFunction = new BuildingDamageScoreFunction();
+        this.scoreFunction.initialise(null, config);
     }
     
     /**
@@ -52,7 +58,7 @@ public class Stats
             writeLine(out, "# solver.class: " + config.getValue(AssignmentSolver.CONF_KEY_SOLVER_CLASS));
             writeLine(out, "# gis.map.dir: " + config.getValue("gis.map.dir"));
             writeLine(out, "# gis.map.scenario: " + config.getValue("gis.map.scenario"));
-            writeLine(out, "Time  NumBuildings  NumBurining  numOnceBurned  numDestroyed  totalAreaDestroyed violatedConstraints MAViolatedConstraints computationTime MAComputationTime numberOfMessages messagesInBytes MAMessageInBytes averageNCCC MAAverageNCCC messagesForFactorgraph ");
+            writeLine(out, "Time  NumBuildings  NumBurining  numOnceBurned  violatedConstraints MAViolatedConstraints computationTime MAComputationTime numberOfMessages messagesInBytes MAMessageInBytes averageNCCC MAAverageNCCC messagesForFactorgraph ");
         } catch (IOException e) {
             Logger.error(e.getLocalizedMessage(), e);
         }
@@ -81,35 +87,33 @@ public class Stats
     {
         int numBuildings = 0;
         int numBurning = 0;
-        int numDestroyed = 0;
         int numOnceBurned = 0;
-        double totalAreaDestroyed = 0.0;
         violatedConstraintsHistory.add(violatedConstraints);
         computationTimeHistory.add(computationTime);
         messagesInBytesHistory.add(messagesInBytes);
         NCCCHistory.add(averageNccc);
+        
+        // Count burning and damaged buildings
         Collection<StandardEntity> allBuildings = world.getEntitiesOfType(StandardEntityURN.BUILDING);
-
         for (Iterator<StandardEntity> it = allBuildings.iterator(); it.hasNext();)
         {
             Building building = (Building) it.next();
-            double area = building.getTotalArea();
             numBuildings++;
 
-            if (building.isOnFire())
+            if (building.isOnFire()) {
                 numBurning++;
-            if (building.getFieryness() > 3)
-            {
-                numDestroyed++;
-                totalAreaDestroyed = totalAreaDestroyed + area;
             }
-            if (building.getFieryness() > 0)
+            
+            if (building.getFierynessEnum() != StandardEntityConstants.Fieryness.UNBURNT) {
                 numOnceBurned++;
+            }
         }
-        totalAreaDestroyed = totalAreaDestroyed / (1000.0);
+        
+        // Compute the score function
+        scoreFunction.score(world, new Timestep(time));
 
         try (BufferedWriter out = new BufferedWriter(new FileWriter(fileName, true))) {
-            writeLine(out, time + " " + numBuildings + " " + numBurning + " " + numOnceBurned + " " + numDestroyed + " " + totalAreaDestroyed + " " + violatedConstraints + " " + computeMovingAverage(violatedConstraintsHistory) + " " + computationTime + " " + computeMovingAverage(computationTimeHistory) + " " + nMessages + " " + messagesInBytes + " " + +computeMovingAverage(messagesInBytesHistory) + " " + averageNccc + " " + computeMovingAverage(NCCCHistory) + " " + nOtherMessages);
+            writeLine(out, time + " " + numBuildings + " " + numBurning + " " + numOnceBurned + " " + violatedConstraints + " " + computeMovingAverage(violatedConstraintsHistory) + " " + computationTime + " " + computeMovingAverage(computationTimeHistory) + " " + nMessages + " " + messagesInBytes + " " + +computeMovingAverage(messagesInBytesHistory) + " " + averageNccc + " " + computeMovingAverage(NCCCHistory) + " " + nOtherMessages);
         } catch (IOException e) {
             Logger.error(e.getLocalizedMessage(), e);
         }

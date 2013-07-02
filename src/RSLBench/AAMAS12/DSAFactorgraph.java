@@ -25,7 +25,7 @@ public class DSAFactorgraph extends DSA {
         private static ArrayList<EntityID> _assignedFunctions = new ArrayList<EntityID>();
         private static HashMap<EntityID, ArrayList<EntityID>> _consideredVariables = new HashMap<EntityID, ArrayList<EntityID>>();
         private int _funPerAgent=4;
-        private int _dependencies=Params.MaxSum_NUMBER_OF_NEIGHBOURS;
+        private int _dependencies=Params.MAXSUM_NUMBER_OF_NEIGHBOURS;
         private UtilityMatrix _oldUtilityMatrix = null;
         private static boolean toReset= false;
         //private static int _number = 1;

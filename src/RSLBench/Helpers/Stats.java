@@ -50,6 +50,8 @@ public class Stats
             writeLine(out, "# hysteresis_factor: " + Params.HYSTERESIS_FACTOR);
             writeLine(out, "# utility.class: " + config.getValue(AssignmentSolver.CONF_KEY_UTILITY_CLASS));
             writeLine(out, "# solver.class: " + config.getValue(AssignmentSolver.CONF_KEY_SOLVER_CLASS));
+            writeLine(out, "# gis.map.dir: " + config.getValue("gis.map.dir"));
+            writeLine(out, "# gis.map.scenario: " + config.getValue("gis.map.scenario"));
             writeLine(out, "Time  NumBuildings  NumBurining  numOnceBurned  numDestroyed  totalAreaDestroyed violatedConstraints MAViolatedConstraints computationTime MAComputationTime numberOfMessages messagesInBytes MAMessageInBytes averageNCCC MAAverageNCCC messagesForFactorgraph ");
         } catch (IOException e) {
             Logger.error(e.getLocalizedMessage(), e);

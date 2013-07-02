@@ -186,10 +186,10 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         // walk around.
         List<EntityID> path = randomExplore();
         if (path != null) {
-            Logger.debug(Markers.MAGENTA, "Agent {0} exploring", getID());
+            Logger.debug(Markers.MAGENTA, "Agent {} exploring", getID());
         } else {
             path = randomWalk();
-            Logger.debug(Markers.MAGENTA, "Agent {0} moving randomly", getID());
+            Logger.debug(Markers.MAGENTA, "Agent {} moving randomly", getID());
         }
         
         sendMove(time, path);

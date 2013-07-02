@@ -39,6 +39,8 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
         
     //private static final String SAY_COMMUNICATION_MODEL = StandardCommunicationModel.class.getName();
     private static final String SPEAK_COMMUNICATION_MODEL = ChannelCommunicationModel.class.getName();
+    
+    private static final String KEY_SEARCH_CLASS = "search.class";
 
     /**
        Whether to use AKSpeak messages or not.
@@ -186,15 +188,11 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
     {
         // construct default search algorithm
         SearchAlgorithm instance = new BreadthFirstSearch();
-
-        String searchClassName = "";
+        
+        // retrieve data from config
+        String searchClassName = config.getValue(KEY_SEARCH_CLASS);
         try
-        {
-            // retrieve data from config
-            String className = config.getValue("SEARCH_CLASS");
-            String basePackage = config.getValue("BASE_PACKAGE");
-            searchClassName = basePackage + "." + "Search" + "." + className;
-            
+        {   
             // instantiate search algorithm
             Class<?> concreteSearchClass = Class.forName(searchClassName);
             Object object = concreteSearchClass.newInstance();
@@ -209,19 +207,16 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
             }
         } catch (NoSuchConfigOptionException e)
         {
-            Logger.warn("SearchAlgorithm config not found. Using BreadthFirstSearch.");
+            Logger.warn(Markers.RED, "SearchAlgorithm config not found. Using BreadthFirstSearch.");
         } catch (ClassNotFoundException e)
         {
-            Logger.error(Markers.RED, "SearchAlgorithm could not be found: " + searchClassName);
-//            e.printStackTrace();
+            Logger.error("SearchAlgorithm could not be found: " + searchClassName);
         } catch (InstantiationException e)
         {
-            Logger.error(Markers.RED, "SearchAlgorithm " + searchClassName + " could not be instantiated. (abstract?!)");
-//            e.printStackTrace();
+            Logger.error("SearchAlgorithm " + searchClassName + " could not be instantiated. (abstract?!)");
         } catch (IllegalAccessException e)
         {
-            Logger.error(Markers.RED, "SearchAlgorithm " + searchClassName + " must have an empty constructor.");
-//            e.printStackTrace();
+            Logger.error("SearchAlgorithm " + searchClassName + " must have an empty constructor.");
         }
         
         return instance;

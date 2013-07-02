@@ -1,6 +1,5 @@
 package RSLBench.Assignment;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import rescuecore2.config.Config;
@@ -46,6 +45,7 @@ public class AssignmentSolver
     private String resultsFile = "no_logfile_name.dat";
     private AssignmentInterface _solver = null;;
     private ComSimulator _com = null;
+    private Stats stats;
     
     private Assignment lastAssignment = new Assignment();
     
@@ -76,13 +76,13 @@ public class AssignmentSolver
         Params.setLocalParams(config, className);
 
         resultsFile = config.getValue(CONF_KEY_RESULTS_PATH) + '/' + config.getValue(CONF_KEY_RESULTS_FILE);
-        //_logFileName = "logs/" + basePackage + "_" + groupName + "_" + className + ".dat";
         _com = new ComSimulator();
         _solver = new DecentralizedAssignmentSimulator(_assignmentSolverClassName, _com);
 
         // Write statistics header to results file
         Logger.info("Writing results to " + resultsFile);
-        Stats.writeHeader(resultsFile);
+        stats = new Stats(config);
+        stats.writeHeader(resultsFile);
     }
 
     /**
@@ -135,12 +135,12 @@ public class AssignmentSolver
         		violatedConstraints += Math.abs(lastAssignment.getTargetSelectionCount(targetID) - utility.getRequiredAgentCount(targetID));         		
         	}
                 
-        	Stats.writeStatsToFile(resultsFile, time, world, violatedConstraints, computationTime, messagesInBytes, averageNccc, totalMessages, notAssignmentMessages);
+        	stats.writeStatsToFile(resultsFile, time, world, violatedConstraints, computationTime, messagesInBytes, averageNccc, totalMessages, notAssignmentMessages);
         	return SimpleProtocolToServer.buildAssignmentMessage(lastAssignment, true);
         }
         else
         {
-        	Stats.writeStatsToFile(resultsFile, time, world, -1, computationTime, messagesInBytes, averageNccc, totalMessages, notAssignmentMessages);
+        	stats.writeStatsToFile(resultsFile, time, world, -1, computationTime, messagesInBytes, averageNccc, totalMessages, notAssignmentMessages);
         	return null;
         }
     }

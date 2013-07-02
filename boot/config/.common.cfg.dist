@@ -10,8 +10,8 @@ kernel.port: 7000
 only_assigned_targets: true
 
 # Define here the planner to use
-# search_class: AStar
-search_class: BreadthFirstSearch
+# search.class: RSLBench.Search.AStar
+search.class: RSLBench.Search.BreadthFirstSearch
 
 # This parameter basically controls the influence of distance
 # the bigger the value the bigger the influence.

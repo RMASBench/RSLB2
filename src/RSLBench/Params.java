@@ -80,10 +80,12 @@ public class Params {
      * params.
      */
     public static void setLocalParams(Config config, String alg) {
+        String upperAlg = alg.toUpperCase();
         Set<String> allParams = (Set<String>) config.getAllKeys();
         for (String param : allParams) {
-            if (param.startsWith(alg + "_")) {
-                setParam(param, config.getValue(param));
+            String p = param.toUpperCase();
+            if (p.startsWith(upperAlg)) {
+                setParam(p, config.getValue(param));
             }
         }
     }

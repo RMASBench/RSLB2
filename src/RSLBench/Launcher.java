@@ -76,17 +76,11 @@ public final class Launcher {
             ComponentLauncher launcher = new TCPComponentLauncher(host, port, config);
             connect(launcher, fb, pf, at, config);
         }
-        catch (IOException e) {
+        catch (IOException | ConnectionException | InterruptedException e) {
             Logger.error("Error connecting agents", e);
         }
         catch (ConfigException e) {
             Logger.error("Configuration error", e); 
-        }
-        catch (ConnectionException e) {
-            Logger.error("Error connecting agents", e);
-        }
-        catch (InterruptedException e) {
-            Logger.error("Error connecting agents", e);
         }
     }
     

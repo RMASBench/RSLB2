@@ -8,6 +8,7 @@ import RSLBench.Params;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.standard.entities.Building;
+import rescuecore2.standard.entities.StandardEntity;
 import rescuecore2.worldmodel.EntityID;
 
 /**
@@ -31,13 +32,14 @@ public class IgnoreFieryness extends AbstractUtilityFunction {
 
     @Override
     public int getRequiredAgentCount(EntityID target) {
-        Building b = (Building) world.getEntity(target);
-        if (b == null) {
+        StandardEntity e = world.getEntity(target);
+        if (e == null || !(e instanceof Building)) {
             Logger.error("Requested the agent count of a non-building target.");
             System.exit(1);
         }
         
-        double area = (double) b.getTotalArea();
+        Building b = (Building)e;
+        double area = b.getTotalArea();
         double neededAgents = Math.ceil(area / (double) Params.AREA_COVERED_BY_FIRE_BRIGADE);
         
         // The fireyness only indicates wether the building is burning or not,

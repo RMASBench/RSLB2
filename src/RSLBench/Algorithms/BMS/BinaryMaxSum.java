@@ -43,7 +43,7 @@ import rescuecore2.worldmodel.EntityID;
 
 import RSLBench.Assignment.DecentralAssignment;
 import RSLBench.Comm.Message;
-import RSLBench.Comm.ComSimulator;
+import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import es.csic.iiia.maxsum.CardinalityFactor;
 
@@ -252,7 +252,7 @@ public class BinaryMaxSum implements DecentralAssignment {
     }
     
     @Override
-    public Collection<Message> sendMessages(ComSimulator com) {
+    public Collection<Message> sendMessages(CommunicationLayer com) {
         // Fetch the messages that must be sent
         Collection<BinaryMaxSumMessage> messages = communicationAdapter.flushMessages();
         

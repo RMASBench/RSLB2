@@ -7,7 +7,7 @@ package RSLBench.Algorithms.MS;
 import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.DecentralAssignment;
 import RSLBench.Comm.Message;
-import RSLBench.Comm.ComSimulator;
+import RSLBench.Comm.CommunicationLayer;
 
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Params;
@@ -416,7 +416,7 @@ public class MaxSum implements DecentralAssignment {
         return _targetID;
     }
 
-    public Collection<Message> sendMessages(ComSimulator com) {
+    public Collection<Message> sendMessages(CommunicationLayer com) {
         _sizeMex = 0; //dimensione mex inviati
         _nMex = 0;
         Collection<Message> mexQ = new ArrayList<Message>();

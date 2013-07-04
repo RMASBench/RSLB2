@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import RSLBench.Params;
 import RSLBench.Comm.Message;
-import RSLBench.Comm.ComSimulator;
+import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import org.apache.logging.log4j.LogManager;
@@ -21,22 +21,18 @@ public class DecentralizedAssignmentSimulator implements AssignmentInterface {
     private static final Logger Logger = LogManager.getLogger(DecentralizedAssignmentSimulator.class);
     private String _className;
     private List<DecentralAssignment> _simulatedAgents;
-    private ComSimulator _com;
-    private int _time;
     private long _messagesInBytes;
     private int _averageNccc = 0;
     private int _nMessages;
     private int _nOtherMessages;
 
-    public DecentralizedAssignmentSimulator(String className, ComSimulator com) {
+    public DecentralizedAssignmentSimulator(String className) {
         _className = className;
-        _com = com;
-        _time = 0;
     }
 
     @Override
     public Assignment compute(UtilityMatrix utility) {
-
+        CommunicationLayer comLayer = new CommunicationLayer();
         long start = System.currentTimeMillis();
         initializeAgents(utility);
 
@@ -57,7 +53,7 @@ public class DecentralizedAssignmentSimulator implements AssignmentInterface {
 
             // send messages
             for (DecentralAssignment agent : _simulatedAgents) {
-                Collection<Message> messages = agent.sendMessages(_com);
+                Collection<Message> messages = agent.sendMessages(comLayer);
                 //collect the byte size of the messages exchanged between agents
                 assignmentMessages = assignmentMessages + messages.size();
                 for (Message msg : messages) {
@@ -67,7 +63,7 @@ public class DecentralizedAssignmentSimulator implements AssignmentInterface {
 
             // receive messages
             for (DecentralAssignment agent : _simulatedAgents) {
-                agent.receiveMessages(_com.retrieveMessages(agent.getAgentID()));
+                agent.receiveMessages(comLayer.retrieveMessages(agent.getAgentID()));
             }
 
             // improve assignment
@@ -109,7 +105,6 @@ public class DecentralizedAssignmentSimulator implements AssignmentInterface {
             }
         }
 
-        _time++;
         Logger.debug("DA Simulator done");
 
         return assignments;

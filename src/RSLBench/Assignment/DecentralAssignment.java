@@ -6,7 +6,7 @@ import rescuecore2.worldmodel.EntityID;
 
 import RSLBench.Comm.Message;
 import RSLBench.Helpers.Utility.UtilityMatrix;
-import RSLBench.Comm.ComSimulator;
+import RSLBench.Comm.CommunicationLayer;
 /**
  * This interface implements the actions that a single agent can perform in a DCOP algorithm.
  * The implementations of this interface are executed
@@ -46,7 +46,7 @@ public interface DecentralAssignment
      * @param com: a communication simulator.
      * @return The set of messages that have been sent.
      */
-    public Collection<Message> sendMessages(ComSimulator com);
+    public Collection<Message> sendMessages(CommunicationLayer com);
     
     /**
      * Receives a set of messages sent by some other agents.

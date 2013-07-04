@@ -6,7 +6,7 @@ import rescuecore2.config.Config;
 import rescuecore2.standard.entities.StandardWorldModel;
 import rescuecore2.worldmodel.EntityID;
 import RSLBench.Params;
-import RSLBench.Comm.ComSimulator;
+import RSLBench.Comm.CommunicationLayer;
 //import RSLBench.Comm.ComSimulatorDSAFactorgraph;
 import RSLBench.Comm.SimpleProtocolToServer;
 import RSLBench.Helpers.Logging.Markers;
@@ -43,8 +43,7 @@ public class AssignmentSolver
     
     private String _assignmentSolverClassName = "";
     private String resultsFile = "no_logfile_name.dat";
-    private AssignmentInterface _solver = null;;
-    private ComSimulator _com = null;
+    private AssignmentInterface _solver = null;
     private Stats stats;
     
     private Assignment lastAssignment = new Assignment();
@@ -75,8 +74,7 @@ public class AssignmentSolver
         Params.setLocalParams(config, className);
 
         resultsFile = config.getValue(CONF_KEY_RESULTS_PATH) + '/' + config.getValue(CONF_KEY_RESULTS_FILE);
-        _com = new ComSimulator();
-        _solver = new DecentralizedAssignmentSimulator(_assignmentSolverClassName, _com);
+        _solver = new DecentralizedAssignmentSimulator(_assignmentSolverClassName);
 
         // Write statistics header to results file
         Logger.info("Writing results to " + resultsFile);
@@ -104,14 +102,6 @@ public class AssignmentSolver
         if (targets.isEmpty() || agents.isEmpty()) {
             Logger.debug(Markers.YELLOW, "No agents or targets for assignment! targets=" + targets.size() + " agents:" + agents.size());
             return null;
-        }
-
-        // Initialize simulated communication
-        if (_com != null) {
-        	if(!_com.isInitialized()) {
-        		_com.initialize(agents);
-        	}
-        	_com.update();
         }
 
         if (Logger.isDebugEnabled()) {

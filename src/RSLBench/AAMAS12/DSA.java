@@ -4,7 +4,7 @@ import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.DecentralAssignment;
 import RSLBench.Comm.Message;
 import RSLBench.Comm.AssignmentMessage;
-import RSLBench.Comm.ComSimulator;
+import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Helpers.SimpleID;
@@ -137,7 +137,7 @@ public class DSA implements DecentralAssignment {
     }
 
     @Override
-    public Collection<Message> sendMessages(ComSimulator com) {
+    public Collection<Message> sendMessages(CommunicationLayer com) {
         Collection<Message> messages = new ArrayList<>();
         Collection<Message> totMessages = new ArrayList<>();
         AssignmentMessage mex = new AssignmentMessage(_agentID, _targetID);

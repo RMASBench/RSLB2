@@ -8,7 +8,7 @@ import rescuecore2.worldmodel.EntityID;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Comm.Message;
 import RSLBench.Assignment.Assignment;
-import RSLBench.Comm.ComSimulator;
+import RSLBench.Comm.CommunicationLayer;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -71,7 +71,7 @@ public class Dummy implements DecentralAssignment{
      * (i.e. those which are within communication range).
      * @return The set of messages to be send.
      */
-    public Collection<Message> sendMessages(ComSimulator com){
+    public Collection<Message> sendMessages(CommunicationLayer com){
        return new LinkedList<Message>();   
     }
     

@@ -25,9 +25,9 @@
                 <foreign-project>Roborescue</foreign-project>
                 <artifact-type>jar</artifact-type>
                 <script>${project.Roborescue}/nbproject/nbjdk.xml</script>
-                <target>compile</target>
+                <target>jars</target>
                 <clean-target>clean</clean-target>
-                <id>compile</id>
+                <id>jars</id>
             </reference>
             <reference>
                 <foreign-project>jMaxSum</foreign-project>

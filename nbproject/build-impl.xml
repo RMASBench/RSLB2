@@ -922,7 +922,7 @@ is divided into following sections:
             <param name="call.built.properties" value="${built-jar.properties}"/>
             <param location="${project.Roborescue}" name="call.subproject"/>
             <param location="${project.Roborescue}/nbproject/nbjdk.xml" name="call.script"/>
-            <param name="call.target" value="compile"/>
+            <param name="call.target" value="jars"/>
             <param name="transfer.built-jar.properties" value="${built-jar.properties}"/>
         </antcall>
         <antcall target="-maybe-call-dep">

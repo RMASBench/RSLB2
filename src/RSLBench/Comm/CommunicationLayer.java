@@ -67,6 +67,9 @@ public class CommunicationLayer {
      */
     public List<Message> retrieveMessages(EntityID agentID) {
         List<Message> mesageInbox = messageInboxes.remove(agentID);
+        if (mesageInbox == null) {
+            mesageInbox = new ArrayList<>();
+        }
         return mesageInbox;
     }
 

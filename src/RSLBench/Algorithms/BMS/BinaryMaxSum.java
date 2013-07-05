@@ -236,6 +236,10 @@ public class BinaryMaxSum implements DecentralAssignment {
         // Now extract our choice
         EntityID oldTarget = targetId;
         targetId = variableNode.select();
+        if (targetId == null) {
+            Logger.error("Agent {} chose no target!", id);
+            System.exit(0);
+        }
         Logger.trace("improveAssignment end.");
         //return targetId != oldTarget;
         return true;
@@ -355,6 +359,10 @@ public class BinaryMaxSum implements DecentralAssignment {
         @Override
         public void send(double message, EntityID sender, EntityID recipient) {
             Logger.trace("Message from {} to {} : {}", new Object[]{sender, recipient, message});
+            if (Double.isNaN(message) || Double.isInfinite(message)) {
+                Logger.error("Factor {} tried to send {} to factor {}!", new Object[]{sender, message, recipient});
+                System.exit(0);
+            }
             outgoingMessages.add(new BinaryMaxSumMessage(message, sender, recipient));
         }
         

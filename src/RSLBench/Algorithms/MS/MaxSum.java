@@ -68,7 +68,6 @@ public class MaxSum implements DecentralAssignment {
     public void initialize(EntityID agentID, UtilityMatrix utilityM) {
         this.resetStructures();
         
-        
         _nMexForFG = 0;
         _FGMexBytes = 0;
         _initializedAgents++;
@@ -86,9 +85,7 @@ public class MaxSum implements DecentralAssignment {
         _maxSumAgent.addNodeVariable(nodevariable);
 
         // Assegnamento delle funzioni agli agenti
-        ArrayList<EntityID> me = new ArrayList<EntityID>();
-        me.add(_agentID);
-        ArrayList<EntityID> targets = (ArrayList<EntityID>) _utilityM.getNBestTargets(_localNumberOfTargets, me);
+        List<EntityID> targets = _utilityM.getNBestTargets(_localNumberOfTargets, _agentID);
         /*FileWriter fw = null;
         try {
         fw = new FileWriter("history.txt", true);
@@ -122,46 +119,13 @@ public class MaxSum implements DecentralAssignment {
                 break;
             }
         }
-        /*try {
-        fw.close();
-        } catch (IOException ii) {}*/
-        /*for (NodeFunction fun: _functions) {
-        System.out.println(fun.getId());
-        }*/
-        //costruisco il factorGraph: assegno le funzioni alle variabili e viceversa
-        Iterator factorGraphIterator = _maxSumAgent.getFunctions().iterator();
-        while (factorGraphIterator.hasNext()) {
-            NodeFunction nodeTarget = (NodeFunction) factorGraphIterator.next();
+        for (NodeFunction nodeTarget : _maxSumAgent.getFunctions()) {
             int count = 0;
-            ArrayList<EntityID> myTarget = new ArrayList<EntityID>();
-            int tarID = nodeTarget.getId();
-            EntityID target = new EntityID(tarID);
-            myTarget.add(target);
-            ArrayList<EntityID> bestAgents = (ArrayList<EntityID>) _utilityM.getNBestAgents(_utilityM.getNumAgents(), myTarget);
+            EntityID target = new EntityID(nodeTarget.getId());
+            List<EntityID> bestAgents = _utilityM.getNBestAgents(_utilityM.getNumAgents(), target);
             //System.out.println("");
             this.buildNeighborhood(target, bestAgents, count);
-
         }
-        /*System.out.println("Stampa di tutti i vicini di tutte le funzioni");
-        for (NodeFunction function: _functions) {
-        System.out.print("Sono la funzione " + function.getId() + " e i miei vicini sono ");
-        
-        Iterator<NodeVariable> iterator = function.getNeighbour().iterator();
-        while (iterator.hasNext()) {
-        System.out.print(" "+iterator.next().getId());
-        }
-        System.out.println("");
-        }
-        System.out.println("Stampa di tutti i vicini delle mie funzioni");
-        for (NodeFunction function : _maxSumAgent.getFunctions()) {
-        System.out.println("Sono la funzione "+function.getId()+ " e i miei vicini sono: "); 
-        Iterator<NodeVariable> iterator = function.getNeighbour().iterator();
-        while (iterator.hasNext()) {
-        System.out.print(" "+iterator.next().getId());
-        }
-        System.out.println("");
-        
-        }*/
 
         if (_initializedAgents == _utilityM.getNumAgents()) {
             //System.out.println("Sono nel tuplebuilder");
@@ -243,7 +207,7 @@ public class MaxSum implements DecentralAssignment {
         }
     }
 
-    public void buildNeighborhood(EntityID target, ArrayList<EntityID> bestAgents, int count) {
+    public void buildNeighborhood(EntityID target, List<EntityID> bestAgents, int count) {
         NodeFunction nodeTarget = null;
         try {
             nodeTarget = NodeFunction.getNodeFunction(target.getValue());
@@ -716,9 +680,7 @@ public class MaxSum implements DecentralAssignment {
             System.exit(0);
         }
         HashSet<NodeVariable> neighbours = nodefunction.getNeighbour();
-        ArrayList<EntityID> me = new ArrayList<EntityID>();
-        me.add(function);
-        ArrayList<EntityID> best = (ArrayList<EntityID>) _utilityM.getNBestAgents(_utilityM.getNumAgents(), me);
+        List<EntityID> best = _utilityM.getNBestAgents(_utilityM.getNumAgents(), function);
         ArrayList alreadyConsidered = _consideredVariables.get(function);
         for (EntityID possibleNewNeighbour : best) {
             if (!alreadyConsidered.contains(possibleNewNeighbour)) {

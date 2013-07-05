@@ -9,6 +9,9 @@ import rescuecore2.config.Config;
 public class Params {
 
     private static final Logger Logger = LogManager.getLogger(Params.class);
+
+    public final static int STATION_CHANNEL = 1;
+    public final static int PLATOON_CHANNEL = 1;
     
     /**
      * The agents will ignore every command until a specific timestep specified
@@ -28,13 +31,9 @@ public class Params {
      * The time at which the experiment ends
      */
     public static int END_EXPERIMENT_TIME;
-    public final static int STATION_CHANNEL = 1;
-    public final static int PLATOON_CHANNEL = 1;
     
     /**
-     * When this is true, agents will only approach targets selected by the
-     * station (which simulates the decentralize assignment) Otherwise they
-     * search for targets on their own.
+     * Amount of area covered by a single fire brigade.
      */
     public static double AREA_COVERED_BY_FIRE_BRIGADE;
     

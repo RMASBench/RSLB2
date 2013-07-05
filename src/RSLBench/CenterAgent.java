@@ -153,7 +153,7 @@ public class CenterAgent extends StandardAgent<Building>
     private Collection<EntityID> getBurningBuildings()
     {
         Collection<StandardEntity> e = model.getEntitiesOfType(StandardEntityURN.BUILDING);
-        List<Building> result = new ArrayList<Building>();
+        List<EntityID> result = new ArrayList<>();
         for (StandardEntity next : e)
         {
             if (next instanceof Building)
@@ -161,12 +161,15 @@ public class CenterAgent extends StandardAgent<Building>
                 Building b = (Building) next;
                 if (b.getFieryness() > 0 && b.getFieryness() < 4)
                 {
-                    result.add(b);
+                    EntityID id = b.getID();
+                    if (id == null) {
+                        Logger.warn("Found a building with no id: {}. Dropped.", b);
+                    }
+                    result.add(id);
                 }
             }
         }
         // Sort by distance
-        Collections.sort(result, new DistanceSorter(location(), model));
-        return objectsToIDs(result);
+        return result;
     }
 }

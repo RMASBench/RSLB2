@@ -25,16 +25,29 @@ public class FirstUtilityFunction extends AbstractUtilityFunction {
             Logger.warn("Cannot find location for agent " + agent);
             location = agent;
         }
+
+        Building b = (Building) world.getEntity(target);
+        double f = b.getFieryness();
+        double utility = 1.0;
+        if (f == 1.0) {
+            utility = 1E9;
+        } else if (f == 2.0) {
+            utility = 1E6;
+        } else if (f == 3.0) {
+            utility = 100.0;
+        }
+
         double distance = world.getDistance(location, target);
-        return 100.0 / Math.pow(distance * Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY, 2.0);
+        utility = utility / Math.pow(distance * Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY, 2.0);
+        return utility;
     }
 
     @Override
     public int getRequiredAgentCount(EntityID target) {
         Building b = (Building) world.getEntity(target);
         if (b == null) {
-            Logger.error("Requested the agent count of a non-building target.");
-            System.exit(1);
+            Logger.error("Requested the agent count of a non-building target {}.", target);
+            throw new RuntimeException("Requested the agent count of a non-building target");
         }
         
         double area = (double) b.getTotalArea();
@@ -47,7 +60,12 @@ public class FirstUtilityFunction extends AbstractUtilityFunction {
         }
         //Logger.debugColor("BASE: " + base + " | FIERYNESS: " + b.getFieryness() + " | NEEEDED AGENTS: " + neededAgents, Logger.BG_RED);
 
-        return (int) Math.round(neededAgents);
+        int result = (int) Math.round(neededAgents);
+        if (result < 1) {
+            Logger.warn("Computed {} required agents for a fire. Correcting to 1.", result);
+            result = 1;
+        }
+        return result;
     }
     
 }

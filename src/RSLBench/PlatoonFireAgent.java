@@ -58,7 +58,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         maxWater = config.getIntValue(MAX_WATER_KEY);
         maxDistance = config.getIntValue(MAX_DISTANCE_KEY);
         firstTimeToAct = Math.max(config.getIntValue(IGNORE_ACT_UNTIL) + 1,
-                Params.START_EXPERIMENT_TIME);
+                config.getIntValue("experiment_start_time", 25));
         maxPower = config.getIntValue(MAX_POWER_KEY);
         Logger.info("Sample fire brigade connected: max extinguish distance = "
                 + maxDistance + ", max power = " + maxPower + ", max tank = "

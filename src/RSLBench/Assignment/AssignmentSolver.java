@@ -45,6 +45,8 @@ public class AssignmentSolver
     private String resultsFile = "no_logfile_name.dat";
     private AssignmentInterface _solver = null;
     private Stats stats;
+
+    private boolean started = false;
     
     private Assignment lastAssignment = new Assignment();
     
@@ -62,6 +64,7 @@ public class AssignmentSolver
         String utilityClassName = config.getValue(CONF_KEY_UTILITY_CLASS);
         UtilityFactory.setClass(utilityClassName);
 
+        Logger.warn("Setting parameters NOW!");
         Params.START_EXPERIMENT_TIME = config.getIntValue("experiment_start_time", 25);
         Params.END_EXPERIMENT_TIME = config.getIntValue("experiment_end_time", 300);
         Params.IGNORE_AGENT_COMMANDS_KEY_UNTIL = config.getIntValue("ignore_agents_commands_until", 3);
@@ -100,9 +103,15 @@ public class AssignmentSolver
 
         // Check whether there is something to do at all
         if (targets.isEmpty() || agents.isEmpty()) {
-            Logger.debug(Markers.YELLOW, "No agents or targets for assignment! targets=" + targets.size() + " agents:" + agents.size());
-            return null;
+            if (!started) {
+                Logger.debug(Markers.YELLOW, "No agents or targets for assignment! targets=" + targets.size() + " agents:" + agents.size());
+                return null;
+            } else {
+                Logger.info("No fires remaining. Stopping the simulation.");
+                System.exit(0);
+            }
         }
+        started = true;
 
         if (Logger.isDebugEnabled()) {
             Logger.debug(Markers.GREEN, _assignmentSolverClassName + ": assigning " + agents.size() + " agents to " + targets.size() + " targets");
@@ -121,7 +130,7 @@ public class AssignmentSolver
         	int violatedConstraints = 0;
         	for (EntityID a: agents) {
         		EntityID targetID = lastAssignment.getAssignment(a);
-        		violatedConstraints += Math.abs(lastAssignment.getTargetSelectionCount(targetID) - utility.getRequiredAgentCount(targetID));         		
+        		violatedConstraints += Math.abs(lastAssignment.getTargetSelectionCount(targetID) - utility.getRequiredAgentCount(targetID));
         	}
                 
         	stats.writeStatsToFile(resultsFile, time, world, violatedConstraints, computationTime, messagesInBytes, averageNccc, totalMessages, notAssignmentMessages);

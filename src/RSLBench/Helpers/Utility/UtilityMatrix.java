@@ -72,7 +72,7 @@ public class UtilityMatrix {
         if (lastAssignment.getAssignment(agentID) == targetID) {
             utility *= Params.HYSTERESIS_FACTOR;
         }
-        return utility;
+        return Double.isInfinite(utility) ? 1e12 : utility;
     }
 
     /**
@@ -101,21 +101,15 @@ public class UtilityMatrix {
      * utility with the agents in agents
      * @return a list of EntityID of targets ordered by utility value
      */
-    public List<EntityID> getNBestTargets(int N, ArrayList<EntityID> agents) {
+    public List<EntityID> getNBestTargets(int N, EntityID agent) {
         Map<EntityID, Double> map = new HashMap<>();
-        for (EntityID agent : agents) {
-            for (EntityID target : _targets) {
-                map.put(target, getUtility(agent, target));
-            }
+        for (EntityID target : _targets) {
+            map.put(target, getUtility(agent, target));
         }
         List<EntityID> res = sortByValue(map);
         ArrayList<EntityID> list = new ArrayList<>();
-        int c = 0;
-        for (EntityID id : res) {
-            list.add(id);
-            if (++c >= N) {
-                break;
-            }
+        for (int i=0, len=list.size(); i<N && i<len; i++) {
+            list.add(res.get(i));
         }
         return list;
     }
@@ -125,24 +119,19 @@ public class UtilityMatrix {
      *
      * @param N: the number of agents to be returned
      * @param targets: the agents are sorted considering, for each agent, the
-     * utility with the targets in targets
+     * utility with the targets in targets.
+     * @TODO Actually single target: refactor!
      * @return a list of EntityID of agents ordered by utility value
      */
-    public List<EntityID> getNBestAgents(int N, ArrayList<EntityID> targets) {
+    public List<EntityID> getNBestAgents(int N, EntityID target) {
         Map<EntityID, Double> map = new HashMap<>();
-        for (EntityID target : targets) {
-            for (EntityID agent : _agents) {
-                map.put(agent, getUtility(agent, target));
-            }
+        for (EntityID agent : _agents) {
+            map.put(agent, getUtility(agent, target));
         }
         List<EntityID> res = sortByValue(map);
         ArrayList<EntityID> list = new ArrayList<>();
-        int c = 0;
-        for (EntityID id : res) {
-            list.add(id);
-            if (++c >= N) {
-                break;
-            }
+        for (int i=0, len=list.size(); i<N && i<len; i++) {
+            list.add(res.get(i));
         }
         return list;
     }
@@ -204,7 +193,7 @@ public class UtilityMatrix {
             System.exit(1);
         }
         
-        return utilityFunction.getRequiredAgentCount(targetID);
+        return Math.min(4, utilityFunction.getRequiredAgentCount(targetID));
     }
 
     /**

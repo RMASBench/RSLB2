@@ -5,10 +5,8 @@
 package RSLBench.AAMAS12;
 
 import RSLBench.Assignment.Assignment;
-import RSLBench.Helpers.SimpleID;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Params;
-import RSLBench.Algorithms.MS.RMASNodeFunctionUtility;
 import java.util.*;
 import rescuecore2.worldmodel.EntityID;
 /**
@@ -43,10 +41,7 @@ public class DSAFactorgraph extends DSA {
             
             
             agents.add(this);
-            
-            ArrayList<EntityID> me = new ArrayList<EntityID>();
-            me.add(_agentID);
-            ArrayList<EntityID> targets = (ArrayList<EntityID>)utilityM.getNBestTargets(_utilityM.getNumTargets(), me);
+            List<EntityID> targets = utilityM.getNBestTargets(_utilityM.getNumTargets(), _agentID);
             
             //assegno le funzioni agli agenti
             int i = 0;
@@ -69,9 +64,7 @@ public class DSAFactorgraph extends DSA {
         
         for(EntityID function: myFunctions) {
             int count = 0;
-            ArrayList<EntityID> func = new ArrayList<EntityID>();
-            func.add(function);
-            ArrayList<EntityID> bestAgents = (ArrayList<EntityID>)_utilityM.getNBestAgents(_utilityM.getNumTargets(), func);
+            List<EntityID> bestAgents = _utilityM.getNBestAgents(_utilityM.getNumTargets(), function);
             this.buildNeighborhood(function, bestAgents, count);
         }
         
@@ -138,7 +131,7 @@ public class DSAFactorgraph extends DSA {
                     }
             }
         }*/
-        public void buildNeighborhood(EntityID function, ArrayList<EntityID> bestAgents, int count) {
+        public void buildNeighborhood(EntityID function, List<EntityID> bestAgents, int count) {
             
             for (EntityID bestAgent: bestAgents) {
                 if (!_agentNeighbours.containsKey(bestAgent)) {
@@ -201,9 +194,7 @@ public class DSAFactorgraph extends DSA {
         
     public void newNeighbour(EntityID function, EntityID removedVariable) {
         ArrayList<EntityID> possibleNewNeighbours = new ArrayList<EntityID>();
-        ArrayList<EntityID> me = new ArrayList<EntityID>();
-        me.add(function);
-        ArrayList<EntityID> best = (ArrayList<EntityID>)_utilityM.getNBestAgents(_utilityM.getNumAgents(), me);
+        List<EntityID> best = _utilityM.getNBestAgents(_utilityM.getNumAgents(), function);
         ArrayList alreadyConsidered = _consideredVariables.get(function);
         for (EntityID possibleNewNeighbour: best) {
             if (!alreadyConsidered.contains(possibleNewNeighbour))  {

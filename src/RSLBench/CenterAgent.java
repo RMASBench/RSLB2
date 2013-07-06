@@ -1,10 +1,8 @@
 package RSLBench;
 
-import static rescuecore2.misc.Handy.objectsToIDs;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -18,7 +16,6 @@ import rescuecore2.worldmodel.EntityID;
 
 import RSLBench.Assignment.AssignmentSolver;
 import RSLBench.Comm.SimpleProtocolToServer;
-import RSLBench.Helpers.DistanceSorter;
 import RSLBench.Helpers.Logging.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,13 +30,12 @@ public class CenterAgent extends StandardAgent<Building>
     private static final Logger Logger = LogManager.getLogger(CenterAgent.class);
     
     private AssignmentSolver assignmentSolver = null;
-    private ArrayList<EntityID> agents = new ArrayList<EntityID>();
-    private HashMap<EntityID, EntityID> agentLocations = new HashMap<EntityID, EntityID>(); 
+    private ArrayList<EntityID> agents = new ArrayList<>();
+    private HashMap<EntityID, EntityID> agentLocations = new HashMap<>(); 
 
     protected CenterAgent() {
     	Logger.info(Markers.BLUE, "Center Agent CREATED");
     }
-
     
     @Override
     public String toString()
@@ -50,22 +46,15 @@ public class CenterAgent extends StandardAgent<Building>
 
     @Override
     protected void think(int time, ChangeSet changed, Collection<Command> heard)
-    {
+    {   
     	// Initialize solver
-        if (assignmentSolver == null && model != null) {
+        if (assignmentSolver == null) {
             assignmentSolver = new AssignmentSolver(model, config);
         }
-        else if (model == null) {
-            Logger.error("Cannot run solver without world model! ");
-            return;
-        }
 
-        // Print out time
-        Logger.info(Markers.WHITE, "CenterAgent: TIME IS " + time);
-        
-        // Find all buildings that are on fire
         Collection<EntityID> burning = getBurningBuildings();
-        Logger.info(Markers.LIGHT_BLUE, "Number of known BURNING buildings: " + burning.size());
+        Logger.info(Markers.WHITE, "TIME IS {} | {} known burning buildings.",
+                new Object[]{time, burning.size()});
         		
         // Subscribe to station channels
         if (time == Params.IGNORE_AGENT_COMMANDS_KEY_UNTIL) {
@@ -80,22 +69,18 @@ public class CenterAgent extends StandardAgent<Building>
 
                 // add fire brigade agents
                 if (model.getEntity(senderId).getStandardURN() == StandardEntityURN.FIRE_BRIGADE) {
-                    if (!agents.contains(senderId))
+                    if (!agents.contains(senderId)) {
                         agents.add(senderId);
+                    }
                     byte content[] = speak.getContent();
                     processMessageContent(content, senderId.getValue());
                 }
             }
             sendRest(time);
-        }        
+        }
 
         // Compute assignment
-        ArrayList<EntityID> targets = new ArrayList<EntityID>(burning.size());
-        for (EntityID next : burning)
-        {
-            EntityID t = model.getEntity(next).getID();
-            targets.add(t);
-        }
+        ArrayList<EntityID> targets = new ArrayList<>(burning);
         byte[] message = assignmentSolver.act(time, agents, targets, agentLocations, model);
 
         // Send out assignment

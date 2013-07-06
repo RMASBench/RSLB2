@@ -1,5 +1,6 @@
-package RSLBench.Comm;
+package RSLBench.Algorithms.DSA;
 
+import RSLBench.Comm.Message;
 import rescuecore2.worldmodel.EntityID;
 
 /**

@@ -1,9 +1,9 @@
-package RSLBench.AAMAS12;
+package RSLBench.Algorithms.DSA;
 
+import RSLBench.AAMAS12.TargetScores;
 import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.DecentralAssignment;
 import RSLBench.Comm.Message;
-import RSLBench.Comm.AssignmentMessage;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Utility.UtilityMatrix;

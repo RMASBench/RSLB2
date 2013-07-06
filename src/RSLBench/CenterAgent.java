@@ -15,7 +15,7 @@ import rescuecore2.worldmodel.ChangeSet;
 import rescuecore2.worldmodel.EntityID;
 
 import RSLBench.Assignment.AssignmentSolver;
-import RSLBench.Comm.SimpleProtocolToServer;
+import RSLBench.Comm.Platform.SimpleProtocolToServer;
 import RSLBench.Helpers.Logging.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

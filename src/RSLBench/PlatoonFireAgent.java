@@ -17,7 +17,7 @@ import rescuecore2.standard.entities.StandardEntityURN;
 import rescuecore2.standard.messages.AKSpeak;
 import rescuecore2.worldmodel.ChangeSet;
 import rescuecore2.worldmodel.EntityID;
-import RSLBench.Comm.SimpleProtocolToServer;
+import RSLBench.Comm.Platform.SimpleProtocolToServer;
 import RSLBench.Helpers.DistanceSorter;
 import RSLBench.Helpers.Logging.Markers;
 import org.apache.logging.log4j.LogManager;

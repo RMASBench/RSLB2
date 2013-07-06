@@ -2,8 +2,9 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package RSLBench.AAMAS12;
+package RSLBench.Algorithms.DSA;
 
+import RSLBench.AAMAS12.TargetScores;
 import RSLBench.Assignment.Assignment;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Params;

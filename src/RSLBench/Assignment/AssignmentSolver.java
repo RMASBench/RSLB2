@@ -8,7 +8,7 @@ import rescuecore2.worldmodel.EntityID;
 import RSLBench.Params;
 import RSLBench.Comm.CommunicationLayer;
 //import RSLBench.Comm.ComSimulatorDSAFactorgraph;
-import RSLBench.Comm.SimpleProtocolToServer;
+import RSLBench.Comm.Platform.SimpleProtocolToServer;
 import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Stats;
 import RSLBench.Helpers.Utility.UtilityFactory;

@@ -1,4 +1,4 @@
-package RSLBench.Comm;
+package RSLBench.Comm.Platform;
 
 import java.util.ArrayList;
 

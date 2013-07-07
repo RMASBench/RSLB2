@@ -29,12 +29,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import operation.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import rescuecore2.config.Config;
 
 /**
  * This class implements the MaxSum algorithm according to RMASBench specification.
  */
 public class MaxSumAgent implements DCOPAgent {
+    private static final Logger Logger = LogManager.getLogger(MaxSumAgent.class);
 
     private static UtilityMatrix _utilityM = null;
     private EntityID _agentID;
@@ -58,8 +61,7 @@ public class MaxSumAgent implements DCOPAgent {
     private static HashMap<EntityID, ArrayList<EntityID>> _consideredVariables = new HashMap<EntityID, ArrayList<EntityID>>();
     private int _sizeMex, _nMex, _nMexForFG;
     private long _FGMexBytes;
-    private static double BIGNUMBER = 10000;
-    private Config config;
+    private static double BIGNUMBER = 1e15;
     
     /*PROVVISORIO*
      * aggiungo una lista in memoria condivisa che contiene tutti gli agenti
@@ -75,7 +77,6 @@ public class MaxSumAgent implements DCOPAgent {
         _initializedAgents++;
         _agentID = agentID;
         _utilityM = utilityM;
-        this.config = config;
         _dependencies = config.getIntValue(Constants.KEY_MAXSUM_NEIGHBORS);
 
         _maxSumAgent = AgentMS_Sync.getAgent(_agentID.getValue());//Agent.getAgent(_agentID.getValue());

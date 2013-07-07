@@ -92,7 +92,7 @@ public abstract class AbstractSolver implements Solver
         stats.report("score", scoreFunction.score(worldModel, new Timestep(time)));
         stats.report("utility", utility.getUtility(solution));
         stats.report("violations", utility.getViolations(solution));
-
+        stats.report("solvable", utility.getTotalMaxAgents() >= utility.getNumAgents());
 
         stats.reportStep();
         return solution;

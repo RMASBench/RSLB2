@@ -112,7 +112,7 @@ public class UtilityMatrix {
         }
         List<EntityID> res = sortByValue(map);
         ArrayList<EntityID> list = new ArrayList<>();
-        for (int i=0, len=list.size(); i<N && i<len; i++) {
+        for (int i=0, len=res.size(); i<N && i<len; i++) {
             list.add(res.get(i));
         }
         return list;
@@ -134,7 +134,7 @@ public class UtilityMatrix {
         }
         List<EntityID> res = sortByValue(map);
         ArrayList<EntityID> list = new ArrayList<>();
-        for (int i=0, len=list.size(); i<N && i<len; i++) {
+        for (int i=0, len=res.size(); i<N && i<len; i++) {
             list.add(res.get(i));
         }
         return list;
@@ -295,6 +295,21 @@ public class UtilityMatrix {
             }
         }
 
+        return count;
+    }
+
+    /**
+     * Get the total maximum number of agents allocable to targets.
+     * 
+     * This is used as a check to see if a problem can or can't be solved
+     * without violating any constraints
+     * @return total number of agents that can be allocated without conflicts.
+     */
+    public int getTotalMaxAgents() {
+        int count = 0;
+        for (EntityID target : _targets) {
+            count += getRequiredAgentCount(target);
+        }
         return count;
     }
     

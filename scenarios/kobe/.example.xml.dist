@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<rcr:scenario xmlns:rcr="urn:roborescue:map:scenario">
+
+<rcr:firebrigade rcr:location="8484"/>
+<rcr:firebrigade rcr:location="8484"/>
+<rcr:firebrigade rcr:location="33133"/>
+<rcr:firebrigade rcr:location="33133"/>
+<rcr:firebrigade rcr:location="8601"/>
+<rcr:firebrigade rcr:location="8601"/>
+<rcr:firebrigade rcr:location="8997"/>
+<rcr:firebrigade rcr:location="8997"/>
+<rcr:firebrigade rcr:location="4479"/>
+<rcr:firebrigade rcr:location="4479"/>
+<rcr:firebrigade rcr:location="32764"/>
+<rcr:firebrigade rcr:location="32764"/>
+<!--
+<rcr:firebrigade rcr:location="32767"/>
+<rcr:firebrigade rcr:location="32767"/>
+<rcr:firebrigade rcr:location="32784"/>
+<rcr:firebrigade rcr:location="32784"/>
+<rcr:firebrigade rcr:location="6819"/>
+<rcr:firebrigade rcr:location="6819"/>
+<rcr:firebrigade rcr:location="8070"/>
+<rcr:firebrigade rcr:location="8070"/>
+<rcr:firebrigade rcr:location="32572"/>
+<rcr:firebrigade rcr:location="32572"/>
+<rcr:firebrigade rcr:location="8250"/>
+
+-->
+<rcr:fire rcr:location="20245"/>
+<rcr:fire rcr:location="23545"/>
+<rcr:fire rcr:location="9820"/>
+<rcr:fire rcr:location="23545"/>
+<rcr:fire rcr:location="15847"/>
+<rcr:fire rcr:location="20858"/>
+
+<rcr:firestation rcr:location="27240"/>
+</rcr:scenario>

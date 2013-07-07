@@ -40,7 +40,7 @@ public final class Launcher {
      */
     public static void main(String[] args) {
 
-        Logger.info("Started!");
+        Logger.info("RSLB2 Started!");
         try {
             Registry.SYSTEM_REGISTRY.registerEntityFactory(StandardEntityFactory.INSTANCE);
             Registry.SYSTEM_REGISTRY.registerMessageFactory(StandardMessageFactory.INSTANCE);

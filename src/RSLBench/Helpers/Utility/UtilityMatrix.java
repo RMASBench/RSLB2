@@ -1,7 +1,7 @@
 package RSLBench.Helpers.Utility;
 
 import RSLBench.Assignment.Assignment;
-import RSLBench.Params;
+import RSLBench.Constants;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import rescuecore2.config.Config;
 
 import rescuecore2.standard.entities.StandardWorldModel;
 import rescuecore2.worldmodel.EntityID;
@@ -31,6 +32,7 @@ public class UtilityMatrix {
     private ArrayList<EntityID> _targets;
     private StandardWorldModel _world;
     private Assignment lastAssignment;
+    private Config config;
     HashMap<EntityID, EntityID> _agentLocations;
 
     /**
@@ -42,16 +44,18 @@ public class UtilityMatrix {
      * @param agentLocations the agent locations
      * @param world the model of the world
      */
-    public UtilityMatrix(ArrayList<EntityID> agents, ArrayList<EntityID> targets, Assignment lastAssignment, HashMap<EntityID, EntityID> agentLocations, StandardWorldModel world) {
+    public UtilityMatrix(Config config, ArrayList<EntityID> agents, ArrayList<EntityID> targets, Assignment lastAssignment, HashMap<EntityID, EntityID> agentLocations, StandardWorldModel world) {
         _agents = agents;
         _targets = targets;
         _world = world;
+        this.config = config;
         _agentLocations = agentLocations;
         this.lastAssignment = lastAssignment;
 
         utilityFunction = UtilityFactory.buildFunction();
         utilityFunction.setAgentLocations(agentLocations);
         utilityFunction.setWorld(world);
+        utilityFunction.setConfig(config);
         Logger.debug("UM has been initialized!");
     }
 
@@ -70,9 +74,9 @@ public class UtilityMatrix {
 
         double utility = utilityFunction.getUtility(agentID, targetID);
         if (lastAssignment.getAssignment(agentID) == targetID) {
-            utility *= Params.HYSTERESIS_FACTOR;
+            utility *= config.getFloatValue(Constants.KEY_UTIL_HYSTERESIS);
         }
-        return Double.isInfinite(utility) ? 1e12 : utility;
+        return Double.isInfinite(utility) ? 1e15 : utility;
     }
 
     /**
@@ -193,7 +197,7 @@ public class UtilityMatrix {
             System.exit(1);
         }
         
-        return Math.min(4, utilityFunction.getRequiredAgentCount(targetID));
+        return utilityFunction.getRequiredAgentCount(targetID);
     }
 
     /**
@@ -230,6 +234,68 @@ public class UtilityMatrix {
      */
     public ArrayList<EntityID> getAgents() {
         return _agents;
+    }
+
+    /**
+     * Get the utility obtained by the given solution.
+     * 
+     * @param solution solution to evaluate.
+     * @return utility obtained by this solution.
+     */
+    public double getUtility(Assignment solution) {
+        double utility = 0;
+
+        HashMap<EntityID, Integer> nAgentsPerTarget = new HashMap<>();
+        for (EntityID agent : _agents) {
+            EntityID target = solution.getAssignment(agent);
+            utility += getUtility(agent, target);
+
+            // Add 1 to the target count
+            int nAgents = nAgentsPerTarget.containsKey(target)
+                    ? nAgentsPerTarget.get(target) : 0;
+            nAgentsPerTarget.put(target, nAgents+1);
+        }
+
+        // Check violated constraints
+        for (EntityID target : nAgentsPerTarget.keySet()) {
+            int assigned = nAgentsPerTarget.get(target);
+            int max = getRequiredAgentCount(target);
+            /*if (assigned > max) {
+                return Double.NEGATIVE_INFINITY;
+            }*/
+        }
+
+        return utility;
+    }
+
+    /**
+     * Get the number of violated constraints in this solution.
+     *
+     * @param solution solution to evaluate.
+     * @return number of violated constraints.
+     */
+    public int getViolations(Assignment solution) {
+        int count = 0;
+        
+        HashMap<EntityID, Integer> nAgentsPerTarget = new HashMap<>();
+        for (EntityID agent : _agents) {
+            EntityID target = solution.getAssignment(agent);
+            int nAgents = nAgentsPerTarget.containsKey(target)
+                    ? nAgentsPerTarget.get(target) : 0;
+            nAgentsPerTarget.put(target, nAgents+1);
+        }
+
+        // Check violated constraints
+        for (EntityID target : nAgentsPerTarget.keySet()) {
+            int assigned = nAgentsPerTarget.get(target);
+            int max = getRequiredAgentCount(target);
+            if (assigned > max) {
+                Logger.warn("Violation! Target {} needs {} agents, got {}", target, max, assigned);
+                count += assigned - max;
+            }
+        }
+
+        return count;
     }
     
 }

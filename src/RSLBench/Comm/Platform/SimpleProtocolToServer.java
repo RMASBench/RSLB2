@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import rescuecore2.standard.entities.Human;
 import rescuecore2.worldmodel.EntityID;
 import RSLBench.Assignment.Assignment;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -110,30 +111,31 @@ public class SimpleProtocolToServer
 
     public static byte[] buildAssignmentMessage(Assignment A, boolean addHeader)
     {
-        // Build the allocation message
-    	ArrayList<EntityID> agents = A.getAgents();
+        if (A == null) {
+            return null;
+        }
+
+        // Build the allocation array
+    	List<EntityID> agents = new ArrayList<>(A.getAgents());
         int[] intArray = new int[agents.size() * 2];
         for (int i = 0; i < agents.size(); i++)
         {
-        	EntityID agent = agents.get(i);
+            EntityID agent = agents.get(i);
             EntityID target = A.getAssignment(agents.get(i));
-            if (target == Assignment.UNKNOWN_TARGET_ID)
-                continue;
-            if (Logger.isDebugEnabled()) {
-            	Logger.debug("A " + agent.getValue() + " ---> T " + target.getValue());
+            if (target == Assignment.UNKNOWN_TARGET_ID) {
+                Logger.error("Agent {} is not assigned to any target!", agent);
             }
+            Logger.debug("Agent {} assigned to fire {}.", agent, target);
             intArray[i * 2] = agent.getValue();
             intArray[i * 2 + 1] = target.getValue();
         }
-        if (addHeader)
-        {
+
+        if (addHeader) {
             byte[] bArray = SimpleProtocolToServer.intArrayToByteArray(intArray, 1);
             bArray[0] = SimpleProtocolToServer.STATION_ASSIGNMENT_MESSAGE;
             return bArray;
         }
-        else
-        {
-            return SimpleProtocolToServer.intArrayToByteArray(intArray, 0);
-        }
+        
+        return SimpleProtocolToServer.intArrayToByteArray(intArray, 0);
     }    
 }

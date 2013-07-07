@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 package RSLBench.AAMAS12;
-import RSLBench.Assignment.DecentralAssignment;
+import RSLBench.Assignment.DCOPAgent;
 import rescuecore2.worldmodel.EntityID;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Comm.Message;
@@ -13,12 +13,13 @@ import RSLBench.Comm.CommunicationLayer;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import rescuecore2.config.Config;
 
 /**
  *
  * @author riccardo
  */
-public class Dummy implements DecentralAssignment{
+public class Dummy implements DCOPAgent{
     private EntityID _agentID;
     private EntityID _targetID;
     private UtilityMatrix _utility;
@@ -28,7 +29,7 @@ public class Dummy implements DecentralAssignment{
      * @param utility: the utility matrix for all agents that are within communication range 
      */
     @Override
-    public void initialize(EntityID agentID, UtilityMatrix utility){
+    public void initialize(Config config, EntityID agentID, UtilityMatrix utility){
         _agentID = agentID;
         _utility = utility;   
         _targetID = Assignment.UNKNOWN_TARGET_ID;

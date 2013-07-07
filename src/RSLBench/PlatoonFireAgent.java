@@ -39,7 +39,6 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
     private int maxWater;
     private int maxDistance;
     private int maxPower;
-    private int firstTimeToAct;
     private int assignedTarget = -1;
 
     public PlatoonFireAgent() {
@@ -57,8 +56,6 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         model.indexClass(StandardEntityURN.BUILDING, StandardEntityURN.REFUGE);
         maxWater = config.getIntValue(MAX_WATER_KEY);
         maxDistance = config.getIntValue(MAX_DISTANCE_KEY);
-        firstTimeToAct = Math.max(config.getIntValue(IGNORE_ACT_UNTIL) + 1,
-                config.getIntValue("experiment_start_time", 25));
         maxPower = config.getIntValue(MAX_POWER_KEY);
         Logger.info("Sample fire brigade connected: max extinguish distance = "
                 + maxDistance + ", max power = " + maxPower + ", max tank = "
@@ -67,10 +64,12 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
 
     @Override
     protected void think(int time, ChangeSet changed, Collection<Command> heard) {
-        if (time == Params.IGNORE_AGENT_COMMANDS_KEY_UNTIL) {
+
+        if (time == config.getIntValue(kernel.KernelConstants.IGNORE_AGENT_COMMANDS_KEY)) {
             // Subscribe to station channel
-            sendSubscribe(time, Params.STATION_CHANNEL);
+            sendSubscribe(time, Constants.STATION_CHANNEL);
         }
+        
         for (Command next : heard) {
             if (next instanceof AKSpeak) {
                 AKSpeak speak = (AKSpeak) next;
@@ -89,10 +88,11 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
             }
         }
 
-        if (time < firstTimeToAct)
+        if (time < config.getIntValue(Constants.KEY_START_EXPERIMENT_TIME)) {
             return;
+        }
 
-        if (time == Params.END_EXPERIMENT_TIME)
+        if (time == config.getIntValue(Constants.KEY_END_EXPERIMENT_TIME))
             System.exit(0);
 
         // Start to act
@@ -100,7 +100,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         FireBrigade me = me();
 
         // / Send position to station
-        sendSpeak(time, Params.PLATOON_CHANNEL, SimpleProtocolToServer
+        sendSpeak(time, Constants.PLATOON_CHANNEL, SimpleProtocolToServer
                 .getPosMessage(me()));
 
         // Are we currently filling with water?
@@ -168,7 +168,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         } 
         
         // If agents can independently choose targets, do it
-        if (!Params.ONLY_ACT_ON_ASSIGNED_TARGETS) {
+        if (!config.getBooleanValue(Constants.KEY_AGENT_ONLY_ASSIGNED)) {
             for (EntityID next : burning) {
                 List<EntityID> path = planPathToFire(next);
                 if (path != null) {

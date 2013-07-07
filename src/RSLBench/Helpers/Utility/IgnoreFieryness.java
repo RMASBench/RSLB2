@@ -4,7 +4,7 @@
  */
 package RSLBench.Helpers.Utility;
 
-import RSLBench.Params;
+import RSLBench.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.standard.entities.Building;
@@ -44,8 +44,8 @@ public class IgnoreFieryness extends AbstractUtilityFunction {
             return 0;
         }
         
-        double area = b.getTotalArea();
-        double neededAgents = Math.ceil(area / (double) Params.AREA_COVERED_BY_FIRE_BRIGADE);
+        int area = b.getTotalArea();
+        double neededAgents = Math.ceil(area / config.getFloatValue(Constants.KEY_AREA_COVERED_BY_FIRE_BRIGADE));
         return (int) Math.round(neededAgents);
     }
     

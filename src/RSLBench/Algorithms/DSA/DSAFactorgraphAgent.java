@@ -4,33 +4,33 @@
  */
 package RSLBench.Algorithms.DSA;
 
-import RSLBench.AAMAS12.TargetScores;
 import RSLBench.Assignment.Assignment;
 import RSLBench.Helpers.Utility.UtilityMatrix;
-import RSLBench.Params;
+import RSLBench.Constants;
 import java.util.*;
+import rescuecore2.config.Config;
 import rescuecore2.worldmodel.EntityID;
 /**
  * Class that implements the DSA algorithm according to RMASBench specification,
  * but, instead of considering all the targets, it considers the targets that MaxSum
  * would consider after the creation of the factorgraph.
  */
-public class DSAFactorgraph extends DSA {
+public class DSAFactorgraphAgent extends DSAAgent {
         private ArrayList<EntityID> myFunctions= new ArrayList<EntityID>();
-        private static ArrayList<DSAFactorgraph> agents = new ArrayList<DSAFactorgraph>();
+        private static ArrayList<DSAFactorgraphAgent> agents = new ArrayList<DSAFactorgraphAgent>();
         private static HashMap<EntityID, EntityID> _targetController = new HashMap<EntityID, EntityID>();
         private static HashMap<EntityID, ArrayList<EntityID>> _agentNeighbours= new HashMap<EntityID, ArrayList<EntityID>>();
         private static HashMap<EntityID, ArrayList<EntityID>> _targetNeighbours= new HashMap<EntityID, ArrayList<EntityID>>();
         private static ArrayList<EntityID> _assignedFunctions = new ArrayList<EntityID>();
         private static HashMap<EntityID, ArrayList<EntityID>> _consideredVariables = new HashMap<EntityID, ArrayList<EntityID>>();
         private int _funPerAgent=4;
-        private int _dependencies=Params.MAXSUM_NUMBER_OF_NEIGHBOURS;
+        private int _dependencies;
         private UtilityMatrix _oldUtilityMatrix = null;
         private static boolean toReset= false;
         //private static int _number = 1;
         
         @Override
-        public void initialize(EntityID agentID, UtilityMatrix utilityM) {
+        public void initialize(Config config, EntityID agentID, UtilityMatrix utilityM) {
             //_number++;
             this.resetStructures();
             
@@ -39,7 +39,8 @@ public class DSAFactorgraph extends DSA {
             _oldUtilityMatrix = utilityM;
             _targetScores = new TargetScores();
             _targetID = Assignment.UNKNOWN_TARGET_ID;
-            
+            this.config = config;
+            _dependencies = config.getIntValue(Constants.KEY_MAXSUM_NEIGHBORS);
             
             agents.add(this);
             List<EntityID> targets = utilityM.getNBestTargets(_utilityM.getNumTargets(), _agentID);
@@ -71,10 +72,10 @@ public class DSAFactorgraph extends DSA {
         
         if (agents.size() == _utilityM.getNumAgents()) {
             ArrayList<EntityID> agentsIDs = new ArrayList<EntityID>();
-            for (DSAFactorgraph agent: agents) {
+            for (DSAFactorgraphAgent agent: agents) {
                 agentsIDs.add(agent.getAgentID());
             }
-            for (DSAFactorgraph agent: agents) {
+            for (DSAFactorgraphAgent agent: agents) {
                 /*try {
                    agent._utilityM = new UtilityMatrix(agentsIDs, _agentNeighbours.get(agent.getAgentID()), _utilityM.getAgentLocations(), _utilityM.getWorld());
                 } catch (NullPointerException n) {
@@ -101,7 +102,7 @@ public class DSAFactorgraph extends DSA {
            
             }
                     
-            if (DSA._random == null) {
+            if (DSAAgent._random == null) {
              _random = new Random();
             }
         }
@@ -228,7 +229,7 @@ public class DSAFactorgraph extends DSA {
             if (!neighbours.contains(neighbour))
                     neighbours.add(neighbour);
         }
-        for (DSAFactorgraph agent: agents) {
+        for (DSAFactorgraphAgent agent: agents) {
             
         if (agent.getAgentID().getValue() == agentID.getValue()) {
         for (EntityID function: agent.myFunctions) {
@@ -252,7 +253,7 @@ public class DSAFactorgraph extends DSA {
     private void resetStructures() {
         if (toReset) {
             toReset = false;
-        agents = new ArrayList<DSAFactorgraph>();
+        agents = new ArrayList<DSAFactorgraphAgent>();
         _targetController = new HashMap<EntityID, EntityID>();
         _agentNeighbours = new HashMap<EntityID, ArrayList<EntityID>>();
         _assignedFunctions = new ArrayList<EntityID>();

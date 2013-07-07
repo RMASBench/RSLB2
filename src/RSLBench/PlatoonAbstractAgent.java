@@ -40,7 +40,7 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
     //private static final String SAY_COMMUNICATION_MODEL = StandardCommunicationModel.class.getName();
     private static final String SPEAK_COMMUNICATION_MODEL = ChannelCommunicationModel.class.getName();
     
-    private static final String KEY_SEARCH_CLASS = "search.class";
+    public static final String KEY_SEARCH_CLASS = "agent.search.class";
 
     /**
        Whether to use AKSpeak messages or not.
@@ -103,9 +103,6 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
         
         // load correct search algorithm
         search = selectSearchAlgorithm();
-
-        Params.ONLY_ACT_ON_ASSIGNED_TARGETS = config.getBooleanValue("only_assigned_targets");
-        
         connectivityGraph = new Graph(model);
         distanceMatrix = new DistanceInterface(model);
         

@@ -1,103 +1,67 @@
 package RSLBench.Assignment;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import rescuecore2.worldmodel.EntityID;
 
 /**
  * This class represents the assignment map between agents and targets.
  */
-public class Assignment
-{
-    // Stores the number of targets assigned to an agent
-    private HashMap<EntityID, Integer> _targetSelectionCounts;
-    // Mapping from Agents to Targets
-    private HashMap<EntityID, EntityID> _assignment;
-    private ArrayList<EntityID> _agents;
-    private ArrayList<EntityID> _targets;
-    
+public class Assignment {
+
+    /** EntityID to use when an agent is not assigned to any fire */
     public static final EntityID UNKNOWN_TARGET_ID = new EntityID(-1);
-    
-    public Assignment()
-    {
-        _targetSelectionCounts = new HashMap<EntityID, Integer>();
-        _assignment = new HashMap<EntityID, EntityID>();
-        _agents = new ArrayList<EntityID>();
-        _targets = new ArrayList<EntityID>();
+
+    // Mapping from Agents to Targets
+    private HashMap<EntityID, EntityID> map;
+
+    /**
+     * Build a new agents to fires assignment
+     */
+    public Assignment() {
+        map = new HashMap<>();
     }
     
     /**
-     * Computes the assignment process.
-     * @param agentID: the agent ID
-     * @param targetID: the target ID
+     * Adds an agent to fire assignment.
+     * 
+     * @param agent the agent ID
+     * @param target the target ID
      */
-    public void assign(EntityID agentID, EntityID targetID)
-    {
-    	_assignment.put(agentID, targetID);    	
-        if (_targetSelectionCounts.containsKey(targetID)) {
-           _targetSelectionCounts.put(targetID, _targetSelectionCounts.get(targetID) + 1);
-        }
-        else {
-           _targetSelectionCounts.put(targetID, 1);
-        }
-        _agents.add(agentID);
-        _targets.add(targetID);
+    public void assign(EntityID agent, EntityID target) {
+    	map.put(agent, target);
     }
     
     /**
      * Returns the assignment of an agent
-     * @param agentID: the agent ID
+     * @param agent the agent ID
      * @return the entity ID of the target assigned to the agent represented by the agentID
      */
-    public EntityID getAssignment(EntityID agentID)
-    {
-        if (_assignment.containsKey(agentID)) 
-        	return _assignment.get(agentID);        
-        else 
-        	return UNKNOWN_TARGET_ID;
-        
-    }
-
-    /**
-     * Returns the number of targets assigned to an agent
-     * @param targetID: the target ID
-     * @return the number of targets assigned to an agent
-     */
-    public int getTargetSelectionCount(EntityID targetID)
-    {
-        if (_targetSelectionCounts.containsKey(targetID)) {
-            return _targetSelectionCounts.get(targetID);
+    public EntityID getAssignment(EntityID agent) {
+        EntityID result = map.get(agent);
+        if (result == null) {
+            result = UNKNOWN_TARGET_ID;
         }
-        else return 0;
+        return result;
     }
 
     /**
      * Returns an arraylist of the entityID's of the agents
      * @return entityID of all the agents
      */
-    public ArrayList<EntityID> getAgents() {
-    	return _agents;
+    public Set<EntityID> getAgents() {
+    	return map.keySet();
     }
     
-    /**
-     * Returns an arraylist of the entityID's of the targets
-     * @return entityID of all the targets
-     */
-    public ArrayList<EntityID> getTargets() {
-    	return _targets;
-    }
     @Override
-    /**
-     * @see Object::toString()
-     */
     public String toString()
     {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         buffer.append("Assignments:\n");
-        Iterator<Entry<EntityID,EntityID>> it = _assignment.entrySet().iterator();
+        Iterator<Entry<EntityID,EntityID>> it = map.entrySet().iterator();
         while (it.hasNext()) {
         	Entry<EntityID,EntityID> pair = it.next();        	        	
         	buffer.append("agent ").append(pair.getKey()).append(" > ").append(pair.getValue()).append("\n");        	

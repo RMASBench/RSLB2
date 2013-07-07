@@ -150,7 +150,7 @@ function processArgs {
 # Start the kernel
 function startKernel {
     # Extract the number of steps from the configuration
-    STEPS=$(configFetchSetting $CONFIGDIR/$ALGORITHM.cfg "experiment_end_time")
+    STEPS=$(configFetchSetting $CONFIGDIR/$ALGORITHM.cfg "experiment.end_time")
 
     echo "Using config $SCONFIGDIR/kernel.cfg"
     KERNEL_OPTIONS="-c $SCONFIGDIR/kernel.cfg"
@@ -225,7 +225,7 @@ function startSims {
 
 function startRslb2 {
     JVM_OPTS="-Xmx2G -Dlog4j.configurationFile=file://$BASEDIR/supplement/log4j2.xml -Djava.awt.headless=true"
-    OPTS="-c $SCONFIGDIR/kernel.cfg -c $CONFIGDIR/$ALGORITHM.cfg --results.file=$ALGORITHM-$$.dat"
+    OPTS="-c $SCONFIGDIR/kernel.cfg -c $CONFIGDIR/$ALGORITHM.cfg --results.path=results/$$-"
     OPTS="$OPTS --gis.map.dir=$MAP --gis.map.scenario=$SCENARIO"
     launch -jar $BASEDIR/dist/RSLB2.jar $OPTS
 }

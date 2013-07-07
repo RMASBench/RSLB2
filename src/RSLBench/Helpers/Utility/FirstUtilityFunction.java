@@ -4,7 +4,7 @@
  */
 package RSLBench.Helpers.Utility;
 
-import RSLBench.Params;
+import RSLBench.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.standard.entities.Building;
@@ -38,20 +38,17 @@ public class FirstUtilityFunction extends AbstractUtilityFunction {
         }
 
         double distance = world.getDistance(location, target);
-        utility = utility / Math.pow(distance * Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY, 2.0);
+        double tradeoff = config.getFloatValue(Constants.KEY_UTIL_TRADEOFF);
+        utility = utility / Math.pow(distance * tradeoff, 2.0);
         return utility;
     }
 
     @Override
     public int getRequiredAgentCount(EntityID target) {
         Building b = (Building) world.getEntity(target);
-        if (b == null) {
-            Logger.error("Requested the agent count of a non-building target {}.", target);
-            throw new RuntimeException("Requested the agent count of a non-building target");
-        }
         
-        double area = (double) b.getTotalArea();
-        double neededAgents = Math.ceil(area / (double) Params.AREA_COVERED_BY_FIRE_BRIGADE);
+        int area = b.getTotalArea();
+        double neededAgents = Math.ceil(area / config.getFloatValue(Constants.KEY_AREA_COVERED_BY_FIRE_BRIGADE));
 
         if (b.getFieryness() == 1) {
             neededAgents *= 1.5;
@@ -60,12 +57,7 @@ public class FirstUtilityFunction extends AbstractUtilityFunction {
         }
         //Logger.debugColor("BASE: " + base + " | FIERYNESS: " + b.getFieryness() + " | NEEEDED AGENTS: " + neededAgents, Logger.BG_RED);
 
-        int result = (int) Math.round(neededAgents);
-        if (result < 1) {
-            Logger.warn("Computed {} required agents for a fire. Correcting to 1.", result);
-            result = 1;
-        }
-        return result;
+        return (int) Math.round(neededAgents);
     }
     
 }

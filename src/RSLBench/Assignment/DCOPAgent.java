@@ -7,20 +7,22 @@ import rescuecore2.worldmodel.EntityID;
 import RSLBench.Comm.Message;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Comm.CommunicationLayer;
+import rescuecore2.config.Config;
 /**
  * This interface implements the actions that a single agent can perform in a DCOP algorithm.
  * The implementations of this interface are executed
  * by the implementations of the AssignmentInterface interface.
  */
-public interface DecentralAssignment
+public interface DCOPAgent
 {
     /**
      * This method initializes the agent.
+     * @param config: configuration being used by the solver.
      * @param agentID: the ID of the agent (as defined in the world model).
      * @param utility: a matrix that contains all the agent-target utilities
      * (for all the agents and alla the targets). 
      */
-    public void initialize(EntityID agentID, UtilityMatrix utility);
+    public void initialize(Config config, EntityID agentID, UtilityMatrix utility);
     
     /**
      * Considering all the messages received from other agents, tries to find

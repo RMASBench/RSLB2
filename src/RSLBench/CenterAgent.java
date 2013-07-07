@@ -14,11 +14,18 @@ import rescuecore2.standard.messages.AKSpeak;
 import rescuecore2.worldmodel.ChangeSet;
 import rescuecore2.worldmodel.EntityID;
 
-import RSLBench.Assignment.AssignmentSolver;
+import RSLBench.Assignment.Assignment;
+import RSLBench.Assignment.CompositeSolver;
+import RSLBench.Assignment.Solver;
 import RSLBench.Comm.Platform.SimpleProtocolToServer;
 import RSLBench.Helpers.Logging.Markers;
+import RSLBench.Helpers.Utility.UtilityFactory;
+import RSLBench.Helpers.Utility.UtilityMatrix;
+import kernel.KernelConstants;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import rescuecore2.config.NoSuchConfigOptionException;
 
 /**
  * It is a "fake" agent that does not appears in the graphic simulation, but that serves as a "station"
@@ -28,12 +35,19 @@ import org.apache.logging.log4j.Logger;
 public class CenterAgent extends StandardAgent<Building>
 {
     private static final Logger Logger = LogManager.getLogger(CenterAgent.class);
-    
-    private AssignmentSolver assignmentSolver = null;
-    private ArrayList<EntityID> agents = new ArrayList<>();
-    private HashMap<EntityID, EntityID> agentLocations = new HashMap<>(); 
 
-    protected CenterAgent() {
+    /** Config key to the (fully qualified) class of the solver to run */
+    public static final String CONF_KEY_SOLVER_CLASS = "solver.class";
+
+    /** Config key to set the solving classes to test **/
+    public static final String CONF_KEY_TEST_CLASSES = "test.classes";
+    
+    private Solver solver = null;
+    private ArrayList<EntityID> agents = new ArrayList<>();
+    private HashMap<EntityID, EntityID> agentLocations = new HashMap<>();
+    private Assignment lastAssignment = null;
+
+    public CenterAgent() {
     	Logger.info(Markers.BLUE, "Center Agent CREATED");
     }
     
@@ -42,23 +56,92 @@ public class CenterAgent extends StandardAgent<Building>
     {
         return "Center Agent";
     }
-    
+
+    /**
+     * Sets up the center agent.
+     *
+     * At this point, the center agent already has a world model, and has
+     * laoded the kernel's configuration. Hence, it is ready to setup the
+     * assignment solver(s).
+     */
+    @Override
+    public void postConnect() {
+        super.postConnect();
+        initializeParameters();
+        solver = buildSolver();
+        solver.initialize(model, config);
+    }
+
+    private void initializeParameters() {
+        // Set the utility function to use
+        String utilityClass = config.getValue(Constants.KEY_UTILITY_CLASS);
+        UtilityFactory.setClass(utilityClass);
+
+        // Extract the map and scenario names
+        String map = config.getValue("gis.map.dir");
+        map = map.substring(map.lastIndexOf("/")+1);
+        config.setValue(Constants.KEY_MAP_NAME, map);
+        String scenario = config.getValue("gis.map.scenario");
+        scenario = scenario.substring(scenario.lastIndexOf("/")+1);
+        config.setValue(Constants.KEY_MAP_SCENARIO, scenario);
+
+        // The experiment can not start before the agent ignore time
+        int ignore = config.getIntValue(kernel.KernelConstants.IGNORE_AGENT_COMMANDS_KEY);
+        int start  = config.getIntValue(Constants.KEY_START_EXPERIMENT_TIME);
+        if (ignore > start) {
+            Logger.error("The experiment can't start at time {} because agent commands are ignored until time {}", start, ignore);
+            System.exit(0);
+        }
+    }
+
+    private Solver buildSolver() {
+        // Load main solver class
+        solver = buildSolver(config.getValue(CONF_KEY_SOLVER_CLASS));
+        Logger.info("Using main solver: {}", solver.getIdentifier());
+
+        // And any additional test solvers
+        try {
+            String[] testClasses = config.getValue(CONF_KEY_TEST_CLASSES).split("[,\\s]+");
+            if (testClasses.length > 0) {
+                CompositeSolver comp = new CompositeSolver(solver);
+                for (String solverClass : testClasses) {
+                    Solver s = buildSolver(solverClass);
+                    Logger.info("Also testing solver: {}", s.getIdentifier());
+                    comp.addSolver(s);
+                }
+                solver = comp;
+            }
+        } catch (NoSuchConfigOptionException ex) {}
+        return solver;
+    }
+
+    private Solver buildSolver(String clazz) {
+        try {
+            Class<?> c = Class.forName(clazz);
+            Object s = c.newInstance();
+            if (s instanceof Solver) {
+                return (Solver)s;
+            }
+
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+            Logger.catching(Level.ERROR, ex);
+        }
+
+        Logger.error("Unable to initialize solver {}", clazz);
+        System.exit(1);
+        return null;
+    }
 
     @Override
     protected void think(int time, ChangeSet changed, Collection<Command> heard)
-    {   
-    	// Initialize solver
-        if (assignmentSolver == null) {
-            assignmentSolver = new AssignmentSolver(model, config);
-        }
-
+    {
         Collection<EntityID> burning = getBurningBuildings();
         Logger.info(Markers.WHITE, "TIME IS {} | {} known burning buildings.",
                 new Object[]{time, burning.size()});
         		
         // Subscribe to station channels
-        if (time == Params.IGNORE_AGENT_COMMANDS_KEY_UNTIL) {
-            sendSubscribe(time, Params.PLATOON_CHANNEL);
+        if (time == config.getIntValue(KernelConstants.IGNORE_AGENT_COMMANDS_KEY)) {
+            sendSubscribe(time, Constants.PLATOON_CHANNEL);
         }
 
         // Process all incoming messages
@@ -79,9 +162,23 @@ public class CenterAgent extends StandardAgent<Building>
             sendRest(time);
         }
 
+        int startTime = config.getIntValue(Constants.KEY_START_EXPERIMENT_TIME);
+        if (time < startTime) {
+            Logger.debug("Waiting until experiment start time ({})", startTime);
+            return;
+        }
+
+        // Stop the simulation if all fires have been extinguished
+        if (burning.isEmpty()) {
+            Logger.info("All fires extinguished. Good job!");
+            System.exit(0);
+        }
+
         // Compute assignment
         ArrayList<EntityID> targets = new ArrayList<>(burning);
-        byte[] message = assignmentSolver.act(time, agents, targets, agentLocations, model);
+        UtilityMatrix utility = new UtilityMatrix(config, agents, targets, lastAssignment, agentLocations, model);
+        lastAssignment = solver.solve(time, utility);
+        byte[] message = SimpleProtocolToServer.buildAssignmentMessage(lastAssignment, true);
 
         // Send out assignment
         if (message != null)
@@ -95,7 +192,7 @@ public class CenterAgent extends StandardAgent<Building>
                 Logger.info(buf.toString());
             }
 
-            sendSpeak(time, Params.STATION_CHANNEL, message);
+            sendSpeak(time, Constants.STATION_CHANNEL, message);
         }
     }
     

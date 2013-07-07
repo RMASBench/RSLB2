@@ -5,6 +5,7 @@
 package RSLBench.Helpers.Utility;
 
 import java.util.HashMap;
+import rescuecore2.config.Config;
 import rescuecore2.standard.entities.StandardWorldModel;
 import rescuecore2.worldmodel.EntityID;
 
@@ -15,6 +16,12 @@ import rescuecore2.worldmodel.EntityID;
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
 public interface UtilityFunction {
+
+    /**
+     * Set the configuration being used.
+     * @param config configuration being used.
+     */
+    public void setConfig(Config config);
     
     /**
      * Set the world model being evaluated.

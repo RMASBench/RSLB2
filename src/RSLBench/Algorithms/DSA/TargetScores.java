@@ -1,4 +1,4 @@
-package RSLBench.AAMAS12;
+package RSLBench.Algorithms.DSA;
 
 import RSLBench.Helpers.Logging.Markers;
 import java.util.HashMap;

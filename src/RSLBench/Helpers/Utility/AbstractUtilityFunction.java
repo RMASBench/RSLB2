@@ -5,6 +5,7 @@
 package RSLBench.Helpers.Utility;
 
 import java.util.HashMap;
+import rescuecore2.config.Config;
 import rescuecore2.standard.entities.StandardWorldModel;
 import rescuecore2.worldmodel.EntityID;
 
@@ -16,6 +17,7 @@ import rescuecore2.worldmodel.EntityID;
 public abstract class AbstractUtilityFunction implements UtilityFunction {
     protected HashMap<EntityID, EntityID> agentLocations;
     protected StandardWorldModel world;
+    protected Config config;
 
     @Override
     public void setAgentLocations(HashMap<EntityID, EntityID> locations) {
@@ -25,6 +27,11 @@ public abstract class AbstractUtilityFunction implements UtilityFunction {
     @Override
     public void setWorld(StandardWorldModel world) {
         this.world = world;
+    }
+
+    @Override
+    public void setConfig(Config config) {
+        this.config = config;
     }
     
 }

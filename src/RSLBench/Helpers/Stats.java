@@ -1,63 +1,90 @@
 package RSLBench.Helpers;
 
-import RSLBench.Assignment.AssignmentSolver;
+import RSLBench.Assignment.Solver;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.ArrayList;
-
-import RSLBench.Params;
-import rescuecore2.Timestep;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import rescuecore2.config.Config;
 import rescuecore2.log.Logger;
 
-import rescuecore2.standard.entities.Building;
-import rescuecore2.standard.entities.StandardEntity;
-import rescuecore2.standard.entities.StandardEntityConstants;
-import rescuecore2.standard.entities.StandardEntityURN;
-import rescuecore2.standard.entities.StandardWorldModel;
 import rescuecore2.standard.score.BuildingDamageScoreFunction;
 /**
  * This class collects and writes the stats in the fileName file (default logs/basePackage_groupName_className.dat).
  */
 public class Stats
 {
-    private ArrayList<Integer> violatedConstraintsHistory = new ArrayList<>();
-    private ArrayList<Long> computationTimeHistory = new ArrayList<>();
-    private ArrayList<Long> messagesInBytesHistory = new ArrayList<>();
-    private ArrayList<Integer> NCCCHistory = new ArrayList<>();
-    private int windowSize = 20;
     private Config config;
+    private Solver solver;
     private BuildingDamageScoreFunction scoreFunction;
+    private Map<String, Object> stats = new LinkedHashMap<>();
+    private String fileName;
+    private boolean headerWritten;
 
-    public Stats(Config config) {
+    public Stats() {}
+
+    public void initialize(Config config, Solver solver, String fileName) {
         this.config = config;
+        this.fileName = fileName;
+        this.solver = solver;
+        this.headerWritten = false;
+
         this.scoreFunction = new BuildingDamageScoreFunction();
         this.scoreFunction.initialise(null, config);
+    }
+
+    /**
+     * Stores a reported value for this step.
+     * 
+     * @param statKey Name of the statistic being reported
+     * @param statValue Value of that statistic for the current step
+     */
+    public void report(String statKey, Object statValue) {
+        stats.put(statKey, statValue);
+    }
+
+    /**
+     * Writes the current step's statistics to the report file.
+     */
+    public void reportStep() {
+        if (!headerWritten) {
+            writeHeader();
+        }
+
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(fileName, true))) {
+            String prefix = "";
+            for (String statKey : stats.keySet()) {
+                out.write(prefix);
+                prefix = "\t";
+                out.write(stats.get(statKey).toString());
+            }
+            out.newLine();
+            out.close();
+        } catch (IOException e) {
+            Logger.error(e.getLocalizedMessage(), e);
+        }
     }
     
     /**
      * Writes the header of the file and the names of the metrics
      * @param fileName:name of the file 
      */
-    public void writeHeader(String fileName)
-    {   
-         try (BufferedWriter out = new BufferedWriter(new FileWriter(fileName, false))) {
-            writeLine(out, "# experiment_start_time: " + Params.START_EXPERIMENT_TIME);
-            writeLine(out, "# experiment_end_time: " + Params.END_EXPERIMENT_TIME);
-            writeLine(out, "# ignore_agents_commands_until: " + Params.IGNORE_AGENT_COMMANDS_KEY_UNTIL);
-            writeLine(out, "# only_assigned_targets: " + Params.ONLY_ACT_ON_ASSIGNED_TARGETS);
-            writeLine(out, "# area_covered_by_fire_brigade: " + Params.AREA_COVERED_BY_FIRE_BRIGADE);
-            writeLine(out, "# trade_off_factor_travel_cost_and_utility: " + Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY);
-            writeLine(out, "# max_iterations: " + Params.MAX_ITERATIONS);
-            writeLine(out, "# hysteresis_factor: " + Params.HYSTERESIS_FACTOR);
-            writeLine(out, "# utility.class: " + config.getValue(AssignmentSolver.CONF_KEY_UTILITY_CLASS));
-            writeLine(out, "# solver.class: " + config.getValue(AssignmentSolver.CONF_KEY_SOLVER_CLASS));
-            writeLine(out, "# gis.map.dir: " + config.getValue("gis.map.dir"));
-            writeLine(out, "# gis.map.scenario: " + config.getValue("gis.map.scenario"));
-            writeLine(out, "Time  NumBuildings  NumBurining  numOnceBurned  violatedConstraints MAViolatedConstraints computationTime MAComputationTime numberOfMessages messagesInBytes MAMessageInBytes averageNCCC MAAverageNCCC messagesForFactorgraph ");
+    public void writeHeader() {
+        headerWritten = true;
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(fileName, false))) {
+            for (String key : solver.getUsedConfigurationKeys()) {
+                writeLine(out, "# " + key + ": " + config.getValue(key));
+            }
+
+            String prefix = "";
+            for (String statKey : stats.keySet()) {
+                out.write(prefix);
+                prefix = "\t";
+                out.write(statKey);
+            }
+            out.newLine();
+            out.close();
         } catch (IOException e) {
             Logger.error(e.getLocalizedMessage(), e);
         }
@@ -67,81 +94,5 @@ public class Stats
         out.write(line);
         out.newLine();
     }
-    
-    
-    /**
-     * Writes the metrics of teh benchmark to file
-     * @param fileName: the name of the file
-     * @param time: the number of the step of the computation
-     * @param world: the model of the world
-     * @param violatedConstraints: the number of violated constraints during a step of computation
-     * @param computationTime: the time of computation in millisecond for each timestep
-     * @param messagesInBytes: the size of the messages in bytes per timestep
-     * @param averageNccc: the average number of nccc per timestep (non concurrent contraint checks)
-     * @param nMessages: the number of messages exchanged between the agents per timestep
-     * @param nOtherMessages: the number of other messages (messages exchanged between the agents
-     * before or after the decisional process)
-     */
-    public void writeStatsToFile(String fileName, int time, StandardWorldModel world, int violatedConstraints, long computationTime, long messagesInBytes, int averageNccc, int nMessages, int nOtherMessages)
-    {
-        int numBuildings = 0;
-        int numBurning = 0;
-        int numOnceBurned = 0;
-        violatedConstraintsHistory.add(violatedConstraints);
-        computationTimeHistory.add(computationTime);
-        messagesInBytesHistory.add(messagesInBytes);
-        NCCCHistory.add(averageNccc);
-        
-        // Count burning and damaged buildings
-        Collection<StandardEntity> allBuildings = world.getEntitiesOfType(StandardEntityURN.BUILDING);
-        for (Iterator<StandardEntity> it = allBuildings.iterator(); it.hasNext();)
-        {
-            Building building = (Building) it.next();
-            numBuildings++;
 
-            if (building.isOnFire()) {
-                numBurning++;
-            }
-            
-            if (building.getFierynessEnum() != StandardEntityConstants.Fieryness.UNBURNT) {
-                numOnceBurned++;
-            }
-        }
-        
-        // Compute the score function
-        scoreFunction.score(world, new Timestep(time));
-
-        try (BufferedWriter out = new BufferedWriter(new FileWriter(fileName, true))) {
-            writeLine(out, time + " " + numBuildings + " " + numBurning + " " + numOnceBurned + " " + violatedConstraints + " " + computeMovingAverage(violatedConstraintsHistory) + " " + computationTime + " " + computeMovingAverage(computationTimeHistory) + " " + nMessages + " " + messagesInBytes + " " + +computeMovingAverage(messagesInBytesHistory) + " " + averageNccc + " " + computeMovingAverage(NCCCHistory) + " " + nOtherMessages);
-        } catch (IOException e) {
-            Logger.error(e.getLocalizedMessage(), e);
-        }
-    }
-
-    /**
-     * Utility method that computes the moving average
-     * @param data: the stat from which it is computed the moving average
-     * @return the moving average of the given stat
-     */
-    public float computeMovingAverage(ArrayList<? extends Number> data) {
-        int windowActualSize = Math.min(data.size(), windowSize);
-        if (data.get(0) instanceof Integer){
-            int sum = 0;
-            for (int i = 0; i < windowActualSize; i++) {
-                sum += (Integer)data.get(data.size() - (i+1));
-
-            }
-        float avg = sum/windowActualSize;
-        return avg;
-        }  
-        else {
-            long sum = 0;
-            for (int i = 0; i < windowActualSize; i++) {
-                sum += (Long)data.get(data.size() - (i+1));
-
-        }
-        float avg = sum/windowActualSize;
-        return avg;
-        }
-    }
 }

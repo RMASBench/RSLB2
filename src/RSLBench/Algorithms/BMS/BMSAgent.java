@@ -67,7 +67,7 @@ import rescuecore2.config.Config;
 public class BMSAgent implements DCOPAgent {
     private static final Logger Logger = LogManager.getLogger(BMSAgent.class);
     
-    private static final double HARD_CONSTRAINT_UTILITY = -10000;
+    private static final double HARD_CONSTRAINT_UTILITY = Double.NEGATIVE_INFINITY;
     private static final MaxOperator maxOperator = new Maximize();
     
     private EntityID id;

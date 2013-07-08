@@ -13,6 +13,11 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.Timestep;
+import rescuecore2.standard.StandardConstants;
+import rescuecore2.standard.entities.Building;
+import rescuecore2.standard.entities.StandardEntity;
+import rescuecore2.standard.entities.StandardEntityConstants;
+import rescuecore2.standard.entities.StandardEntityURN;
 import rescuecore2.standard.score.BuildingDamageScoreFunction;
 
 /**
@@ -58,6 +63,7 @@ public abstract class AbstractSolver implements Solver
     @Override
     public List<String> getUsedConfigurationKeys() {
         List<String> keys = new ArrayList<>();
+        keys.add(Constants.KEY_MAIN_SOLVER);
         keys.add(Constants.KEY_RUN_ID);
         keys.add(Constants.KEY_START_EXPERIMENT_TIME);
         keys.add(Constants.KEY_END_EXPERIMENT_TIME);
@@ -88,8 +94,24 @@ public abstract class AbstractSolver implements Solver
     @Override
     public Assignment solve(int time, UtilityMatrix utility) {
         stats.report("time", time);
-        Assignment solution = compute(utility);
 
+        // Report number of burning and once burned buildings
+        int nOnceBurned = 0;
+        int nBurning = 0;
+        for (StandardEntity entity : worldModel.getEntitiesOfType(StandardEntityURN.BUILDING)) {
+            Building building = (Building) entity;
+
+            if (building.getFierynessEnum() != StandardEntityConstants.Fieryness.UNBURNT) {
+                nOnceBurned++;
+            }
+            if (building.isOnFire()) {
+                nBurning++;
+            }
+        }
+        stats.report("nOnceBurned", nOnceBurned);
+        stats.report("nBurning", nBurning);
+
+        Assignment solution = compute(utility);
         // Compute score and utility obtained
         stats.report("score", scoreFunction.score(worldModel, new Timestep(time)));
         stats.report("utility", utility.getUtility(solution));

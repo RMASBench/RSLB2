@@ -102,6 +102,7 @@ public class CenterAgent extends StandardAgent<Building>
         // Load main solver class
         solver = buildSolver(config.getValue(CONF_KEY_SOLVER_CLASS));
         Logger.info("Using main solver: {}", solver.getIdentifier());
+        config.setValue(Constants.KEY_MAIN_SOLVER, solver.getIdentifier());
 
         // And any additional test solvers
         try {

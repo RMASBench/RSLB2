@@ -14,6 +14,7 @@ boot/results
 boot/*.png
 boot/**/*.cfg
 boot/*.gps
+boot/rays/*
 
 # Log files
 run/logs

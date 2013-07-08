@@ -104,7 +104,6 @@ public final class Launcher {
             while (fb-- != 0) {
                 Logger.info("Connecting fire brigade " + (i++) + "...");
                 launcher.connect(new PlatoonFireAgent());
-                Logger.info("success");
             }
         }
         catch (ComponentConnectionException e) {

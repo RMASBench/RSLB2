@@ -196,7 +196,7 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
             if (object instanceof SearchAlgorithm)
             {
                 instance = (SearchAlgorithm) object;
-                Logger.info(Markers.LIGHT_BLUE, "Using search class: " + searchClassName);                
+                Logger.debug(Markers.LIGHT_BLUE, "Using search class: " + searchClassName);
             }
             else
             {

@@ -31,9 +31,9 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
 {
     private static final Logger Logger = LogManager.getLogger(PlatoonFireAgent.class);
     
-    private static final String MAX_WATER_KEY = "fire.tank.maximum";
-    private static final String MAX_DISTANCE_KEY = "fire.extinguish.max-distance";
-    private static final String MAX_POWER_KEY = "fire.extinguish.max-sum";
+    public static final String MAX_WATER_KEY = "fire.tank.maximum";
+    public static final String MAX_DISTANCE_KEY = "fire.extinguish.max-distance";
+    public static final String MAX_POWER_KEY = "fire.extinguish.max-sum";
 
     private int maxWater;
     private int maxDistance;
@@ -56,9 +56,9 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         maxWater = config.getIntValue(MAX_WATER_KEY);
         maxDistance = config.getIntValue(MAX_DISTANCE_KEY);
         maxPower = config.getIntValue(MAX_POWER_KEY);
-        Logger.info("Sample fire brigade connected: max extinguish distance = "
-                + maxDistance + ", max power = " + maxPower + ", max tank = "
-                + maxWater);
+        Logger.info("{} connected: max extinguish distance = {}, " +
+               "max power = {}, max tank = {}",
+                this, maxDistance, maxPower, maxWater);
     }
 
     @Override

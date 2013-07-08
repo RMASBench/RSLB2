@@ -63,4 +63,7 @@ public class Constants {
     /** Key to identify the ID of the experiment run */
     public static final String KEY_RUN_ID = "run";
 
+    /** Key to identify the main solver being run */
+    public static final String KEY_MAIN_SOLVER = "main_solver";
+
 }

@@ -60,4 +60,7 @@ public class Constants {
     /** Config key to the results filename */
     public static final String CONF_KEY_RESULTS_PREFIX = "results.prefix";
 
+    /** Key to identify the ID of the experiment run */
+    public static final String KEY_RUN_ID = "run";
+
 }

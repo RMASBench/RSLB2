@@ -6,6 +6,7 @@ scenarios/**/*.xml
 
 # Local logging setup
 supplement/*.xml
+supplement/*.properties
 
 # Run results
 boot/logs

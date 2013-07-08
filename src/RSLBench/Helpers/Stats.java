@@ -73,6 +73,7 @@ public class Stats
     public void writeHeader() {
         headerWritten = true;
         try (BufferedWriter out = new BufferedWriter(new FileWriter(fileName, false))) {
+            writeLine(out, "# solver: " + solver.getIdentifier());
             for (String key : solver.getUsedConfigurationKeys()) {
                 writeLine(out, "# " + key + ": " + config.getValue(key));
             }

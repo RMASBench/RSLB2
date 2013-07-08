@@ -1,5 +1,6 @@
 package RSLBench.Assignment;
 
+import RSLBench.CenterAgent;
 import java.util.ArrayList;
 
 import rescuecore2.config.Config;
@@ -57,6 +58,7 @@ public abstract class AbstractSolver implements Solver
     @Override
     public List<String> getUsedConfigurationKeys() {
         List<String> keys = new ArrayList<>();
+        keys.add(Constants.KEY_RUN_ID);
         keys.add(Constants.KEY_START_EXPERIMENT_TIME);
         keys.add(Constants.KEY_END_EXPERIMENT_TIME);
         keys.add(kernel.KernelConstants.IGNORE_AGENT_COMMANDS_KEY);

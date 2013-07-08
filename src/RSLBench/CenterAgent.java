@@ -21,6 +21,7 @@ import RSLBench.Comm.Platform.SimpleProtocolToServer;
 import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Utility.UtilityFactory;
 import RSLBench.Helpers.Utility.UtilityMatrix;
+import java.util.UUID;
 import kernel.KernelConstants;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -73,6 +74,9 @@ public class CenterAgent extends StandardAgent<Building>
     }
 
     private void initializeParameters() {
+        // Set a UUID for this run
+        config.setValue(Constants.KEY_RUN_ID, UUID.randomUUID().toString());
+
         // Set the utility function to use
         String utilityClass = config.getValue(Constants.KEY_UTILITY_CLASS);
         UtilityFactory.setClass(utilityClass);

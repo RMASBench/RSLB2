@@ -8,14 +8,12 @@ RSL_SIM_PATH=$(cd ../../roborescue; pwd)
 
 processArgs $*
 
-cd $RSL_SIM_PATH/boot
 if [ -z "$KERNEL_VIEWER" ]; then
 	startKernel --nomenu --autorun --nogui
 else
 	startKernel --nomenu --autorun
 fi
 startSims --nogui
-cd -
 
 if [ -z "$NO_RSLB2" ]; then
     startRslb2 &

@@ -1,0 +1,77 @@
+#########################################
+# PLATFORM SETTINGS
+#########################################
+
+kernel.host: localhost
+kernel.port: 7000
+
+
+#########################################
+# AGENT BEHAVIOR
+#########################################
+
+# When this is true, agents will only approach 
+# targets selected by the station (which simulates the decentralize assignment)
+# Otherwise they search for targets on their own.
+agent.only_assigned: true
+
+# Define here the planner to use
+# agents.search.class: RSLBench.Search.AStar
+agent.search.class: RSLBench.Search.BreadthFirstSearch
+
+
+#########################################
+# UTILITY SETTINGS
+#########################################
+
+# Utility function to use
+util.class: RSLBench.Helpers.Utility.FirstUtilityFunction
+
+# Trade-off between building utility and distance utility
+# The bigger the value the bigger the influence of distance.
+util.trade_off: 100.0
+
+# Area covered by a single fire brigade.
+# This is the major parameter when deciding the maximum number of agents
+# to assign to a single fire.
+util.fire_brigade_area: 100
+
+# Hysteresis factor to prevent target switching due to pathing issues
+# The higher the factor, the higher the stickiness.
+util.hysteresis: 1
+
+
+#########################################
+# EXPERIMENT SETTINGS
+#########################################
+
+# When should agents start acting
+experiment.start_time: 23
+
+# When should the experiment finish.
+experiment.end_time: 300
+
+# Number of iterations to run the DCOP algorithm at each step of the roborescue simulation
+# For instance, DSA agents will run for 100 iterations before making a final decision
+dcop.iterations: 100
+
+# Fully qualified class of the solver
+solver.class: RSLBench.Algorithms.MS.MaxSum
+#solver.class: RSLBench.Algorithms.BMS.BinaryMaxSum
+
+# Fully qualified class names of additional solvers to test
+# Comment this out if you want to run a single solver
+#test.classes: RSLBench.Algorithms.MS.MaxSum, RSLBench.Algorithms.BMS.BinaryMaxSum, RSLBench.Algorithms.DSA.DSA
+test.classes: RSLBench.Algorithms.BMS.BinaryMaxSum, RSLBench.Algorithms.DSA.DSA
+
+# Path to the results folder
+results.path: results/
+
+# Algorithm-specific settings
+
+# MaxSum *and DSAFactorgraph* number of neighbors
+maxsum.neighbors: 4
+
+# DSA and DSAFactorgraph probability of change
+dsa.probability: 0.6
+

@@ -45,7 +45,7 @@ public class CenterAgent extends StandardAgent<Building>
     private Solver solver = null;
     private ArrayList<EntityID> agents = new ArrayList<>();
     private HashMap<EntityID, EntityID> agentLocations = new HashMap<>();
-    private Assignment lastAssignment = null;
+    private Assignment lastAssignment = new Assignment();
 
     public CenterAgent() {
     	Logger.info(Markers.BLUE, "Center Agent CREATED");
@@ -162,9 +162,8 @@ public class CenterAgent extends StandardAgent<Building>
             sendRest(time);
         }
 
-        int startTime = config.getIntValue(Constants.KEY_START_EXPERIMENT_TIME);
-        if (time < startTime) {
-            Logger.debug("Waiting until experiment start time ({})", startTime);
+        if (agents.isEmpty()) {
+            Logger.debug("Waiting until experiment starts.");
             return;
         }
 

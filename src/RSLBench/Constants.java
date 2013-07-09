@@ -28,6 +28,12 @@ public class Constants {
      */
     public static final String KEY_UTIL_TRADEOFF = "util.trade_off";
 
+    /** K value to use in the workload model */
+    public static final String KEY_UTIL_K = "util.k";
+
+    /** Alpha value to use in the workload model */
+    public static String KEY_UTIL_ALPHA = "util.alpha";
+
     /**
      * when true and there is no target assigned by the station, the agent
      * selects a target on his own (rather than doing nothing)

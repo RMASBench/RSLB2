@@ -191,13 +191,30 @@ public class UtilityMatrix {
      * @return the amount of agents required or zero if targetID is out of
      * range.
      */
-    public int getRequiredAgentCount(EntityID targetID) {
+    private int getRequiredAgentCount(EntityID targetID) {
         if (utilityFunction == null) {
             Logger.error("Utility matrix has not been initialized!!");
             System.exit(1);
         }
         
         return utilityFunction.getRequiredAgentCount(targetID);
+    }
+
+    /**
+     * Returns the utility penalty incurred when the given number of agents
+     * are assigned to the given target.
+     *
+     * @param target target assigned to some agents
+     * @param nAgents number of agents assigned to that target
+     * @return utility penalty incurred by this assignment
+     */
+    public double getUtilityPenalty(EntityID target, int nAgents) {
+        int maxAgents = getRequiredAgentCount(target);
+        if (maxAgents >= nAgents) {
+            return 0;
+        }
+        return config.getFloatValue(Constants.KEY_UTIL_K) *
+                Math.pow(nAgents-maxAgents, config.getFloatValue(Constants.KEY_UTIL_ALPHA));
     }
 
     /**
@@ -259,10 +276,7 @@ public class UtilityMatrix {
         // Check violated constraints
         for (EntityID target : nAgentsPerTarget.keySet()) {
             int assigned = nAgentsPerTarget.get(target);
-            int max = getRequiredAgentCount(target);
-            /*if (assigned > max) {
-                return Double.NEGATIVE_INFINITY;
-            }*/
+            utility -= getUtilityPenalty(target, assigned);
         }
 
         return utility;

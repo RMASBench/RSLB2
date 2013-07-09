@@ -295,12 +295,8 @@ public class MaxSumAgent implements DCOPAgent {
                         cost = cost + _utilityM.getUtility(new EntityID(var.getId()), new EntityID(targetID));
                     }
                 }
-                cost = cost * 1000000000;
-                if (countAgent > _utilityM.getRequiredAgentCount(new EntityID(targetID))) {
-                    cost = -BIGNUMBER;
-                }
+                cost -= _utilityM.getUtilityPenalty(new EntityID(targetID), countAgent);
                 //System.out.println("");
-
 
                 function.getFunction().addParametersCost(arg, cost);
 

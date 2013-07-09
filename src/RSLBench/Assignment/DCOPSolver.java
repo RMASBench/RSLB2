@@ -46,7 +46,7 @@ public abstract class DCOPSolver extends AbstractSolver {
 
             // send messages
             for (DCOPAgent agent : agents) {
-                Collection<Message> messages = agent.sendMessages(comLayer);
+                Collection<? extends Message> messages = agent.sendMessages(comLayer);
                 //collect the byte size of the messages exchanged between agents
                 nMessages = nMessages + messages.size();
                 for (Message msg : messages) {

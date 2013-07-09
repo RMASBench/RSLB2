@@ -48,7 +48,7 @@ public interface DCOPAgent
      * @param com: a communication simulator.
      * @return The set of messages that have been sent.
      */
-    public Collection<Message> sendMessages(CommunicationLayer com);
+    public Collection<? extends Message> sendMessages(CommunicationLayer com);
     
     /**
      * Receives a set of messages sent by some other agents.

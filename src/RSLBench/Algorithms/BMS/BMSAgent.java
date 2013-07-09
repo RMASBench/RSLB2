@@ -47,9 +47,7 @@ import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import es.csic.iiia.maxsum.CardinalityFactor;
 
-import es.csic.iiia.maxsum.CommunicationAdapter;
 import es.csic.iiia.maxsum.Factor;
-import es.csic.iiia.maxsum.MaxAgFunction;
 import es.csic.iiia.maxsum.MaxOperator;
 import es.csic.iiia.maxsum.Maximize;
 import es.csic.iiia.maxsum.SelectorFactor;
@@ -66,9 +64,8 @@ import rescuecore2.config.Config;
  */
 public class BMSAgent implements DCOPAgent {
     private static final Logger Logger = LogManager.getLogger(BMSAgent.class);
-    
-    private static final double HARD_CONSTRAINT_UTILITY = Double.NEGATIVE_INFINITY;
-    private static final MaxOperator maxOperator = new Maximize();
+
+    private static final MaxOperator MAX_OPERATOR = new Maximize();
     
     private EntityID id;
     private UtilityMatrix utilities;
@@ -115,7 +112,7 @@ public class BMSAgent implements DCOPAgent {
      */
     private void addFactor(EntityID id, Factor<EntityID> factor) {
         factors.put(id, factor);
-        factor.setMaxOperator(maxOperator);
+        factor.setMaxOperator(MAX_OPERATOR);
         factor.setIdentity(id);
         factor.setCommunicationAdapter(communicationAdapter);
     }
@@ -175,10 +172,12 @@ public class BMSAgent implements DCOPAgent {
             
             // Set the maximum number of agents that should be attending this
             // fire
-            CardinalityFunction wf = new MaxAgFunction(
-                utilities.getRequiredAgentCount(fire), HARD_CONSTRAINT_UTILITY
-                //1, HARD_CONSTRAINT_UTILITY
-            );
+            CardinalityFunction wf = new CardinalityFunction() {
+                @Override
+                public double getCost(int nActiveVariables) {
+                    return - utilities.getUtilityPenalty(fire, nActiveVariables);
+                }
+            };
             f.setFunction(wf);
             
             // Link the fire with all agents
@@ -235,15 +234,14 @@ public class BMSAgent implements DCOPAgent {
         }
         
         // Now extract our choice
-        EntityID oldTarget = targetId;
         targetId = variableNode.select();
         if (targetId == null) {
             Logger.error("Agent {} chose no target!", id);
-            System.exit(0);
+            System.exit(1);
         }
         Logger.trace("improveAssignment end.");
-        //return targetId != oldTarget;
-        return true;
+
+        return !communicationAdapter.isConverged();
     }
 
     @Override
@@ -257,7 +255,7 @@ public class BMSAgent implements DCOPAgent {
     }
     
     @Override
-    public Collection<Message> sendMessages(CommunicationLayer com) {
+    public Collection<BinaryMaxSumMessage> sendMessages(CommunicationLayer com) {
         // Fetch the messages that must be sent
         Collection<BinaryMaxSumMessage> messages = communicationAdapter.flushMessages();
         
@@ -267,14 +265,7 @@ public class BMSAgent implements DCOPAgent {
             com.send(recipientAgent, message);
         }
         
-        // Hack to force java to understand that a collection of binary max sum
-        // messages is *also* a collection of abstract messages
-        Collection<Message> result = new ArrayList<>();
-        for (BinaryMaxSumMessage message : messages) {
-            result.add(message);
-        }
-        
-        return result;
+        return messages;
     }
 
     /**
@@ -337,36 +328,6 @@ public class BMSAgent implements DCOPAgent {
     @Override
     public long getDimensionOfOtherMessages() {
         return 0;
-    }
-    
-    /**
-     * Communication adapter that knows how to send messages to other agents
-     * using the RSLBench communications layer.
-     */
-    public class RSLBenchCommunicationAdapter implements CommunicationAdapter<EntityID> {
-        
-        private ArrayList<BinaryMaxSumMessage> outgoingMessages;
-        
-        public RSLBenchCommunicationAdapter() {
-            this.outgoingMessages = new ArrayList<>();
-        }
-        
-        public Collection<BinaryMaxSumMessage> flushMessages() {
-            Collection<BinaryMaxSumMessage> result = outgoingMessages;
-            outgoingMessages = new ArrayList<>();
-            return result;
-        }
-
-        @Override
-        public void send(double message, EntityID sender, EntityID recipient) {
-            Logger.trace("Message from {} to {} : {}", new Object[]{sender, recipient, message});
-            if (Double.isNaN(message) || Double.isInfinite(message)) {
-                Logger.error("Factor {} tried to send {} to factor {}!", new Object[]{sender, message, recipient});
-                System.exit(0);
-            }
-            outgoingMessages.add(new BinaryMaxSumMessage(message, sender, recipient));
-        }
-        
     }
     
 }

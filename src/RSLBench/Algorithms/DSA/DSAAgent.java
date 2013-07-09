@@ -27,7 +27,6 @@ import rescuecore2.worldmodel.EntityID;
 public class DSAAgent implements DCOPAgent {
 
     private static final Logger Logger = LogManager.getLogger(DSAAgent.class);
-    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(DSAAgent.class.getName());
     protected UtilityMatrix _utilityM = null;
     protected EntityID _agentID;
     protected EntityID _targetID;
@@ -46,7 +45,7 @@ public class DSAAgent implements DCOPAgent {
     public void initialize(Config config, EntityID agentID, UtilityMatrix utilityM) {
         _agentID = agentID;
         _utilityM = utilityM;
-        _targetScores = new TargetScores();
+        _targetScores = new TargetScores(agentID, utilityM);
         _targetID = Assignment.UNKNOWN_TARGET_ID;
         this.config = config;
 
@@ -55,7 +54,6 @@ public class DSAAgent implements DCOPAgent {
         // Find the target with the highest utility and initialize required agents for each target 
         double bestTargetUtility = Double.NEGATIVE_INFINITY;
         for (EntityID t : _utilityM.getTargets()) {
-            _targetScores.initializeTarget(t, _utilityM.getRequiredAgentCount(t));
             double util = _utilityM.getUtility(agentID, t);
             if (bestTargetUtility < util) {
                 bestTargetUtility = util;
@@ -65,6 +63,7 @@ public class DSAAgent implements DCOPAgent {
 
         Logger.debug(Markers.LIGHT_BLUE, "A [" + SimpleID.conv(agentID) + "] init done!");
         neighbors = new HashSet<>(_utilityM.getAgents());
+        neighbors.remove(_agentID);
     }
 
     @Override
@@ -88,16 +87,16 @@ public class DSAAgent implements DCOPAgent {
 
         // Find the best target given utilities and constraints
         double bestScore;
-        try {
-            bestScore = _targetScores.computeScore(_targetID, _utilityM.getUtility(_agentID, _targetID));
-            _nccc++;
-        } catch (NullPointerException n) {
+        if (_targetID == null || _targetID.equals(Assignment.UNKNOWN_TARGET_ID)) {
             bestScore = Double.NEGATIVE_INFINITY;
+        } else {
+            bestScore = _targetScores.computeScore(_targetID);
         }
         EntityID bestTarget = _targetID;
+        
         //Logger.debugColor(Markers.LIGHT_BLUE, "["+ _agentID +"]  BEFORE -> target: " + _targetID +" score: "+bestScore);
         for (EntityID t : _utilityM.getTargets()) {
-            double score = _targetScores.computeScore(t, _utilityM.getUtility(_agentID, t));
+            double score = _targetScores.computeScore(t);
             if (score > bestScore) {
                 bestScore = score;
                 bestTarget = t;
@@ -117,8 +116,8 @@ public class DSAAgent implements DCOPAgent {
                 Logger.debug(Markers.GREEN, "[" + SimpleID.conv(_agentID) + "] assignment improved");
                 // change target
                 _targetID = bestTarget;
-                return true;
             }
+            return true;
         }
         return false;
     }

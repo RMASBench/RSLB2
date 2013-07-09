@@ -40,6 +40,12 @@ util.fire_brigade_area: 100
 # The higher the factor, the higher the stickiness.
 util.hysteresis: 1
 
+# Parameters for the workload model.
+# Whenever a fire with a required number of agents M gets
+# N assigned agents and N>M, then there is a utility penalty
+# of k*(N-M)^alpha
+util.k: 1
+util.alpha: 2
 
 #########################################
 # EXPERIMENT SETTINGS
@@ -58,6 +64,7 @@ dcop.iterations: 100
 # Fully qualified class of the solver
 solver.class: RSLBench.Algorithms.MS.MaxSum
 #solver.class: RSLBench.Algorithms.BMS.BinaryMaxSum
+#solver.class: RSLBench.Algorithms.DSA.DSA
 
 # Fully qualified class names of additional solvers to test
 # Comment this out if you want to run a single solver

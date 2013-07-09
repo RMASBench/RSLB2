@@ -37,7 +37,7 @@ public class DSAFactorgraphAgent extends DSAAgent {
             _agentID = agentID;
             _utilityM = utilityM;
             _oldUtilityMatrix = utilityM;
-            _targetScores = new TargetScores();
+            _targetScores = new TargetScores(agentID, utilityM);
             _targetID = Assignment.UNKNOWN_TARGET_ID;
             this.config = config;
             _dependencies = config.getIntValue(Constants.KEY_MAXSUM_NEIGHBORS);
@@ -91,7 +91,6 @@ public class DSAFactorgraphAgent extends DSAAgent {
                 if (agent._utilityM != null) {
                     double bestTargetUtility = 0;
                     for (EntityID t : agent._utilityM.getTargets()) {
-                        agent._targetScores.initializeTarget(t, agent._utilityM.getRequiredAgentCount(t));            
                         double util = agent._utilityM.getUtility(agentID, t);
                         if (bestTargetUtility < util) {
                             bestTargetUtility = util;

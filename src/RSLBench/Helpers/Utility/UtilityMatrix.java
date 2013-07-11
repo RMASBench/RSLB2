@@ -35,6 +35,11 @@ public class UtilityMatrix {
     private Config config;
     HashMap<EntityID, EntityID> _agentLocations;
 
+    // Indexes and matrix of the utility noises
+    Map<EntityID, Integer> agent2idx;
+    Map<EntityID, Integer> target2idx;
+    double[][] utilityMatrix;
+
     /**
      * It creates a utility matrix
      *
@@ -57,6 +62,39 @@ public class UtilityMatrix {
         utilityFunction.setWorld(world);
         utilityFunction.setConfig(config);
         Logger.debug("UM has been initialized!");
+
+        // Build the utility matrix. This is necessary because utility functions
+        // may not be consistent (they may introduce a small random noise to
+        // break ties)
+        final int nAgents = agents.size();
+        final int nTargets = targets.size();
+        agent2idx = new HashMap<>(nAgents);
+        target2idx = new HashMap<>(nTargets);
+        utilityMatrix = new double[nAgents][nTargets];
+        for (int i=0; i<nAgents; i++) {
+            final EntityID agent = agents.get(i);
+            agent2idx.put(agent, i);
+
+            for (int j=0; j<nTargets; j++) {
+                final EntityID target = targets.get(j);
+                if (i == 0) {
+                    target2idx.put(target, j);
+                }
+
+                double utility = utilityFunction.getUtility(agent, target);
+
+                // Apply hysteresis factor if configured
+                if (lastAssignment.getAssignment(agent).equals(target)) {
+                    utility *= config.getFloatValue(Constants.KEY_UTIL_HYSTERESIS);
+                }
+                // Set a cap on max utility
+                if (Double.isInfinite(utility)) {
+                    utility = 1e15;
+                }
+                
+                utilityMatrix[i][j] = utility;
+            }
+        }
     }
 
     /**
@@ -67,16 +105,9 @@ public class UtilityMatrix {
      * @return the utility value for the specified agent and target.
      */
     public double getUtility(EntityID agentID, EntityID targetID) {
-        if (utilityFunction == null) {
-            Logger.error("Utility matrix has not been initialized!!");
-            System.exit(1);
-        }
-
-        double utility = utilityFunction.getUtility(agentID, targetID);
-        if (lastAssignment.getAssignment(agentID) == targetID) {
-            utility *= config.getFloatValue(Constants.KEY_UTIL_HYSTERESIS);
-        }
-        return Double.isInfinite(utility) ? 1e15 : utility;
+        final int i = agent2idx.get(agentID);
+        final int j = target2idx.get(targetID);
+        return utilityMatrix[i][j];
     }
 
     /**

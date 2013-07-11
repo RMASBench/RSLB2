@@ -35,7 +35,7 @@ public class TargetScores {
     public double computeScore(EntityID target) {
         int nAgents = 1;
         if (_numAssignedAgents.containsKey(target)) {
-            nAgents = _numAssignedAgents.get(target);
+            nAgents = _numAssignedAgents.get(target)+1;
         }
         double penalty = utilities.getUtilityPenalty(target, nAgents);
         return utilities.getUtility(agent, target) - penalty;

@@ -1,7 +1,7 @@
 package RSLBench.Assignment;
 
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -16,13 +16,24 @@ public class Assignment {
     public static final EntityID UNKNOWN_TARGET_ID = new EntityID(-1);
 
     // Mapping from Agents to Targets
-    private HashMap<EntityID, EntityID> map;
+    private LinkedHashMap<EntityID, EntityID> map;
 
     /**
      * Build a new agents to fires assignment
      */
     public Assignment() {
-        map = new HashMap<>();
+        map = new LinkedHashMap<>();
+    }
+
+    /**
+     * Build a copy of the given agents to fires assignment
+     * @param assignment assignment to copy
+     */
+    public Assignment(Assignment assignment) {
+        this();
+        for (EntityID agent : assignment.getAgents()) {
+            map.put(agent, assignment.getAssignment(agent));
+        }
     }
     
     /**

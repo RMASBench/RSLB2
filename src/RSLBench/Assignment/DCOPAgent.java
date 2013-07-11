@@ -1,5 +1,6 @@
 package RSLBench.Assignment;
 
+import RSLBench.Algorithms.DSA.TargetScores;
 import java.util.Collection;
 
 import rescuecore2.worldmodel.EntityID;

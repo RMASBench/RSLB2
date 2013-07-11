@@ -36,6 +36,7 @@
  */
 package RSLBench.Algorithms.BMS;
 
+import RSLBench.Assignment.Assignment;
 import java.util.Collection;
 import java.util.ArrayList;
 
@@ -54,7 +55,11 @@ import es.csic.iiia.maxsum.SelectorFactor;
 import es.csic.iiia.maxsum.CardinalityFunction;
 import es.csic.iiia.maxsum.CompositeIndependentFactor;
 import es.csic.iiia.maxsum.IndependentFactor;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.PriorityQueue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.config.Config;

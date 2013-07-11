@@ -1,5 +1,6 @@
 package RSLBench.Assignment;
 
+import RSLBench.Algorithms.DSA.TargetScores;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -20,6 +21,11 @@ public abstract class DCOPSolver extends AbstractSolver {
 
     private static final Logger Logger = LogManager.getLogger(DCOPSolver.class);
     private List<DCOPAgent> agents;
+    private List<Double> utilities;
+
+    public DCOPSolver() {
+        utilities = new ArrayList<>();
+    }
 
     @Override
     public List<String> getUsedConfigurationKeys() {
@@ -42,7 +48,10 @@ public abstract class DCOPSolver extends AbstractSolver {
         int MAX_ITERATIONS = getConfig().getIntValue(Constants.KEY_DCOP_ITERATIONS);
         boolean done = false;
         int iterations = 0;
+        Assignment finalAssignment = null, bestAssignment = null;
+        double bestAssignmentUtility = Double.NEGATIVE_INFINITY;
         while (!done && iterations < MAX_ITERATIONS) {
+            finalAssignment = new Assignment();
 
             // send messages
             for (DCOPAgent agent : agents) {
@@ -59,17 +68,55 @@ public abstract class DCOPSolver extends AbstractSolver {
                 agent.receiveMessages(comLayer.retrieveMessages(agent.getAgentID()));
             }
 
-            // improve assignment
+            // try to improve assignment
             done = true;
             long nccc = 0;
             for (DCOPAgent agent : agents) {
                 boolean improved = agent.improveAssignment();
                 nccc = Math.max(nccc, agent.getConstraintChecks());
                 done = done && !improved;
+
+                // Collect assignment
+                if (agent.getTargetID() != Assignment.UNKNOWN_TARGET_ID) {
+                    finalAssignment.assign(agent.getAgentID(), agent.getTargetID());
+                }
             }
+
+            // Collect the best assignment visited
+            double assignmentUtility = utility.getUtility(finalAssignment);
+            if (assignmentUtility > bestAssignmentUtility) {
+                bestAssignmentUtility = assignmentUtility;
+                bestAssignment = finalAssignment;
+            }
+
             totalNccc += nccc;
             iterations++;
+            utilities.add(utility.getUtility(finalAssignment));
         }
+
+        // Run sequential value propagation to make the solution consistent
+        Assignment finalGreedy = greedyImprovement(utility, finalAssignment, false);
+        double finalAssignmentU = utility.getUtility(finalAssignment);
+        double finalGreedyU = utility.getUtility(finalGreedy);
+        if (finalAssignmentU > finalGreedyU) {
+            Logger.error("Final assignment utility went from {} to {}",
+                    finalAssignmentU, finalGreedyU);
+            greedyImprovement(utility, bestAssignment, true);
+        }
+        stats.report("final", finalAssignmentU);
+        stats.report("final_greedy", finalGreedyU);
+
+        Assignment bestGreedy = greedyImprovement(utility, bestAssignment, false);
+        double bestAssignmentU = utility.getUtility(bestAssignment);
+        double bestGreedyU = utility.getUtility(bestGreedy);
+        if (bestAssignmentU > bestGreedyU) {
+            Logger.error("Greedy improvement lowered utility from {} to {}",
+                    bestAssignmentU, bestGreedyU);
+            greedyImprovement(utility, bestGreedy, true);
+        }
+        stats.report("best", bestAssignmentU);
+        stats.report("best_greedy", bestGreedyU);
+        
 
         long algBMessages = bMessages;
         int  algNMessages = nMessages;
@@ -88,21 +135,24 @@ public abstract class DCOPSolver extends AbstractSolver {
         stats.report("MessageBytes", bMessages);
         stats.report("OtherNum", nOtherMessages);
         stats.report("OtherBytes", bOtherMessages);
+        reportUtilities();
 
         long time = System.currentTimeMillis() - start;
         Logger.info("{} took {} ms.", getIdentifier(), time);
-
-        // Combine assignments
-        Assignment assignments = new Assignment();
-        for (DCOPAgent agent : agents) {
-            if (agent.getTargetID() != Assignment.UNKNOWN_TARGET_ID) {
-                assignments.assign(agent.getAgentID(), agent.getTargetID());
-            }
-        }
-
         Logger.debug("DA Simulator done");
 
-        return assignments;
+        return bestGreedy;
+    }
+
+    private void reportUtilities() {
+        StringBuilder buf = new StringBuilder();
+        String prefix = "";
+        for (double utility : utilities) {
+            buf.append(prefix).append(utility);
+            prefix = ",";
+        }
+        stats.report("utilities", buf.toString());
+        utilities.clear();
     }
 
     /**
@@ -125,4 +175,58 @@ public abstract class DCOPSolver extends AbstractSolver {
     }
 
     protected abstract DCOPAgent buildAgent();
+
+    /**
+     * Operate on the (sequential) greedy algorithm.
+     *
+     * This gives the agent an opportunity to orderly reconsider their choices.
+     *
+     * @param initial current assignment.
+     */
+    public Assignment greedyImprovement(UtilityMatrix utility, 
+            Assignment initial, boolean debug)
+    {
+        Assignment assignment = new Assignment(initial);
+        for (DCOPAgent agent : agents) {
+            final EntityID agentID = agent.getAgentID();
+
+            // Consider previous assignments
+            TargetScores scores = new TargetScores(agentID, utility);
+            for (EntityID a : assignment.getAgents()) {
+                if (!a.equals(agentID)) {
+                    scores.increaseAgentCount(assignment.getAssignment(a));
+                }
+            }
+
+            // Compute the best target for ourselves
+            EntityID bestTarget = assignment.getAssignment(agentID);
+            double bestScore = scores.computeScore(bestTarget);
+            for (EntityID t : utility.getTargets()) {
+                double score = scores.computeScore(t);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestTarget = t;
+                }
+            }
+
+            EntityID initialTarget = initial.getAssignment(agentID);
+            if (debug && !bestTarget.equals(initialTarget)) {
+                Logger.warn("Agent {} switch: {} ({}) -> {} ({})", agentID,
+                        initialTarget, scores.computeScore(initialTarget),
+                        bestTarget, scores.computeScore(bestTarget));
+            }
+            
+            assignment.assign(agent.getAgentID(), bestTarget);
+        }
+
+        if (debug) {
+            double initialU = utility.getUtility(initial);
+            double finalU   = utility.getUtility(assignment);
+            Logger.error("Got {} before greedy, deteriorated to {} afterwards!",
+                    initialU, finalU);
+        }
+
+        return assignment;
+    }
+    
 }

@@ -31,7 +31,6 @@ public class UtilityMatrix {
     private ArrayList<EntityID> _agents;
     private ArrayList<EntityID> _targets;
     private StandardWorldModel _world;
-    private Assignment lastAssignment;
     private Config config;
     HashMap<EntityID, EntityID> _agentLocations;
 
@@ -49,16 +48,13 @@ public class UtilityMatrix {
      * @param agentLocations the agent locations
      * @param world the model of the world
      */
-    public UtilityMatrix(Config config, ArrayList<EntityID> agents, ArrayList<EntityID> targets, Assignment lastAssignment, HashMap<EntityID, EntityID> agentLocations, StandardWorldModel world) {
+    public UtilityMatrix(Config config, ArrayList<EntityID> agents, ArrayList<EntityID> targets, Assignment lastAssignment, StandardWorldModel world) {
         _agents = agents;
         _targets = targets;
         _world = world;
         this.config = config;
-        _agentLocations = agentLocations;
-        this.lastAssignment = lastAssignment;
 
         utilityFunction = UtilityFactory.buildFunction();
-        utilityFunction.setAgentLocations(agentLocations);
         utilityFunction.setWorld(world);
         utilityFunction.setConfig(config);
         Logger.debug("UM has been initialized!");

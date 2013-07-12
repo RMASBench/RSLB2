@@ -24,12 +24,6 @@ public class SecondUtilityFunction extends AbstractUtilityFunction {
 
     @Override
     public double getUtility(EntityID agent, EntityID target) {
-        EntityID location = agentLocations.get(agent);
-        if (location == null) {
-            Logger.error("Cannot find location for agent " + agent);
-            System.exit(1);
-        }
-
         if (maxDistance == null) {
             maxDistance = getMaxDistance();
         }
@@ -45,7 +39,7 @@ public class SecondUtilityFunction extends AbstractUtilityFunction {
             utility = 1;
         }
 
-        double distance = world.getDistance(location, target);
+        double distance = world.getDistance(agent, target);
         double threshold = config.getFloatValue(PlatoonFireAgent.MAX_DISTANCE_KEY);
         if (distance < threshold) {
             distance = 0;

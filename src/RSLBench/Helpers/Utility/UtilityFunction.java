@@ -28,12 +28,6 @@ public interface UtilityFunction {
      * @param world to evaluate
      */
     public void setWorld(StandardWorldModel world);
-    
-    /**
-     * Set the agent locations.
-     * @param locations map of agent locations.
-     */
-    public void setAgentLocations(HashMap<EntityID, EntityID> locations);
 
     /**
      * Get the utility obtained if the given agent attends the given target.

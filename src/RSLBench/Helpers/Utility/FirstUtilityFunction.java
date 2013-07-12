@@ -20,12 +20,6 @@ public class FirstUtilityFunction extends AbstractUtilityFunction {
     
     @Override
     public double getUtility(EntityID agent, EntityID target) {
-        EntityID location = agentLocations.get(agent);
-        if (location == null) {
-            Logger.warn("Cannot find location for agent " + agent);
-            location = agent;
-        }
-
         Building b = (Building) world.getEntity(target);
         double f = b.getFieryness();
         double utility = 1.0;
@@ -37,7 +31,7 @@ public class FirstUtilityFunction extends AbstractUtilityFunction {
             utility = 100.0;
         }
 
-        double distance = world.getDistance(location, target);
+        double distance = world.getDistance(agent, target);
         double tradeoff = config.getFloatValue(Constants.KEY_UTIL_TRADEOFF);
         utility = utility / Math.pow(distance * tradeoff, 2.0);
         return utility;

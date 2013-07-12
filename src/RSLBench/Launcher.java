@@ -2,6 +2,8 @@ package RSLBench;
 
 import RSLBench.Helpers.Logging.Markers;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -99,11 +101,15 @@ public final class Launcher {
      * @throws ConnectionException 
      */
     private static void connect(ComponentLauncher launcher, int fb, int pf, int at, Config config) throws InterruptedException, ConnectionException {
+        List<PlatoonFireAgent> fireAgents = new ArrayList<>();
+
         int i = 0;
         try {
             while (fb-- != 0) {
                 Logger.info("Connecting fire brigade " + (i++) + "...");
-                launcher.connect(new PlatoonFireAgent());
+                PlatoonFireAgent fireAgent = new PlatoonFireAgent();
+                launcher.connect(fireAgent);
+                fireAgents.add(fireAgent);
             }
         }
         catch (ComponentConnectionException e) {
@@ -133,7 +139,7 @@ public final class Launcher {
         try {
             while (true) {
                 Logger.info("Connecting center " + (i++) + "...");
-                launcher.connect(new CenterAgent());
+                launcher.connect(new CenterAgent(fireAgents));
                 Logger.info("success");
             }
         }

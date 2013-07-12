@@ -21,12 +21,7 @@ public class IgnoreFieryness extends AbstractUtilityFunction {
 
     @Override
     public double getUtility(EntityID agent, EntityID target) {
-        EntityID location = agentLocations.get(agent);
-        if (location == null) {
-            Logger.warn("Cannot find location for agent " + agent);
-            location = agent;
-        }
-        double distance = world.getDistance(location, target);
+        double distance = world.getDistance(agent, target);
         return 1e12 / Math.pow(distance, 2);
         //return 100.0 / Math.pow(distance * Params.TRADE_OFF_FACTOR_TRAVEL_COST_AND_UTILITY, 2.0);
     }

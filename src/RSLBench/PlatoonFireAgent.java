@@ -1,5 +1,6 @@
 package RSLBench;
 
+import RSLBench.Assignment.Assignment;
 import static rescuecore2.misc.Handy.objectsToIDs;
 
 import java.util.ArrayList;
@@ -14,12 +15,12 @@ import rescuecore2.standard.entities.FireBrigade;
 import rescuecore2.standard.entities.Refuge;
 import rescuecore2.standard.entities.StandardEntity;
 import rescuecore2.standard.entities.StandardEntityURN;
-import rescuecore2.standard.messages.AKSpeak;
 import rescuecore2.worldmodel.ChangeSet;
 import rescuecore2.worldmodel.EntityID;
-import RSLBench.Comm.Platform.SimpleProtocolToServer;
 import RSLBench.Helpers.DistanceSorter;
 import RSLBench.Helpers.Logging.Markers;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -38,10 +39,17 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
     private int maxWater;
     private int maxDistance;
     private int maxPower;
-    private int assignedTarget = -1;
+    private EntityID assignedTarget = Assignment.UNKNOWN_TARGET_ID;
+
+    /** Queue to receive assignments from the central */
+    private BlockingQueue<EntityID> assignmentQueue = new ArrayBlockingQueue<>(1);
 
     public PlatoonFireAgent() {
     	Logger.debug(Markers.BLUE, "Platoon Fire Agent CREATED");
+    }
+
+    public boolean enqueueAssignment(EntityID target) {
+        return assignmentQueue.offer(target);
     }
 
     @Override
@@ -68,24 +76,6 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
             // Subscribe to station channel
             sendSubscribe(time, Constants.STATION_CHANNEL);
         }
-        
-        for (Command next : heard) {
-            if (next instanceof AKSpeak) {
-                AKSpeak speak = (AKSpeak) next;
-                int senderIdValue = speak.getAgentID().getValue();
-                byte content[] = speak.getContent();
-                EntityID eid = speak.getAgentID();
-                StandardEntity entity = model.getEntity(eid);
-                if (entity.getStandardURN() == StandardEntityURN.FIRE_STATION) {
-                    Logger.debug(Markers.GREEN, "Heard FROM FIRE_STATION: " + next);
-                    processStationMessage(content, senderIdValue);
-                } 
-                else if (entity.getStandardURN() == StandardEntityURN.FIRE_BRIGADE) {
-                    // Logger.debugColor("Heard FROM OTHER FIRE_BRIGADE: " +
-                    // next,Logger.FG_LIGHTBLUE);
-                }
-            }
-        }
 
         if (time < config.getIntValue(Constants.KEY_START_EXPERIMENT_TIME)) {
             return;
@@ -94,13 +84,20 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         if (time == config.getIntValue(Constants.KEY_END_EXPERIMENT_TIME))
             System.exit(0);
 
-        // Start to act
-        // //////////////////////////////////////////////////////////////////////////////////////
-        FireBrigade me = me();
+        // Wait until the station sends us an assignment
+        ////////////////////////////////////////////////////////////////////////
+        Logger.debug("Agent {} waiting for command.", getID());
+        try {
+            assignedTarget = assignmentQueue.take();
+        } catch (InterruptedException ex) {
+            Logger.error("Agent {} unable to fetch its assingment from central.",
+                    ex, getID());
+        }
+        Logger.debug("Agent {} approaching {}!", getID(), assignedTarget);
 
-        // / Send position to station
-        sendSpeak(time, Constants.PLATOON_CHANNEL, SimpleProtocolToServer
-                .getPosMessage(me()));
+        // Start to act
+        // /////////////////////////////////////////////////////////////////////
+        FireBrigade me = me();
 
         // Are we currently filling with water?
         // //////////////////////////////////////
@@ -139,28 +136,27 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         
         // Ensure that the assigned target is still burning, and unassign the
         // agent if it is not.
-        if (assignedTarget != -1 && !burning.contains(new EntityID(assignedTarget))) {
-            assignedTarget = -1;
+        if (!burning.contains(assignedTarget)) {
+            assignedTarget = Assignment.UNKNOWN_TARGET_ID;
         }
 
-        if (assignedTarget != -1) {
-            EntityID target = new EntityID(assignedTarget);
+        if (!assignedTarget.equals(Assignment.UNKNOWN_TARGET_ID)) {
 
             // Extinguish if the assigned target is in range
-            if (model.getDistance(me().getPosition(), target) <= maxDistance) {
-                Logger.debug(Markers.MAGENTA, "Agent {} extinguishing ASSIGNED target {}", getID(), target);
-                sendExtinguish(time, target, maxPower);
+            if (model.getDistance(me().getPosition(), assignedTarget) <= maxDistance) {
+                Logger.debug(Markers.MAGENTA, "Agent {} extinguishing ASSIGNED target {}", getID(), assignedTarget);
+                sendExtinguish(time, assignedTarget, maxPower);
                 // sendSpeak(time, 1, ("Extinguishing " + next).getBytes());
                 return;
             }
 
             // Try to approach the target (if we are here, it is not yet in range)
-            List<EntityID> path = planPathToFire(target);
+            List<EntityID> path = planPathToFire(assignedTarget);
             if (path != null) {
-                Logger.debug(Markers.MAGENTA, "Agent {} approaching ASSIGNED target {}", getID(), target);
+                Logger.debug(Markers.MAGENTA, "Agent {} approaching ASSIGNED target {}", getID(), assignedTarget);
                 sendMove(time, path);
             } else {
-                Logger.warn(Markers.RED, "Agent {} can't find a path to ASSIGNED target {}. Moving randomly.", getID(), target);
+                Logger.warn(Markers.RED, "Agent {} can't find a path to ASSIGNED target {}. Moving randomly.", getID(), assignedTarget);
                 sendMove(time, randomWalk());
             }
             return;
@@ -232,64 +228,4 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
                 connectivityGraph, distanceMatrix);
     }
     
-    /**
-     * Reads and processes the station message, i.e. if it is an assignment messages
-     * a target is assigned to the PlatoonFireAgent.
-     * @param msg
-     * @param senderId 
-     */
-    private void processStationMessage(byte msg[], int senderId) {
-        // Logger.debugColor("PROCESS MSG FROM STATION", //Logger.BG_LIGHTBLUE);
-        if (msg.length == 0)
-            return;
-        byte MESSAGE_TYPE = msg[0];
-
-        switch (MESSAGE_TYPE) {
-        case SimpleProtocolToServer.POS_MESSAGE:
-            break;
-        case SimpleProtocolToServer.STATION_ASSIGNMENT_MESSAGE:
-            // Logger.debugColor("msg received " + me(), //Logger.BG_MAGENTA);
-            byte[] raw = SimpleProtocolToServer.removeHeader(msg);
-            int[] intArray = SimpleProtocolToServer.byteArrayToIntArray(raw, false);
-            int id = me().getID().getValue();
-            for (int i = 0; i < intArray.length; i++) {
-                if (intArray[i] == id) {
-                    int targetID = intArray[i + 1];
-                    Building newT = (Building) model.getEntity(new EntityID(
-                            targetID));
-                    if (!newT.isOnFire()) {
-                        // Logger.debugColor("ERROR: Got target from station that is NOT ON FIRE: "
-                        // + newT.getID() + " fire is " + newT.getFieryness(),
-                        // //Logger.FG_RED);
-                        continue;
-                    }
-
-                    // Take station assignment
-                    if (assignedTarget == -1) {
-                        assignedTarget = targetID;
-                        // Logger.debugColor("Setting station assignment " +
-                        // assignedTarget, //Logger.FG_GREEN);
-                        break;
-                    }
-
-                    // Change current target if better one assigned
-                    Building curT = (Building) model.getEntity(new EntityID(
-                            assignedTarget));
-
-                    if (curT.getFieryness() > newT.getFieryness()) {
-                        assignedTarget = targetID;
-                        // Logger.debugColor("Setting station assignment " +
-                        // assignedTarget, //Logger.FG_GREEN);
-                        break;
-                    }
-                }
-            }
-            break;
-        default:
-            // Logger.debugColor("Agent: cannot parse message of type " +
-            // MESSAGE_TYPE + " Message size is " + msg.length,
-            // //Logger.FG_RED);
-            break;
-        }
-    }
 }

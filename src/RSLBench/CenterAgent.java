@@ -10,19 +10,16 @@ import java.util.List;
 import rescuecore2.messages.Command;
 import rescuecore2.standard.components.StandardAgent;
 import rescuecore2.standard.entities.*;
-import rescuecore2.standard.messages.AKSpeak;
 import rescuecore2.worldmodel.ChangeSet;
 import rescuecore2.worldmodel.EntityID;
 
 import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.CompositeSolver;
 import RSLBench.Assignment.Solver;
-import RSLBench.Comm.Platform.SimpleProtocolToServer;
 import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Utility.UtilityFactory;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import java.util.UUID;
-import kernel.KernelConstants;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,11 +42,15 @@ public class CenterAgent extends StandardAgent<Building>
     
     private Solver solver = null;
     private ArrayList<EntityID> agents = new ArrayList<>();
-    private HashMap<EntityID, EntityID> agentLocations = new HashMap<>();
     private Assignment lastAssignment = new Assignment();
+    private List<PlatoonFireAgent> fireAgents;
 
-    public CenterAgent() {
+    public CenterAgent(List<PlatoonFireAgent> fireAgents) {
     	Logger.info(Markers.BLUE, "Center Agent CREATED");
+        this.fireAgents = fireAgents;
+        for (PlatoonFireAgent fagent : fireAgents) {
+            agents.add(fagent.getID());
+        }
     }
     
     @Override
@@ -143,31 +144,8 @@ public class CenterAgent extends StandardAgent<Building>
         Collection<EntityID> burning = getBurningBuildings();
         Logger.info(Markers.WHITE, "TIME IS {} | {} known burning buildings.",
                 new Object[]{time, burning.size()});
-        		
-        // Subscribe to station channels
-        if (time == config.getIntValue(KernelConstants.IGNORE_AGENT_COMMANDS_KEY)) {
-            sendSubscribe(time, Constants.PLATOON_CHANNEL);
-        }
 
-        // Process all incoming messages
-        for (Command next : heard) {
-            if (next instanceof AKSpeak) {
-                AKSpeak speak = (AKSpeak) next;
-                EntityID senderId = speak.getAgentID();
-
-                // add fire brigade agents
-                if (model.getEntity(senderId).getStandardURN() == StandardEntityURN.FIRE_BRIGADE) {
-                    if (!agents.contains(senderId)) {
-                        agents.add(senderId);
-                    }
-                    byte content[] = speak.getContent();
-                    processMessageContent(content, senderId.getValue());
-                }
-            }
-            sendRest(time);
-        }
-
-        if (agents.isEmpty()) {
+        if (time < config.getIntValue(Constants.KEY_START_EXPERIMENT_TIME)) {
             Logger.debug("Waiting until experiment starts.");
             return;
         }
@@ -180,50 +158,13 @@ public class CenterAgent extends StandardAgent<Building>
 
         // Compute assignment
         ArrayList<EntityID> targets = new ArrayList<>(burning);
-        UtilityMatrix utility = new UtilityMatrix(config, agents, targets, lastAssignment, agentLocations, model);
+        UtilityMatrix utility = new UtilityMatrix(config, agents, targets, lastAssignment, model);
         lastAssignment = solver.solve(time, utility);
-        byte[] message = SimpleProtocolToServer.buildAssignmentMessage(lastAssignment, true);
 
-        // Send out assignment
-        if (message != null)
-        {
-            int[] intArray = SimpleProtocolToServer.byteArrayToIntArray(message, true);
-            if (Logger.isInfoEnabled()) {
-                StringBuilder buf = new StringBuilder("STATION SENDS AssignmentMessage: ");
-                for (int i = 0; i < intArray.length; i++) {
-                    buf.append(intArray[i]).append(" ");
-                }
-                Logger.info(buf.toString());
-            }
-
-            sendSpeak(time, Constants.STATION_CHANNEL, message);
+        // Send assignment to agents
+        for (PlatoonFireAgent fagent : fireAgents) {
+            fagent.enqueueAssignment(lastAssignment.getAssignment(fagent.getID()));
         }
-    }
-    
-    /**
-     * It processes the content of the message containing the agent assignments.
-     * @param content
-     * @param senderId 
-     */
-    private void processMessageContent(byte content[], int senderId)
-    {
-    	if (content.length == 0)
-    		return;
-    	byte MESSAGE_TYPE = content[0];
-
-    	switch (MESSAGE_TYPE)
-    	{
-    	case SimpleProtocolToServer.POS_MESSAGE:
-    		int posInt = SimpleProtocolToServer.getPosIdFromMessage(content);
-    		StandardEntity agent = model.getEntity(new EntityID(senderId));
-    		StandardEntity pos = model.getEntity(new EntityID(posInt));    		
-    		//Logger.debugColor("Station: heard from agent " + agent + " Pos: " + pos, Logger.BG_LIGHTBLUE);
-    		agentLocations.put(agent.getID(), pos.getID());    		
-    		break;
-    	default:
-    		Logger.warn(Markers.RED, "Station: cannot parse message of type " + MESSAGE_TYPE + " Message size is " + content.length);
-    		break;
-    	}
     }
 
     @Override

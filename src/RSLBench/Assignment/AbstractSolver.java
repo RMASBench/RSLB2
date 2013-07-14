@@ -44,7 +44,8 @@ public abstract class AbstractSolver implements Solver
 
         String file = new StringBuilder()
                 .append(config.getValue(Constants.CONF_KEY_RESULTS_PATH))
-                .append(getIdentifier()).append(".dat")
+                .append(config.getValue(Constants.KEY_RUN_ID))
+                .append("-").append(getIdentifier()).append(".dat")
                 .toString();
         stats.initialize(config, this, file);
         Logger.info("Solver {} initialized. Results file: {}.", getIdentifier(), file);
@@ -91,7 +92,9 @@ public abstract class AbstractSolver implements Solver
 
     @Override
     public Assignment solve(int time, UtilityMatrix utility) {
+        final long start = System.currentTimeMillis();
         stats.report("time", time);
+        Logger.debug("Starting {} solver.", getIdentifier());
 
         // Report number of burning and once burned buildings
         int nOnceBurned = 0;
@@ -115,6 +118,11 @@ public abstract class AbstractSolver implements Solver
         stats.report("utility", utility.getUtility(solution));
         stats.report("violations", utility.getViolations(solution));
         stats.report("solvable", utility.getTotalMaxAgents() >= utility.getNumAgents());
+
+        long cputime = System.currentTimeMillis() - start;
+        Logger.info("{} took {} ms.", getIdentifier(), cputime);
+        Logger.debug("DA Simulator done");
+        stats.report("cpu_time", cputime);
 
         stats.reportStep();
         return solution;

@@ -25,11 +25,11 @@ agent.search.class: RSLBench.Search.BreadthFirstSearch
 #########################################
 
 # Utility function to use
-util.class: RSLBench.Helpers.Utility.FirstUtilityFunction
+util.class: RSLBench.Helpers.Utility.SecondUtilityFunction
 
 # Trade-off between building utility and distance utility
 # The bigger the value the bigger the influence of distance.
-util.trade_off: 100.0
+util.trade_off: 10
 
 # Area covered by a single fire brigade.
 # This is the major parameter when deciding the maximum number of agents
@@ -44,7 +44,7 @@ util.hysteresis: 1
 # Whenever a fire with a required number of agents M gets
 # N assigned agents and N>M, then there is a utility penalty
 # of k*(N-M)^alpha
-util.k: 1
+util.k: 2
 util.alpha: 2
 
 #########################################

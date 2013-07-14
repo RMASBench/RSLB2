@@ -4,7 +4,6 @@ package RSLBench;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 
 import rescuecore2.messages.Command;
@@ -76,7 +75,10 @@ public class CenterAgent extends StandardAgent<Building>
 
     private void initializeParameters() {
         // Set a UUID for this run
-        config.setValue(Constants.KEY_RUN_ID, UUID.randomUUID().toString());
+        if (!config.isDefined(Constants.KEY_RUN_ID)) {
+            Logger.error("Setting run id!");
+            config.setValue(Constants.KEY_RUN_ID, UUID.randomUUID().toString());
+        }
 
         // Set the utility function to use
         String utilityClass = config.getValue(Constants.KEY_UTILITY_CLASS);

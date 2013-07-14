@@ -23,7 +23,7 @@ fi
 waitUntilFinished $PIDS
 
 if [ -n "$PLOT" ]; then
-    results/plot.sh "results/$ALGORITHM-$$.dat"
+    results/plot.sh "results/$UID-$ALGORITHM.dat"
 fi
 
 # Cleanup

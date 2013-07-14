@@ -54,10 +54,8 @@ public abstract class DCOPSolver extends AbstractSolver {
     @Override
     public Assignment compute(UtilityMatrix utility) {
         CommunicationLayer comLayer = new CommunicationLayer();
-        long start = System.currentTimeMillis();
         initializeAgents(utility);
 
-        Logger.debug("Starting {} solver.", getIdentifier());
         int totalNccc = 0;
         long bMessages = 0;
         int nMessages = 0;
@@ -120,8 +118,6 @@ public abstract class DCOPSolver extends AbstractSolver {
                     finalAssignmentU, finalGreedyU);
             greedyImprovement(utility, bestAssignment);
         }
-        stats.report("final", finalAssignmentU);
-        stats.report("final_greedy", finalGreedyU);
 
         Assignment bestGreedy = greedyImprovement(utility, bestAssignment);
         double bestAssignmentU = utility.getUtility(bestAssignment);
@@ -130,9 +126,6 @@ public abstract class DCOPSolver extends AbstractSolver {
             Logger.error("Greedy improvement lowered utility from {} to {}",
                     bestAssignmentU, bestGreedyU);
         }
-        stats.report("best", bestAssignmentU);
-        stats.report("best_greedy", bestGreedyU);
-        
 
         long algBMessages = bMessages;
         int  algNMessages = nMessages;
@@ -145,17 +138,18 @@ public abstract class DCOPSolver extends AbstractSolver {
         long bOtherMessages = bMessages - algBMessages;
         Logger.debug(Markers.WHITE, "Done with iterations. Needed: " + iterations);
 
+        // Report statistics
         stats.report("iterations", iterations);
         stats.report("NCCCs", totalNccc);
         stats.report("MessageNum", nMessages);
         stats.report("MessageBytes", bMessages);
         stats.report("OtherNum", nOtherMessages);
         stats.report("OtherBytes", bOtherMessages);
+        stats.report("final", finalAssignmentU);
+        stats.report("final_greedy", finalGreedyU);
+        stats.report("best", bestAssignmentU);
+        stats.report("best_greedy", bestGreedyU);
         reportUtilities();
-
-        long time = System.currentTimeMillis() - start;
-        Logger.info("{} took {} ms.", getIdentifier(), time);
-        Logger.debug("DA Simulator done");
 
         // Return the assignment depending on the configuration settings
         boolean anytime = config.getBooleanValue(KEY_ANYTIME);

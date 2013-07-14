@@ -1,6 +1,7 @@
 PIDS=
 DIR=$(pwd)
 BASEDIR=$(cd ..; pwd)
+UUID=$(uuidgen)
 
 # Print the usage statement
 function printUsage {
@@ -16,18 +17,20 @@ function printUsage {
     echo "-t    --team      <teamname>    Set the team name. Default is \"\""
     echo "      --think-time <millis>     Set the max. agent think time in millis. Default is 1000."
     echo "-s    --scenario  <scenario>    Set the scenario to run. Default is \"example\" (.xml appended automatically)."
+    echo "      --start-time <step>       Set the experiment start time."
     echo "-v    --viewer                  Enable the viewer."
     echo "-vv   --kernel-viewer           Enable the kernel viewer."
 }
 
 # Process arguments
 function processArgs {
-    LOGDIR="logs/$$"
+    LOGDIR="logs/$UUID"
     MAP="paris"
     TEAM=""
     CONFIGDIR="$DIR/config"
     SCENARIO="example"
     THINK_TIME=1000
+    PORT=$((RANDOM%5000+7000))
 
     while [[ ! -z "$1" ]]; do
         case "$1" in
@@ -69,6 +72,10 @@ function processArgs {
                 ;;
             -s | --scenario)
                 SCENARIO="$2"
+                shift 2
+                ;;
+            --start-time)
+                START_TIME="$2"
                 shift 2
                 ;;
             -v | --viewer)
@@ -154,7 +161,7 @@ function startKernel {
 
     echo "Using config $SCONFIGDIR/kernel.cfg"
     KERNEL_OPTIONS="-c $SCONFIGDIR/kernel.cfg"
-    KERNEL_OPTIONS="$KERNEL_OPTIONS --kernel.agents.think-time=$THINK_TIME --kernel.timesteps=$STEPS"
+    KERNEL_OPTIONS="$KERNEL_OPTIONS --kernel.agents.think-time=$THINK_TIME --kernel.timesteps=$STEPS --kernel.port=$PORT"
     KERNEL_OPTIONS="$KERNEL_OPTIONS --gis.map.dir=$MAP --gis.map.scenario=$SCENARIO"
     KERNEL_OPTIONS="$KERNEL_OPTIONS --kernel.logname=/dev/null $*"
     if [ -z "$KERNEL_VIEWER" ]; then
@@ -162,6 +169,7 @@ function startKernel {
     else
         JVM_OPTS="-Djava.awt.headless=false"
     fi
+    JVM_OPTS="$JVM_OPTS -Xmx2G"
     makeClasspath $RSL_SIM_PATH/jars $RSL_SIM_PATH/lib
     launch -cp $CP kernel.StartKernel $KERNEL_OPTIONS 2>&1 >$LOGDIR/kernel.log &
     PIDS="$PIDS $!"
@@ -175,38 +183,22 @@ function startSims {
 
     makeClasspath $RSL_SIM_PATH/lib
     # Simulators
-    launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/misc.jar rescuecore2.LaunchComponents misc.MiscSimulator -c $SCONFIGDIR/misc.cfg $* 2>&1 >$LOGDIR/misc.log &
+    launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/misc.jar rescuecore2.LaunchComponents misc.MiscSimulator -c $SCONFIGDIR/misc.cfg --kernel.port=$PORT $* 2>&1 >$LOGDIR/misc.log &
     PIDS="$PIDS $!"
     PID_MISC=$!
 
-    launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/traffic3.jar rescuecore2.LaunchComponents traffic3.simulator.TrafficSimulator -c $SCONFIGDIR/traffic3.cfg $* 2>&1 >$LOGDIR/traffic.log &
+    launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/traffic3.jar rescuecore2.LaunchComponents traffic3.simulator.TrafficSimulator -c $SCONFIGDIR/traffic3.cfg --kernel.port=$PORT $* 2>&1 >$LOGDIR/traffic.log &
     PIDS="$PIDS $!"
     PID_TRAFFIC=$!
 
-    launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/resq-fire.jar:$RSL_SIM_PATH/oldsims/firesimulator/lib/commons-logging-1.1.1.jar rescuecore2.LaunchComponents firesimulator.FireSimulatorWrapper -c $SCONFIGDIR/resq-fire.cfg $* 2>&1 > $LOGDIR/fire.log &
+    launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/resq-fire.jar:$RSL_SIM_PATH/oldsims/firesimulator/lib/commons-logging-1.1.1.jar rescuecore2.LaunchComponents firesimulator.FireSimulatorWrapper -c $SCONFIGDIR/resq-fire.cfg --kernel.port=$PORT $* 2>&1 > $LOGDIR/fire.log &
     PIDS="$PIDS $!"
     PID_FIRE=$!
-
-    #xterm -T ignition -e "java -Xmx256m -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/ignition.jar rescuecore2.LaunchComponents ignition.IgnitionSimulator -c $CONFIGDIR/ignition.cfg $* 2>&1 | tee $LOGDIR/ignition-out.log" &
-    #PIDS="$PIDS $!"
-    #xterm -T collapse -e "java -Xmx256m -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/collapse.jar rescuecore2.LaunchComponents collapse.CollapseSimulator -c $CONFIGDIR/collapse.cfg $* 2>&1 | tee $LOGDIR/collapse-out.log" &
-    #PIDS="$PIDS $!"
-    #xterm -T clear -e "java -Xmx256m -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/clear.jar rescuecore2.LaunchComponents clear.ClearSimulator -c $CONFIGDIR/clear.cfg $* 2>&1 | tee $LOGDIR/clear-out.log" &
-    #PIDS="$PIDS $!"
 
     # Wait for all simulators to start
     waitFor $LOGDIR/misc.log "connected" $PID_MISC
     waitFor $LOGDIR/traffic.log "connected" $PID_TRAFFIC
     waitFor $LOGDIR/fire.log "connected" $PID_FIRE
-    #waitFor $LOGDIR/ignition.log "connected"
-    #waitFor $LOGDIR/collapse.log "connected"
-    #waitFor $LOGDIR/clear.log "connected"
-
-    #xterm -T civilian -e "java -Xmx1024m -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/sample.jar:$RSL_SIM_PATH/jars/kernel.jar rescuecore2.LaunchComponents sample.SampleCivilian*n -c $CONFIGDIR/civilian.cfg $* 2>&1 | tee $LOGDIR/civilian-out.log" &
-    #PIDS="$PIDS $!"
-
-    # Wait a bit so the civilian XTerm can start up
-    #sleep 1
 
     # Viewer
     if [ ! -z "$VIEWER" ]; then
@@ -216,7 +208,7 @@ function startSims {
             TEAM_NAME_ARG="\"--viewer.team-name=$TEAM\"";
         fi
         JVM_OPTS="-Xmx256m -Djava.awt.headless=false"
-        launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/sample.jar rescuecore2.LaunchComponents sample.SampleViewer -c $SCONFIGDIR/viewer.cfg $TEAM_NAME_ARG 2>&1 >$LOGDIR/viewer.log &
+        launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/sample.jar rescuecore2.LaunchComponents sample.SampleViewer -c $SCONFIGDIR/viewer.cfg $TEAM_NAME_ARG --kernel.port=$PORT 2>&1 >$LOGDIR/viewer.log &
         PIDS="$PIDS $!"
 
         waitFor $LOGDIR/viewer.log "connected" $!
@@ -225,7 +217,10 @@ function startSims {
 
 function startRslb2 {
     JVM_OPTS="-Xmx2G -Dlog4j.configurationFile=file://$BASEDIR/supplement/log4j2.xml -Djava.awt.headless=true"
-    OPTS="-c $SCONFIGDIR/kernel.cfg -c $CONFIGDIR/$ALGORITHM.cfg --results.path=results/$$-"
+    OPTS="-c $SCONFIGDIR/kernel.cfg -c $CONFIGDIR/$ALGORITHM.cfg --results.path=results/ --run=$UUID --kernel.port=$PORT"
+    if [ ! -z "$START_TIME" ]; then
+        OPTS="$OPTS --experiment.start_time=$START_TIME"
+    fi
     OPTS="$OPTS --gis.map.dir=$MAP --gis.map.scenario=$SCENARIO"
     launch -jar $BASEDIR/dist/RSLB2.jar $OPTS
 }

@@ -42,7 +42,7 @@ import java.util.ArrayList;
 
 import rescuecore2.worldmodel.EntityID;
 
-import RSLBench.Assignment.DCOPAgent;
+import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Helpers.Utility.UtilityMatrix;

@@ -4,8 +4,8 @@
  */
 package RSLBench.Algorithms.DSA;
 
-import RSLBench.Assignment.DCOPAgent;
-import RSLBench.Assignment.DCOPSolver;
+import RSLBench.Assignment.DCOP.DCOPAgent;
+import RSLBench.Assignment.DCOP.DCOPSolver;
 import RSLBench.Constants;
 import java.util.List;
 

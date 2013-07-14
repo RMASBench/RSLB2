@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 package RSLBench.AAMAS12;
-import RSLBench.Assignment.DCOPAgent;
+import RSLBench.Assignment.DCOP.DCOPAgent;
 import rescuecore2.worldmodel.EntityID;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Comm.Message;

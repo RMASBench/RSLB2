@@ -5,7 +5,7 @@
 package RSLBench.Algorithms.MS;
 
 import RSLBench.Assignment.Assignment;
-import RSLBench.Assignment.DCOPAgent;
+import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 

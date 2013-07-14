@@ -1,7 +1,8 @@
 package RSLBench.Algorithms.DSA;
 
+import RSLBench.Assignment.DCOP.TargetScores;
 import RSLBench.Assignment.Assignment;
-import RSLBench.Assignment.DCOPAgent;
+import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Helpers.Logging.Markers;

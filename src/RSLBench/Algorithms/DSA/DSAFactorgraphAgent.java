@@ -4,6 +4,7 @@
  */
 package RSLBench.Algorithms.DSA;
 
+import RSLBench.Assignment.DCOP.TargetScores;
 import RSLBench.Assignment.Assignment;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Constants;

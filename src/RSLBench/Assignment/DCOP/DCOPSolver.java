@@ -1,6 +1,7 @@
-package RSLBench.Assignment;
+package RSLBench.Assignment.DCOP;
 
-import RSLBench.Algorithms.DSA.TargetScores;
+import RSLBench.Assignment.AbstractSolver;
+import RSLBench.Assignment.Assignment;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

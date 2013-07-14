@@ -4,8 +4,8 @@
  */
 package RSLBench.Algorithms.BMS;
 
-import RSLBench.Assignment.DCOPAgent;
-import RSLBench.Assignment.DCOPSolver;
+import RSLBench.Assignment.DCOP.DCOPAgent;
+import RSLBench.Assignment.DCOP.DCOPSolver;
 
 /**
  *

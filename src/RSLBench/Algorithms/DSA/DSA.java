@@ -15,6 +15,11 @@ import java.util.List;
  */
 public class DSA extends DCOPSolver {
 
+    /**
+     * The probability that an agent changes his assigned target.
+     */
+    public static final String KEY_DSA_PROBABILITY = "dsa.probability";
+
     @Override
     public String getIdentifier() {
         return "DSA";
@@ -28,7 +33,7 @@ public class DSA extends DCOPSolver {
     @Override
     public List<String> getUsedConfigurationKeys() {
         List<String> keys = super.getUsedConfigurationKeys();
-        keys.add(Constants.KEY_DSA_PROBABILITY);
+        keys.add(KEY_DSA_PROBABILITY);
         return keys;
     }
 

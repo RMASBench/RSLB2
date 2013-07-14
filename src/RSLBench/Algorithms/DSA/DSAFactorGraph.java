@@ -28,7 +28,7 @@ public class DSAFactorGraph extends DCOPSolver {
     @Override
     public List<String> getUsedConfigurationKeys() {
         List<String> keys = super.getUsedConfigurationKeys();
-        keys.add(Constants.KEY_DSA_PROBABILITY);
+        keys.add(DSA.KEY_DSA_PROBABILITY);
         keys.add(Constants.KEY_MAXSUM_NEIGHBORS);
         return keys;
     }

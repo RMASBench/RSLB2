@@ -8,7 +8,6 @@ import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.Helpers.SimpleID;
-import RSLBench.Constants;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -113,7 +112,7 @@ public class DSAAgent implements DCOPAgent {
         if (bestTarget != _targetID) {
             Logger.trace(Markers.LIGHT_BLUE, "[" + SimpleID.conv(_agentID) + "] assignment can be improved");
             // improvement possible
-            if (_random.nextDouble() <= config.getFloatValue(Constants.KEY_DSA_PROBABILITY)) {
+            if (_random.nextDouble() <= config.getFloatValue(DSA.KEY_DSA_PROBABILITY)) {
                 Logger.debug(Markers.GREEN, "[" + SimpleID.conv(_agentID) + "] assignment improved");
                 // change target
                 _targetID = bestTarget;

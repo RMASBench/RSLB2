@@ -5,7 +5,6 @@ import RSLBench.Assignment.Assignment;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import RSLBench.Constants;
 import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Helpers.Logging.Markers;
@@ -20,6 +19,21 @@ import rescuecore2.worldmodel.EntityID;
  */
 public abstract class DCOPSolver extends AbstractSolver {
 
+    /**
+     * The number of iterations max that an algorithm can perform before the
+     * agents take a definitive decision for each timestep.
+     */
+    public static final String KEY_DCOP_ITERATIONS = "dcop.iterations";
+
+    /** Configuration key to enable/disable usage of anytime assignments. */
+    public static final String KEY_ANYTIME = "dcop.anytime";
+
+    /**
+     * Configuration key to enable/disable the sequential greedy correction of
+     * assignments.
+     */
+    public static final String KEY_GREEDY_CORRECTION = "dcop.greedy_correction";
+
     private static final Logger Logger = LogManager.getLogger(DCOPSolver.class);
     private List<DCOPAgent> agents;
     private List<Double> utilities;
@@ -31,7 +45,9 @@ public abstract class DCOPSolver extends AbstractSolver {
     @Override
     public List<String> getUsedConfigurationKeys() {
         List<String> keys = super.getUsedConfigurationKeys();
-        keys.add(Constants.KEY_DCOP_ITERATIONS);
+        keys.add(KEY_DCOP_ITERATIONS);
+        keys.add(KEY_ANYTIME);
+        keys.add(KEY_GREEDY_CORRECTION);
         return keys;
     }
 
@@ -46,7 +62,7 @@ public abstract class DCOPSolver extends AbstractSolver {
         long bMessages = 0;
         int nMessages = 0;
 
-        int MAX_ITERATIONS = getConfig().getIntValue(Constants.KEY_DCOP_ITERATIONS);
+        int MAX_ITERATIONS = getConfig().getIntValue(KEY_DCOP_ITERATIONS);
         boolean done = false;
         int iterations = 0;
         Assignment finalAssignment = null, bestAssignment = null;
@@ -96,24 +112,23 @@ public abstract class DCOPSolver extends AbstractSolver {
         }
 
         // Run sequential value propagation to make the solution consistent
-        Assignment finalGreedy = greedyImprovement(utility, finalAssignment, false);
+        Assignment finalGreedy = greedyImprovement(utility, finalAssignment);
         double finalAssignmentU = utility.getUtility(finalAssignment);
         double finalGreedyU = utility.getUtility(finalGreedy);
         if (finalAssignmentU > finalGreedyU) {
             Logger.error("Final assignment utility went from {} to {}",
                     finalAssignmentU, finalGreedyU);
-            greedyImprovement(utility, bestAssignment, true);
+            greedyImprovement(utility, bestAssignment);
         }
         stats.report("final", finalAssignmentU);
         stats.report("final_greedy", finalGreedyU);
 
-        Assignment bestGreedy = greedyImprovement(utility, bestAssignment, false);
+        Assignment bestGreedy = greedyImprovement(utility, bestAssignment);
         double bestAssignmentU = utility.getUtility(bestAssignment);
         double bestGreedyU = utility.getUtility(bestGreedy);
         if (bestAssignmentU > bestGreedyU) {
             Logger.error("Greedy improvement lowered utility from {} to {}",
                     bestAssignmentU, bestGreedyU);
-            greedyImprovement(utility, bestGreedy, true);
         }
         stats.report("best", bestAssignmentU);
         stats.report("best_greedy", bestGreedyU);
@@ -142,7 +157,17 @@ public abstract class DCOPSolver extends AbstractSolver {
         Logger.info("{} took {} ms.", getIdentifier(), time);
         Logger.debug("DA Simulator done");
 
-        return bestGreedy;
+        // Return the assignment depending on the configuration settings
+        boolean anytime = config.getBooleanValue(KEY_ANYTIME);
+        boolean greedy  = config.getBooleanValue(KEY_GREEDY_CORRECTION);
+        if (anytime && greedy) {
+            return bestGreedy;
+        } else if (anytime) {
+            return bestAssignment;
+        } else if (greedy) {
+            return finalGreedy;
+        }
+        return finalAssignment;
     }
 
     private void reportUtilities() {
@@ -185,7 +210,7 @@ public abstract class DCOPSolver extends AbstractSolver {
      * @param initial current assignment.
      */
     public Assignment greedyImprovement(UtilityMatrix utility, 
-            Assignment initial, boolean debug)
+            Assignment initial)
     {
         Assignment assignment = new Assignment(initial);
         for (DCOPAgent agent : agents) {
@@ -211,20 +236,13 @@ public abstract class DCOPSolver extends AbstractSolver {
             }
 
             EntityID initialTarget = initial.getAssignment(agentID);
-            if (debug && !bestTarget.equals(initialTarget)) {
-                Logger.warn("Agent {} switch: {} ({}) -> {} ({})", agentID,
+            if (!bestTarget.equals(initialTarget)) {
+                Logger.debug("Agent {} switch: {} ({}) -> {} ({})", agentID,
                         initialTarget, scores.computeScore(initialTarget),
                         bestTarget, scores.computeScore(bestTarget));
             }
             
             assignment.assign(agent.getAgentID(), bestTarget);
-        }
-
-        if (debug) {
-            double initialU = utility.getUtility(initial);
-            double finalU   = utility.getUtility(assignment);
-            Logger.error("Got {} before greedy, deteriorated to {} afterwards!",
-                    initialU, finalU);
         }
 
         return assignment;

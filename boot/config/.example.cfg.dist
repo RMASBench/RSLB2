@@ -61,6 +61,16 @@ experiment.end_time: 300
 # For instance, DSA agents will run for 100 iterations before making a final decision
 dcop.iterations: 100
 
+# If enabled, the DCOP solvers will employ an "anytime" check, so that their reported assignment
+# will be the best of all assignments they have gone through during the solving process.
+dcop.anytime: yes
+
+# If enabled, DCOP solvers will make a final sequential pass through all agents, using a greedy
+# procedure where each agent can change its choice depending on what others have chosen. This
+# procedure is guaranteed to never decrease the solution quality, but has the noticeable cost
+# of requiring n_agents extra iterations (because of the sequential nature of this correction)
+dcop.greedy_correction: yes
+
 # Fully qualified class of the solver
 solver.class: RSLBench.Algorithms.MS.MaxSum
 #solver.class: RSLBench.Algorithms.BMS.BinaryMaxSum

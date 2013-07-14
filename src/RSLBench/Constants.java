@@ -17,12 +17,6 @@ public class Constants {
     public static final String KEY_AREA_COVERED_BY_FIRE_BRIGADE = "util.fire_brigade_area";
     
     /**
-     * The number of iterations max that an algorithm can perform before the
-     * agents take a definitive decision for each timestep.
-     */
-    public static final String KEY_DCOP_ITERATIONS = "dcop.iterations";
-    
-    /**
      * This factor controls the influence of travel costs on the utility for
      * targets. As bigger as the factor as bigger the influence.
      */
@@ -48,11 +42,6 @@ public class Constants {
 
     /** Scenario name */
     public static final String KEY_MAP_SCENARIO = "map.scenario";
-
-    /**
-     * The probability that an agent changes his assigned target.
-     */
-    public static final String KEY_DSA_PROBABILITY = "dsa.probability";
 
     /**
      * The number of neighbours of an agent in the factograph (the number of

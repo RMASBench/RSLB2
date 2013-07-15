@@ -16,6 +16,7 @@ function printUsage {
     echo "-p    --plot                    Plot the run results."
     echo "-t    --team      <teamname>    Set the team name. Default is \"\""
     echo "      --think-time <millis>     Set the max. agent think time in millis. Default is 1000."
+    echo "      --seed      <num>         Set the random seed to num. Default is 1.";
     echo "-s    --scenario  <scenario>    Set the scenario to run. Default is \"example\" (.xml appended automatically)."
     echo "      --start-time <step>       Set the experiment start time."
     echo "-v    --viewer                  Enable the viewer."
@@ -31,6 +32,7 @@ function processArgs {
     SCENARIO="example"
     THINK_TIME=1000
     PORT=$((RANDOM%5000+7000))
+    SEED=1
 
     while [[ ! -z "$1" ]]; do
         case "$1" in
@@ -53,6 +55,10 @@ function processArgs {
             -p | --plot)
                 PLOT=true
                 shift 1
+                ;;
+            --seed)
+                SEED="$2"
+                shift 2
                 ;;
             -t | --team)
                 TEAM="$2"
@@ -164,6 +170,7 @@ function startKernel {
     KERNEL_OPTIONS="$KERNEL_OPTIONS --kernel.agents.think-time=$THINK_TIME --kernel.timesteps=$STEPS --kernel.port=$PORT"
     KERNEL_OPTIONS="$KERNEL_OPTIONS --gis.map.dir=$MAP --gis.map.scenario=$SCENARIO"
     KERNEL_OPTIONS="$KERNEL_OPTIONS --kernel.logname=/dev/null $*"
+    KERNEL_OPTIONS="$KERNEL_OPTIONS --random.seed=$SEED $*"
     if [ -z "$KERNEL_VIEWER" ]; then
         JVM_OPTS="-Djava.awt.headless=true"
     else

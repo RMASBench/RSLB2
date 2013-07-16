@@ -63,6 +63,7 @@ public abstract class AbstractSolver implements Solver
     public List<String> getUsedConfigurationKeys() {
         List<String> keys = new ArrayList<>();
         keys.add(Constants.KEY_MAIN_SOLVER);
+        keys.add(rescuecore2.Constants.RANDOM_SEED_KEY);
         keys.add(Constants.KEY_RUN_ID);
         keys.add(Constants.KEY_START_EXPERIMENT_TIME);
         keys.add(Constants.KEY_END_EXPERIMENT_TIME);

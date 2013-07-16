@@ -53,6 +53,8 @@ public abstract class DCOPSolver extends AbstractSolver {
 
     @Override
     public Assignment compute(UtilityMatrix utility) {
+        long startTime = System.currentTimeMillis();
+        boolean ranOutOfTime = false;
         CommunicationLayer comLayer = new CommunicationLayer();
         initializeAgents(utility);
 
@@ -99,27 +101,35 @@ public abstract class DCOPSolver extends AbstractSolver {
 
             // Collect the best assignment visited
             double assignmentUtility = utility.getUtility(finalAssignment);
+            totalNccc += nccc;
+            iterations++;
+            utilities.add(utility.getUtility(finalAssignment));
+
+            // Check the maximum time requirements
+            long elapsedTime = System.currentTimeMillis() - startTime;
+            if (elapsedTime >= maxTime) {
+                ranOutOfTime = true;
+                break;
+            }
+
             if (assignmentUtility > bestAssignmentUtility) {
                 bestAssignmentUtility = assignmentUtility;
                 bestAssignment = finalAssignment;
             }
-
-            totalNccc += nccc;
-            iterations++;
-            utilities.add(utility.getUtility(finalAssignment));
         }
 
         // Run sequential value propagation to make the solution consistent
-        Assignment finalGreedy = greedyImprovement(utility, finalAssignment);
+        Assignment finalGreedy = ranOutOfTime ?
+                finalAssignment : greedyImprovement(utility, finalAssignment);
         double finalAssignmentU = utility.getUtility(finalAssignment);
         double finalGreedyU = utility.getUtility(finalGreedy);
         if (finalAssignmentU > finalGreedyU) {
             Logger.error("Final assignment utility went from {} to {}",
                     finalAssignmentU, finalGreedyU);
-            greedyImprovement(utility, bestAssignment);
         }
 
-        Assignment bestGreedy = greedyImprovement(utility, bestAssignment);
+        Assignment bestGreedy = ranOutOfTime ?
+                bestAssignment : greedyImprovement(utility, bestAssignment);
         double bestAssignmentU = utility.getUtility(bestAssignment);
         double bestGreedyU = utility.getUtility(bestGreedy);
         if (bestAssignmentU > bestGreedyU) {
@@ -146,19 +156,24 @@ public abstract class DCOPSolver extends AbstractSolver {
         stats.report("OtherNum", nOtherMessages);
         stats.report("OtherBytes", bOtherMessages);
         stats.report("final", finalAssignmentU);
-        stats.report("final_greedy", finalGreedyU);
         stats.report("best", bestAssignmentU);
-        stats.report("best_greedy", bestGreedyU);
+        if (!ranOutOfTime) {
+            stats.report("final_greedy", finalGreedyU);
+            stats.report("best_greedy", bestGreedyU);
+        } else {
+            stats.report("final_greedy", Double.NaN);
+            stats.report("best_greedy", Double.NaN);
+        }
         reportUtilities();
 
         // Return the assignment depending on the configuration settings
         boolean anytime = config.getBooleanValue(KEY_ANYTIME);
         boolean greedy  = config.getBooleanValue(KEY_GREEDY_CORRECTION);
-        if (anytime && greedy) {
+        if (anytime && greedy && !ranOutOfTime) {
             return bestGreedy;
-        } else if (anytime) {
+        } else if (anytime && bestAssignment != null) {
             return bestAssignment;
-        } else if (greedy) {
+        } else if (greedy && !ranOutOfTime) {
             return finalGreedy;
         }
         return finalAssignment;

@@ -74,6 +74,7 @@ public class Stats
         headerWritten = true;
         try (BufferedWriter out = new BufferedWriter(new FileWriter(fileName, false))) {
             writeLine(out, "# solver: " + solver.getIdentifier());
+            writeLine(out, "# max_time: " + solver.getMaxTime());
             for (String key : solver.getUsedConfigurationKeys()) {
                 writeLine(out, "# " + key + ": " + config.getValue(key));
             }

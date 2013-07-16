@@ -7,6 +7,8 @@ package RSLBench.Assignment;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import rescuecore2.config.Config;
 import rescuecore2.standard.entities.StandardWorldModel;
 
@@ -15,6 +17,7 @@ import rescuecore2.standard.entities.StandardWorldModel;
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
 public class CompositeSolver implements Solver {
+    private static final Logger Logger = LogManager.getLogger(CompositeSolver.class);
 
     private Solver mainSolver;
     private List<Solver> testSolvers;
@@ -55,4 +58,14 @@ public class CompositeSolver implements Solver {
         return null;
     }
 
+    @Override
+    public void setMaxTime(int maxTime) {
+        Logger.warn("Composite solvers do not have a max running time.");
+    }
+
+    @Override
+    public int getMaxTime() {
+        Logger.warn("Composite solvers do not have a max running time.");
+        return 0;
+    }
 }

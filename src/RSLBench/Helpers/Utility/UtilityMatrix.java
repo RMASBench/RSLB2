@@ -287,6 +287,10 @@ public class UtilityMatrix {
      * @return utility obtained by this solution.
      */
     public double getUtility(Assignment solution) {
+        if (solution == null) {
+            return Double.NaN;
+        }
+
         double utility = 0;
 
         HashMap<EntityID, Integer> nAgentsPerTarget = new HashMap<>();

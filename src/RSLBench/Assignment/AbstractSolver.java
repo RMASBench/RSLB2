@@ -29,11 +29,22 @@ import rescuecore2.standard.score.BuildingDamageScoreFunction;
 public abstract class AbstractSolver implements Solver
 {
     private static final Logger Logger = LogManager.getLogger(AbstractSolver.class);
-    
+
+    protected long maxTime;
     protected final Stats stats = new Stats();
     private StandardWorldModel worldModel;
     protected Config config;
     private BuildingDamageScoreFunction scoreFunction;
+
+    @Override
+    public void setMaxTime(int maxTime) {
+        this.maxTime = maxTime;
+    }
+
+    @Override
+    public int getMaxTime() {
+        return (int)maxTime;
+    }
 
     @Override
     public void initialize(StandardWorldModel world, Config config) {
@@ -114,14 +125,15 @@ public abstract class AbstractSolver implements Solver
         stats.report("nBurning", nBurning);
 
         Assignment solution = compute(utility);
+        long cputime = System.currentTimeMillis() - start;
+        Logger.info("{} took {} ms.", getIdentifier(), cputime);
+
         // Compute score and utility obtained
         stats.report("score", scoreFunction.score(worldModel, new Timestep(time)));
         stats.report("utility", utility.getUtility(solution));
         stats.report("violations", utility.getViolations(solution));
         stats.report("solvable", utility.getTotalMaxAgents() >= utility.getNumAgents());
 
-        long cputime = System.currentTimeMillis() - start;
-        Logger.info("{} took {} ms.", getIdentifier(), cputime);
         Logger.debug("DA Simulator done");
         stats.report("cpu_time", cputime);
 

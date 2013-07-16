@@ -21,6 +21,7 @@ import RSLBench.Helpers.DistanceSorter;
 import RSLBench.Helpers.Logging.Markers;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,6 +36,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
     public static final String MAX_WATER_KEY = "fire.tank.maximum";
     public static final String MAX_DISTANCE_KEY = "fire.extinguish.max-distance";
     public static final String MAX_POWER_KEY = "fire.extinguish.max-sum";
+    public static final String THINK_TIME_KEY = "kernel.agents.think-time";
 
     private int maxWater;
     private int maxDistance;
@@ -88,7 +90,8 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         ////////////////////////////////////////////////////////////////////////
         Logger.debug("Agent {} waiting for command.", getID());
         try {
-            assignedTarget = assignmentQueue.take();
+            assignedTarget = assignmentQueue.poll(
+                    config.getIntValue(THINK_TIME_KEY), TimeUnit.MILLISECONDS);
         } catch (InterruptedException ex) {
             Logger.error("Agent {} unable to fetch its assingment from central.",
                     ex, getID());

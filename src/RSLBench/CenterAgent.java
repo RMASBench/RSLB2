@@ -22,7 +22,6 @@ import java.util.UUID;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import rescuecore2.config.NoSuchConfigOptionException;
 
 /**
  * It is a "fake" agent that does not appears in the graphic simulation, but that serves as a "station"
@@ -33,11 +32,14 @@ public class CenterAgent extends StandardAgent<Building>
 {
     private static final Logger Logger = LogManager.getLogger(CenterAgent.class);
 
-    /** Config key to the (fully qualified) class of the solver to run */
-    public static final String CONF_KEY_SOLVER_CLASS = "solver.class";
+    /** Base config key to solver configurations */
+    public static final String CONF_KEY_SOLVER= "solver";
 
-    /** Config key to set the solving classes to test **/
-    public static final String CONF_KEY_TEST_CLASSES = "test.classes";
+    /** Config key of a solver class to run */
+    public static final String CONF_KEY_CLASS = "class";
+
+    /** Config key to the maximum time allowed for the main oslver */
+    public static final String CONF_KEY_TIME = "time";
     
     private Solver solver = null;
     private ArrayList<EntityID> agents = new ArrayList<>();
@@ -103,32 +105,43 @@ public class CenterAgent extends StandardAgent<Building>
 
     private Solver buildSolver() {
         // Load main solver class
-        solver = buildSolver(config.getValue(CONF_KEY_SOLVER_CLASS));
+        solver = buildSolver(
+                config.getValue(CONF_KEY_SOLVER + "." + CONF_KEY_CLASS),
+                config.getIntValue(CONF_KEY_SOLVER + "." + CONF_KEY_TIME));
         Logger.info("Using main solver: {}", solver.getIdentifier());
         config.setValue(Constants.KEY_MAIN_SOLVER, solver.getIdentifier());
 
         // And any additional test solvers
-        try {
-            String[] testClasses = config.getValue(CONF_KEY_TEST_CLASSES).split("[,\\s]+");
-            if (testClasses.length > 0) {
-                CompositeSolver comp = new CompositeSolver(solver);
-                for (String solverClass : testClasses) {
-                    Solver s = buildSolver(solverClass);
-                    Logger.info("Also testing solver: {}", s.getIdentifier());
-                    comp.addSolver(s);
-                }
+        CompositeSolver comp = null;
+        for(int nTestClass=1;;nTestClass++) {
+            String key = CONF_KEY_SOLVER + "." + nTestClass + "." + CONF_KEY_CLASS;
+            String className = config.getValue(key, null);
+            if (className == null) {
+                break;
+            }
+
+            if (comp == null) {
+                comp = new CompositeSolver(solver);
                 solver = comp;
             }
-        } catch (NoSuchConfigOptionException ex) {}
+
+            Solver s = buildSolver(className, config.getIntValue(
+                    CONF_KEY_SOLVER + "." + nTestClass + "." + CONF_KEY_TIME));
+            Logger.info("Also testing solver: {}", s.getIdentifier());
+            comp.addSolver(s);
+        }
+
         return solver;
     }
 
-    private Solver buildSolver(String clazz) {
+    private Solver buildSolver(String clazz, int time) {
         try {
             Class<?> c = Class.forName(clazz);
             Object s = c.newInstance();
             if (s instanceof Solver) {
-                return (Solver)s;
+                Solver solver = (Solver)s;
+                solver.setMaxTime(time);
+                return solver;
             }
 
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
@@ -165,7 +178,11 @@ public class CenterAgent extends StandardAgent<Building>
 
         // Send assignment to agents
         for (PlatoonFireAgent fagent : fireAgents) {
-            fagent.enqueueAssignment(lastAssignment.getAssignment(fagent.getID()));
+            if (lastAssignment != null) {
+                fagent.enqueueAssignment(lastAssignment.getAssignment(fagent.getID()));
+            } else {
+                fagent.enqueueAssignment(Assignment.UNKNOWN_TARGET_ID);
+            }
         }
     }
 

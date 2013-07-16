@@ -47,5 +47,19 @@ public interface Solver
      * @return list of configuration keys used by this solver.
      */
     public List<String> getUsedConfigurationKeys();
+
+    /**
+     * Set the maximum time (in ms) that this solver is allowed to run at
+     * each simulation step.
+     * @param time time (in ms) that this solver has per simulation step.
+     */
+    public void setMaxTime(int time);
+
+    /**
+     * Get the maximum time (in ms) that this solver is allowed to run at
+     * each simulation step.
+     * @return time (in ms) that this solver has per simulation step.
+     */
+    public int getMaxTime();
     
 }

@@ -76,7 +76,7 @@ public class CenterAgent extends StandardAgent<Building>
     private void initializeParameters() {
         // Set a UUID for this run
         if (!config.isDefined(Constants.KEY_RUN_ID)) {
-            Logger.error("Setting run id!");
+            Logger.warn("Setting run id to generated value.");
             config.setValue(Constants.KEY_RUN_ID, UUID.randomUUID().toString());
         }
 

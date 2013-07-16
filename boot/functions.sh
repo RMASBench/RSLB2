@@ -225,6 +225,7 @@ function startSims {
 function startRslb2 {
     JVM_OPTS="-Xmx2G -Dlog4j.configurationFile=file://$BASEDIR/supplement/log4j2.xml -Djava.awt.headless=true"
     OPTS="-c $SCONFIGDIR/kernel.cfg -c $CONFIGDIR/$ALGORITHM.cfg --results.path=results/ --run=$UUID --kernel.port=$PORT"
+    OPTS="$OPTS --random.seed=$SEED"
     if [ ! -z "$START_TIME" ]; then
         OPTS="$OPTS --experiment.start_time=$START_TIME"
     fi

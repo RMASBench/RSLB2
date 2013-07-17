@@ -5,6 +5,7 @@
 package RSLBench.Helpers.Utility;
 
 import RSLBench.Constants;
+import RSLBench.Helpers.Distance;
 import RSLBench.PlatoonFireAgent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,7 +40,7 @@ public class SecondUtilityFunction extends AbstractUtilityFunction {
             utility = 1;
         }
 
-        double distance = world.getDistance(agent, target);
+        double distance = Distance.distance(agent, target, world);
         double threshold = config.getFloatValue(PlatoonFireAgent.MAX_DISTANCE_KEY);
         if (distance < threshold) {
             distance = 0;

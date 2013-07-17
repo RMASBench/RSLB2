@@ -5,6 +5,7 @@
 package RSLBench.Helpers.Utility;
 
 import RSLBench.Constants;
+import RSLBench.Helpers.Distance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.standard.entities.Building;
@@ -31,7 +32,7 @@ public class FirstUtilityFunction extends AbstractUtilityFunction {
             utility = 100.0;
         }
 
-        double distance = world.getDistance(agent, target);
+        double distance = Distance.distance(agent, target, world);
         double tradeoff = config.getFloatValue(Constants.KEY_UTIL_TRADEOFF);
         utility = utility / Math.pow(distance * tradeoff, 2.0);
         return utility;

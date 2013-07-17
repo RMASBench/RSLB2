@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Cleanup processes when exiting
-trap "kill 0" SIGINT SIGTERM EXIT
+trap 'kill $PIDS 2>/dev/null' SIGINT SIGTERM EXIT
 
 RSL_SIM_PATH=$(cd ../../roborescue; pwd)
 . functions.sh
@@ -16,15 +16,11 @@ fi
 startSims --nogui
 
 if [ -z "$NO_RSLB2" ]; then
-    startRslb2 &
-    PIDS="$PIDS $!"
+    startRslb2
 fi
 
 waitUntilFinished $PIDS
 
 if [ -n "$PLOT" ]; then
-    results/plot.sh "results/$UID-$ALGORITHM.dat"
+    for f in results/$UUID-*.dat; do results/plot.sh $f; done
 fi
-
-# Cleanup
-kill $PIDS 2>/dev/null

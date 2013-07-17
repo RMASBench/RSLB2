@@ -178,8 +178,10 @@ function startKernel {
     fi
     JVM_OPTS="$JVM_OPTS -Xmx2G"
     makeClasspath $RSL_SIM_PATH/jars $RSL_SIM_PATH/lib
-    launch -cp $CP kernel.StartKernel $KERNEL_OPTIONS 2>&1 >$LOGDIR/kernel.log &
-    PIDS="$PIDS $!"
+    PROGRAM="-cp $CP kernel.StartKernel $KERNEL_OPTIONS"
+    OUTFILE="$LOGDIR/kernel.log"
+    launch
+
     # Wait for the kernel to start
     waitFor $LOGDIR/kernel.log "Listening for connections" $!
 }
@@ -190,16 +192,19 @@ function startSims {
 
     makeClasspath $RSL_SIM_PATH/lib
     # Simulators
-    launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/misc.jar rescuecore2.LaunchComponents misc.MiscSimulator -c $SCONFIGDIR/misc.cfg --kernel.port=$PORT $* 2>&1 >$LOGDIR/misc.log &
-    PIDS="$PIDS $!"
+    PROGRAM="-cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/misc.jar rescuecore2.LaunchComponents misc.MiscSimulator -c $SCONFIGDIR/misc.cfg --kernel.port=$PORT $*"
+    OUTFILE="$LOGDIR/misc.log"
+    launch
     PID_MISC=$!
 
-    launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/traffic3.jar rescuecore2.LaunchComponents traffic3.simulator.TrafficSimulator -c $SCONFIGDIR/traffic3.cfg --kernel.port=$PORT $* 2>&1 >$LOGDIR/traffic.log &
-    PIDS="$PIDS $!"
+    PROGRAM="-cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/traffic3.jar rescuecore2.LaunchComponents traffic3.simulator.TrafficSimulator -c $SCONFIGDIR/traffic3.cfg --kernel.port=$PORT $*"
+    OUTFILE="$LOGDIR/traffic.log"
+    launch
     PID_TRAFFIC=$!
 
-    launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/resq-fire.jar:$RSL_SIM_PATH/oldsims/firesimulator/lib/commons-logging-1.1.1.jar rescuecore2.LaunchComponents firesimulator.FireSimulatorWrapper -c $SCONFIGDIR/resq-fire.cfg --kernel.port=$PORT $* 2>&1 > $LOGDIR/fire.log &
-    PIDS="$PIDS $!"
+    PROGRAM="-cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/resq-fire.jar:$RSL_SIM_PATH/oldsims/firesimulator/lib/commons-logging-1.1.1.jar rescuecore2.LaunchComponents firesimulator.FireSimulatorWrapper -c $SCONFIGDIR/resq-fire.cfg --kernel.port=$PORT $*"
+    OUTFILE="$LOGDIR/fire.log"
+    launch
     PID_FIRE=$!
 
     # Wait for all simulators to start
@@ -215,8 +220,9 @@ function startSims {
             TEAM_NAME_ARG="\"--viewer.team-name=$TEAM\"";
         fi
         JVM_OPTS="-Xmx256m -Djava.awt.headless=false"
-        launch -cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/sample.jar rescuecore2.LaunchComponents sample.SampleViewer -c $SCONFIGDIR/viewer.cfg $TEAM_NAME_ARG --kernel.port=$PORT 2>&1 >$LOGDIR/viewer.log &
-        PIDS="$PIDS $!"
+        PROGRAM="-cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/sample.jar rescuecore2.LaunchComponents sample.SampleViewer -c $SCONFIGDIR/viewer.cfg $TEAM_NAME_ARG --kernel.port=$PORT"
+        OUTFILE="$LOGDIR/viewer.log"
+        launch
 
         waitFor $LOGDIR/viewer.log "connected" $!
     fi
@@ -230,7 +236,9 @@ function startRslb2 {
         OPTS="$OPTS --experiment.start_time=$START_TIME"
     fi
     OPTS="$OPTS --gis.map.dir=$MAP --gis.map.scenario=$SCENARIO"
-    launch -jar $BASEDIR/dist/RSLB2.jar $OPTS
+    PROGRAM="-jar $BASEDIR/dist/RSLB2.jar $OPTS"
+    OUTFILE=""
+    launch
 }
 
 
@@ -240,8 +248,14 @@ function startRslb2 {
 
 # Launches a java program
 function launch {
-    echo "Launching $JVM_OPTS -Dlog4.log.dir=$LOGDIR $@"
-    java $JVM_OPTS -Dlog4j.log.dir=$LOGDIR $@
+    if [ -z "$OUTFILE" ]; then
+        #echo "Launching $JVM_OPTS -Dlog4.log.dir=$LOGDIR $PROGRAM"
+        java $JVM_OPTS -Dlog4j.log.dir=$LOGDIR $PROGRAM &
+    else
+        #echo "Launching $JVM_OPTS -Dlog4.log.dir=$LOGDIR $PROGRAM 2>&1 >$OUTFILE"
+        java $JVM_OPTS -Dlog4j.debug -Dlog4j.log.dir=$LOGDIR $PROGRAM 2>&1 >$OUTFILE &
+    fi
+    PIDS="$PIDS $!"
 }
 
 # Make a classpath argument by looking in a directory of jar files.

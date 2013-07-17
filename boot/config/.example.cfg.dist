@@ -73,18 +73,18 @@ dcop.greedy_correction: yes
 
 # Fully qualified class of the solver
 solver.class: RSLBench.Algorithms.MS.MaxSum
-solver.time: 2800
-#solver.class: RSLBench.Algorithms.BMS.BinaryMaxSum
-#solver.time: 900
-#solver.class: RSLBench.Algorithms.DSA.DSA
-#solver.time: 900
+solver.time: 3000
 
 # Additional solvers to test
 # Warning: the numbers must be in sequence!
 solver.1.class: RSLBench.Algorithms.BMS.BinaryMaxSum
-solver.1.time: 900
+solver.1.time: 1000
 solver.2.class: RSLBench.Algorithms.DSA.DSA
-solver.2.time: 900
+solver.2.time: 500
+solver.3.class: RSLBench.Algorithms.Random.Random
+solver.3.time: 100
+solver.4.class: RSLBench.Algorithms.Greedy.Greedy
+solver.4.time: 100
 
 # Path to the results folder
 results.path: results/

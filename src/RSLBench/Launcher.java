@@ -110,6 +110,14 @@ public final class Launcher {
                 PlatoonFireAgent fireAgent = new PlatoonFireAgent();
                 launcher.connect(fireAgent);
                 fireAgents.add(fireAgent);
+
+                // Wait a bit, allowing the last agent to receive map info and
+                // so. This is added because it seems that multiple agents
+                // initializing at the same time increases the memory requirements
+                // of the kernel substantially.
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {}
             }
         }
         catch (ComponentConnectionException e) {

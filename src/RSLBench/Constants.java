@@ -10,6 +10,12 @@ public class Constants {
     /** The time at which the experiment ends */
     public static final String KEY_END_EXPERIMENT_TIME = "experiment.end_time";
 
+    /** Whether to export each step's problem (in terms of utilities) or not */
+    public static final String KEY_EXPORT = "export";
+
+    /** Path where exported problems should be saved to */
+    public static final String KEY_EXPORT_PATH = "export.path";
+
     /** Fully qualified class of the utility function to employ */
     public static final String KEY_UTILITY_CLASS = "util.class";
 

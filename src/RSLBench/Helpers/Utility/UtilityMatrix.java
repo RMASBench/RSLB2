@@ -218,7 +218,7 @@ public class UtilityMatrix {
      * @return the amount of agents required or zero if targetID is out of
      * range.
      */
-    private int getRequiredAgentCount(EntityID targetID) {
+    public int getRequiredAgentCount(EntityID targetID) {
         if (utilityFunction == null) {
             Logger.error("Utility matrix has not been initialized!!");
             System.exit(1);

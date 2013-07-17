@@ -11,6 +11,7 @@ supplement/*.properties
 # Run results
 boot/logs
 boot/results
+boot/export
 boot/*.png
 boot/**/*.cfg
 boot/*.gps

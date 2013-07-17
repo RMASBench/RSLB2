@@ -15,6 +15,7 @@ import rescuecore2.worldmodel.EntityID;
 import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.CompositeSolver;
 import RSLBench.Assignment.Solver;
+import RSLBench.Helpers.Exporter;
 import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Utility.UtilityFactory;
 import RSLBench.Helpers.Utility.UtilityMatrix;
@@ -42,6 +43,7 @@ public class CenterAgent extends StandardAgent<Building>
     public static final String CONF_KEY_TIME = "time";
     
     private Solver solver = null;
+    private Exporter exporter = null;
     private ArrayList<EntityID> agents = new ArrayList<>();
     private Assignment lastAssignment = new Assignment();
     private List<PlatoonFireAgent> fireAgents;
@@ -71,6 +73,12 @@ public class CenterAgent extends StandardAgent<Building>
     public void postConnect() {
         super.postConnect();
         initializeParameters();
+
+        if (config.getBooleanValue(Constants.KEY_EXPORT)) {
+            exporter = new Exporter();
+            exporter.initialize(model, config);
+        }
+
         solver = buildSolver();
         solver.initialize(model, config);
     }
@@ -139,9 +147,9 @@ public class CenterAgent extends StandardAgent<Building>
             Class<?> c = Class.forName(clazz);
             Object s = c.newInstance();
             if (s instanceof Solver) {
-                Solver solver = (Solver)s;
-                solver.setMaxTime(time);
-                return solver;
+                Solver newSolver = (Solver)s;
+                newSolver.setMaxTime(time);
+                return newSolver;
             }
 
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
@@ -171,9 +179,16 @@ public class CenterAgent extends StandardAgent<Building>
             System.exit(0);
         }
 
-        // Compute assignment
+        // Build the problem
         ArrayList<EntityID> targets = new ArrayList<>(burning);
         UtilityMatrix utility = new UtilityMatrix(config, agents, targets, lastAssignment, model);
+
+        // Export the problem if required
+        if (exporter != null) {
+            exporter.export(utility);
+        }
+
+        // Compute assignment
         lastAssignment = solver.solve(time, utility);
 
         // Send assignment to agents

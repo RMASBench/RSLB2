@@ -57,6 +57,10 @@ experiment.start_time: 23
 # When should the experiment finish.
 experiment.end_time: 300
 
+# Whether to export each step's problem (in terms of utilities) or not
+export: no
+export.path: export/
+
 # Number of iterations to run the DCOP algorithm at each step of the roborescue simulation
 # For instance, DSA agents will run for 100 iterations before making a final decision
 dcop.iterations: 100

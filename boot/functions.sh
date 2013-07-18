@@ -238,6 +238,7 @@ function startRslb2 {
     OPTS="$OPTS --gis.map.dir=$MAP --gis.map.scenario=$SCENARIO"
     PROGRAM="-jar $BASEDIR/dist/RSLB2.jar $OPTS"
     OUTFILE=""
+    TEEFILE="$LOGDIR/rslb2.log"
     launch
 }
 
@@ -248,12 +249,15 @@ function startRslb2 {
 
 # Launches a java program
 function launch {
-    if [ -z "$OUTFILE" ]; then
+    if [ ! -z "$TEEFILE" ]; then
+        #echo "Launching java $JVM_OPTS -Dlog4j.debug -Dlog4j.log.dir=$LOGDIR $PROGRAM 2>&1 | tee $TEEFILE &"
+        java $JVM_OPTS -Dlog4j.log.dir=$LOGDIR $PROGRAM 2>&1 | tee $TEEFILE &
+    elif [ -z "$OUTFILE" ]; then
         #echo "Launching $JVM_OPTS -Dlog4.log.dir=$LOGDIR $PROGRAM"
         java $JVM_OPTS -Dlog4j.log.dir=$LOGDIR $PROGRAM &
     else
         #echo "Launching $JVM_OPTS -Dlog4.log.dir=$LOGDIR $PROGRAM 2>&1 >$OUTFILE"
-        java $JVM_OPTS -Dlog4j.debug -Dlog4j.log.dir=$LOGDIR $PROGRAM 2>&1 >$OUTFILE &
+        java $JVM_OPTS -Dlog4j.log.dir=$LOGDIR $PROGRAM 2>&1 >$OUTFILE &
     fi
     PIDS="$PIDS $!"
 }
@@ -329,6 +333,12 @@ function waitUntilFinished {
         done
         if grep -q 'Kernel has shut down' $LOGDIR/kernel.log; then
             return 0
+        fi
+        if grep -q 'Exception in thread' $LOGDIR/kernel.log; then
+            return 2
+        fi
+        if grep -q 'Exception in thread' $LOGDIR/rslb2.log; then
+            return 3
         fi
         sleep $SLEEP_TIME
     done

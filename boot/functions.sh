@@ -259,7 +259,7 @@ function launch {
         #echo "Launching $JVM_OPTS -Dlog4.log.dir=$LOGDIR $PROGRAM 2>&1 >$OUTFILE"
         java $JVM_OPTS -Dlog4j.log.dir=$LOGDIR $PROGRAM 2>&1 >$OUTFILE &
     fi
-    PIDS="$PIDS $!"
+    PIDS="$PIDS `jobs -pr`"
 }
 
 # Make a classpath argument by looking in a directory of jar files.

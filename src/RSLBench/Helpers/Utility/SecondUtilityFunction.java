@@ -49,7 +49,7 @@ public class SecondUtilityFunction extends AbstractUtilityFunction {
         factor = Math.pow(factor, 2);
         
         // Add some noise to break ties
-        factor += config.getRandom().nextDouble()/100;
+        factor += config.getRandom().nextDouble()/10000;
 
         double tradeoff = config.getFloatValue(Constants.KEY_UTIL_TRADEOFF);
         utility = utility - factor * tradeoff;

@@ -59,7 +59,8 @@ public class TargetScores {
         }
 
         // Now get the utility penalty if this agent *also* chooses that target
-        double penalty = utilities.getUtilityPenalty(target, nAgents+1);
+        double penalty = utilities.getUtilityPenalty(target, nAgents+1)
+                - utilities.getUtilityPenalty(target, nAgents);
 
         // Finally, the score for this agent is its utility minus the penalty
         return utilities.getUtility(agent, target) - penalty;

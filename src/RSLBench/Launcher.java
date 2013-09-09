@@ -116,7 +116,7 @@ public final class Launcher {
                 // initializing at the same time increases the memory requirements
                 // of the kernel substantially.
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(500);
                 } catch (InterruptedException ex) {}
             }
         }

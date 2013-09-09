@@ -40,6 +40,10 @@ public abstract class DCOPSolver extends AbstractSolver {
 
     public DCOPSolver() {
         utilities = new ArrayList<>();
+
+        // This is to force the jvm to load the classes, preventing this from
+        // counting towards the cpu time of the first iteration of the algo.
+        buildAgent();
     }
 
     @Override
@@ -108,6 +112,8 @@ public abstract class DCOPSolver extends AbstractSolver {
             // Check the maximum time requirements
             long elapsedTime = System.currentTimeMillis() - startTime;
             if (elapsedTime >= maxTime) {
+                Logger.info("Solver {} ran out of time (got {}, took {})",
+                        getIdentifier(), maxTime, elapsedTime);
                 ranOutOfTime = true;
                 break;
             }
@@ -117,6 +123,7 @@ public abstract class DCOPSolver extends AbstractSolver {
                 bestAssignment = finalAssignment;
             }
         }
+        Logger.debug("Done with iterations. Needed: " + iterations);
 
         // Run sequential value propagation to make the solution consistent
         Assignment finalGreedy = ranOutOfTime ?
@@ -146,7 +153,6 @@ public abstract class DCOPSolver extends AbstractSolver {
 
         int  nOtherMessages = nMessages - algNMessages;
         long bOtherMessages = bMessages - algBMessages;
-        Logger.debug(Markers.WHITE, "Done with iterations. Needed: " + iterations);
 
         // Report statistics
         stats.report("iterations", iterations);
@@ -221,6 +227,7 @@ public abstract class DCOPSolver extends AbstractSolver {
     public Assignment greedyImprovement(UtilityMatrix utility, 
             Assignment initial)
     {
+        Logger.debug("Initiating greedy improvement. Initial value {}", utility.getUtility(initial));
         Assignment assignment = new Assignment(initial);
         for (DCOPAgent agent : agents) {
             final EntityID agentID = agent.getAgentID();
@@ -244,14 +251,20 @@ public abstract class DCOPSolver extends AbstractSolver {
                 }
             }
 
-            EntityID initialTarget = initial.getAssignment(agentID);
+            EntityID initialTarget = assignment.getAssignment(agentID);
             if (!bestTarget.equals(initialTarget)) {
-                Logger.debug("Agent {} switch: {} ({}) -> {} ({})", agentID,
+                if (Logger.isDebugEnabled()) {
+                    Assignment tmp = new Assignment(assignment);
+                    tmp.assign(agentID, bestTarget);
+                    Logger.debug("Agent {} switch: {} ({}) -> {} ({}) | Util from {} to {}", agentID,
                         initialTarget, scores.computeScore(initialTarget),
-                        bestTarget, scores.computeScore(bestTarget));
+                        bestTarget, scores.computeScore(bestTarget),
+                        utility.getUtility(assignment),
+                        utility.getUtility(tmp));
+                }
             }
             
-            assignment.assign(agent.getAgentID(), bestTarget);
+            assignment.assign(agentID, bestTarget);
         }
 
         return assignment;

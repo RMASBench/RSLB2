@@ -4,16 +4,19 @@
 trap 'kill $PIDS 2>/dev/null' SIGINT SIGTERM EXIT
 
 RSL_SIM_PATH=$(cd ../../roborescue; pwd)
+BLOCKADE_SIM_PATH=$(cd ../../BlockadeLoader; pwd)
 . functions.sh
 
 processArgs $*
 
-if [ -z "$KERNEL_VIEWER" ]; then
-	startKernel --nomenu --autorun --nogui
-else
-	startKernel --nomenu --autorun
+if [ -z "$ONLY_RSLB2" ]; then
+	if [ -z "$KERNEL_VIEWER" ]; then
+		startKernel --nomenu --autorun --nogui
+	else
+		startKernel --nomenu --autorun
+	fi
+	startSims --nogui
 fi
-startSims --nogui
 
 if [ -z "$NO_RSLB2" ]; then
     startRslb2

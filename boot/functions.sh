@@ -9,10 +9,12 @@ function printUsage {
     echo "Options"
     echo "======="
     echo "-a    --algorithm <algorithm>   Set the algorithm to run. Default is \"MaxSum\""
+    echo "-b    --blockades               Run the blockades loader"
+    echo "-c    --config    <configdir>   Set the config directory. Default is \"config\""
     echo "-m    --map       <mapdir>      Set the map directory. Default is \"paris\""
     echo '-n    --no-rslb2                Do not run RSLB2 (useful if you want to run it externaly with a debugger)'
     echo "-l    --log       <logdir>      Set the log directory. Default is \"logs/$PID\""
-    echo "-c    --config    <configdir>   Set the config directory. Default is \"config\""
+    echo "-o    --only-rslb2              Run only RSLB2 (useful in combination with -n)"
     echo "-p    --plot                    Plot the run results."
     echo "-t    --team      <teamname>    Set the team name. Default is \"\""
     echo "      --think-time <millis>     Set the max. agent think time in millis. Default is 1000."
@@ -31,7 +33,6 @@ function processArgs {
     CONFIGDIR="$DIR/config"
     SCENARIO="example"
     THINK_TIME=1000
-    PORT=$((RANDOM%5000+7000))
     SEED=1
 
     while [[ ! -z "$1" ]]; do
@@ -39,6 +40,10 @@ function processArgs {
             -a | --algorithm)
                 ALGORITHM="$2"
                 shift 2
+                ;;
+            -b | --blockades)
+                BLOCKADES=true
+                shift 1
                 ;;
             -m | --map)
                 MAP="$2"
@@ -51,6 +56,10 @@ function processArgs {
             -l | --log)
                 LOGDIR="$2"
                 shift 2
+                ;;
+            -o | --only-rslb2)
+                ONLY_RSLB2=true
+                shift 1
                 ;;
             -p | --plot)
                 PLOT=true
@@ -157,6 +166,14 @@ function processArgs {
         exit 1
     fi
 
+    # Use a random port when running everything, or the default one when only running
+    # parts of the software
+    if [ -z "$NO_RSLB2" ] && [ -z "$ONLY_RSLB2" ]; then
+        PORT=$((RANDOM%5000+7000))
+    else
+        PORT=5557
+    fi
+
     JVM_OPTS=""
 }
 
@@ -206,6 +223,15 @@ function startSims {
     OUTFILE="$LOGDIR/fire.log"
     launch
     PID_FIRE=$!
+
+    if [ ! -z "$BLOCKADES" ]; then
+        PROGRAM="-cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$BLOCKADE_SIM_PATH/dist/BlockadeLoader.jar: rescuecore2.LaunchComponents rslb2.blockadeloader.BlockadeLoader --loadabletypes.inspect.dir=$RSL_SIM_PATH/jars --kernel.port=$PORT $*"
+        echo "Launching $PROGRAM"
+        OUTFILE="$LOGDIR/blockade.log"
+        launch
+
+        waitFor $LOGDIR/blockade.log "connected" $!
+    fi
 
     # Wait for all simulators to start
     waitFor $LOGDIR/misc.log "connected" $PID_MISC
@@ -331,13 +357,13 @@ function waitUntilFinished {
                 return 1
             fi
         done
-        if grep -q 'Kernel has shut down' $LOGDIR/kernel.log; then
+        if [ -f "$LOGDIR/kernel.log" ] && grep -q 'Kernel has shut down' $LOGDIR/kernel.log; then
             return 0
         fi
-        if grep -q 'Exception in thread' $LOGDIR/kernel.log; then
+        if [ -f "$LOGDIR/kernel.log" ] && grep -q 'Exception in thread' $LOGDIR/kernel.log; then
             return 2
         fi
-        if grep -q 'Exception in thread' $LOGDIR/rslb2.log; then
+        if [ -f "$LOGDIR/rslb2.log" ] && grep -q 'Exception in thread' $LOGDIR/rslb2.log; then
             return 3
         fi
         sleep $SLEEP_TIME

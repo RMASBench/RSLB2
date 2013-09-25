@@ -24,7 +24,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import rescuecore2.standard.entities.Area;
 
 
 /**
@@ -33,7 +32,7 @@ import rescuecore2.standard.entities.Area;
 public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
 {
     private static final Logger Logger = LogManager.getLogger(PlatoonFireAgent.class);
-    
+
     public static final String MAX_WATER_KEY = "fire.tank.maximum";
     public static final String MAX_DISTANCE_KEY = "fire.extinguish.max-distance";
     public static final String MAX_POWER_KEY = "fire.extinguish.max-sum";
@@ -116,8 +115,8 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         // //////////////////////////////////////
         if (me.isWaterDefined() && me.getWater() == 0) {
             // Head for a refuge
-            List<Area> path = search.search(me().getPosition(), refugeIDs,
-                    connectivityGraph, distanceMatrix);
+            List<EntityID> path = search.search(me().getPosition(), refugeIDs,
+                    connectivityGraph, distanceMatrix).getPathIds();
             if (path != null) {
                 // Logger.debugColor("Moving to refuge", //Logger.FG_MAGENTA);
                 sendMove(time, path);
@@ -137,7 +136,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
 
         // Try to plan to assigned target
         // ///////////////////////////////
-        
+
         // Ensure that the assigned target is still burning, and unassign the
         // agent if it is not.
         if (!burning.contains(assignedTarget)) {
@@ -164,8 +163,8 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
                 sendMove(time, randomWalk());
             }
             return;
-        } 
-        
+        }
+
         // If agents can independently choose targets, do it
         if (!config.getBooleanValue(Constants.KEY_AGENT_ONLY_ASSIGNED)) {
             for (EntityID next : burning) {
@@ -180,7 +179,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
                 Logger.info(Markers.MAGENTA, "Unassigned agent {} can't reach any of the {} burning buildings", getID(), burning.size());
             }
         }
-        
+
         // If the agen't can do nothing else, try to explore or just randomly
         // walk around.
         List<EntityID> path = randomExplore();
@@ -190,7 +189,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
             path = randomWalk();
             Logger.debug(Markers.MAGENTA, "Agent {} moving randomly", getID());
         }
-        
+
         sendMove(time, path);
     }
 
@@ -198,7 +197,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
     protected EnumSet<StandardEntityURN> getRequestedEntityURNsEnum() {
         return EnumSet.of(StandardEntityURN.FIRE_BRIGADE);
     }
-    
+
     /**
      * Returns the burning buildings.
      * @return a collection of burning buildings.
@@ -219,7 +218,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         Collections.sort(result, new DistanceSorter(location(), model));
         return objectsToIDs(result);
     }
-    
+
     /**
      * Given a target, calls the chosen algorothm to plan the path to the target
      * @param target: the target
@@ -229,7 +228,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         Collection<StandardEntity> targets = model.getObjectsInRange(target,
                 maxDistance / 2);
         return search.search(me().getPosition(), objectsToIDs(targets),
-                connectivityGraph, distanceMatrix);
+                connectivityGraph, distanceMatrix).getPathIds();
     }
-    
+
 }

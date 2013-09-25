@@ -1,7 +1,9 @@
 package RSLBench.Search;
 
 import RSLBench.Helpers.Logging.Markers;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,6 +13,8 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.standard.entities.Area;
+import rescuecore2.standard.entities.Blockade;
+import rescuecore2.worldmodel.EntityID;
 
 
 public class AStar extends AbstractSearchAlgorithm
@@ -18,20 +22,20 @@ public class AStar extends AbstractSearchAlgorithm
     private static final Logger Logger = LogManager.getLogger(AStar.class);
 
     @Override
-    public List<Area> search(Area start, Collection<Area> goals, Graph graph, DistanceInterface distanceMatrix)
+    public SearchResults search(Area start, Collection<Area> goals, Graph graph, DistanceInterface distanceMatrix)
     {
         Logger.debug(Markers.GREEN, "start multi target search");
-        
+
         PriorityQueue<SearchNode> openList = new PriorityQueue<>();
         Map<Area, SearchNode> closedList = new HashMap<>();
-        
+
         // reverse search: add all goals to the open list
         for (Area id: goals)
         {
             int heuristicValue = distanceMatrix.getDistance(id.getID(), start.getID());
             openList.add(new SearchNode(id, null, 0, heuristicValue));
         }
-        
+
         SearchNode currentNode = null;
         boolean searchComplete = false;
         Set<Area> neighbors;
@@ -43,7 +47,7 @@ public class AStar extends AbstractSearchAlgorithm
                 searchComplete = true;
                 break;
             }
-            
+
             // check if this is closed
             if (closedList.containsKey(currentNode.getNodeID()))
             {
@@ -54,10 +58,10 @@ public class AStar extends AbstractSearchAlgorithm
                     continue;
                 }
             }
-            
+
             // put current node on close list
             closedList.put(currentNode.getNodeID(), currentNode);
-            
+
             // expand node
             neighbors = graph.getNeighbors(currentNode.getNodeID());
             for (Area id: neighbors)
@@ -77,14 +81,31 @@ public class AStar extends AbstractSearchAlgorithm
             Logger.debug(Markers.RED, "no path found");
             return null;
         }
+
         // construct the path
-        List<Area> path = new LinkedList<>();
+        List<Area> pathAreas = new ArrayList<>();
+        List<EntityID> pathEntities = new ArrayList<>();
+        List<Blockade> blockers = new ArrayList<>();
         while (currentNode.getParent() != null)
         {
-            path.add(currentNode.getNodeID());
+            Area current = currentNode.getNodeID();
+            pathAreas.add(current);
+            pathEntities.add(current.getID());
+            addBlockers(graph, blockers, current);
+
             currentNode = currentNode.getParent();
         }
 //        Logger.debugColor("path found. length: "+path.size(), Logger.BG_GREEN);
-        return path;
+
+        Collections.reverse(pathAreas);
+        Collections.reverse(pathEntities);
+        Collections.reverse(blockers);
+
+        SearchResults result = new SearchResults();
+        result.setPathAreas(pathAreas);
+        result.setPathIds(pathEntities);
+        result.setPathBlocks(blockers);
+
+        return result;
     }
 }

@@ -83,11 +83,12 @@ public class UtilityMatrix {
                 if (lastAssignment.getAssignment(agent).equals(target)) {
                     utility *= config.getFloatValue(Constants.KEY_UTIL_HYSTERESIS);
                 }
+                
                 // Set a cap on max utility
                 if (Double.isInfinite(utility)) {
                     utility = 1e15;
                 }
-                
+
                 utilityMatrix[i][j] = utility;
             }
         }
@@ -223,7 +224,7 @@ public class UtilityMatrix {
             Logger.error("Utility matrix has not been initialized!!");
             System.exit(1);
         }
-        
+
         return utilityFunction.getRequiredAgentCount(targetID);
     }
 
@@ -282,7 +283,7 @@ public class UtilityMatrix {
 
     /**
      * Get the utility obtained by the given solution.
-     * 
+     *
      * @param solution solution to evaluate.
      * @return utility obtained by this solution.
      */
@@ -321,7 +322,7 @@ public class UtilityMatrix {
      */
     public int getViolations(Assignment solution) {
         int count = 0;
-        
+
         HashMap<EntityID, Integer> nAgentsPerTarget = new HashMap<>();
         for (EntityID agent : _agents) {
             EntityID target = solution.getAssignment(agent);
@@ -345,7 +346,7 @@ public class UtilityMatrix {
 
     /**
      * Get the total maximum number of agents allocable to targets.
-     * 
+     *
      * This is used as a check to see if a problem can or can't be solved
      * without violating any constraints
      * @return total number of agents that can be allocated without conflicts.
@@ -357,5 +358,5 @@ public class UtilityMatrix {
         }
         return count;
     }
-    
+
 }

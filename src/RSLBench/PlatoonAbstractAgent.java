@@ -8,16 +8,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import RSLBench.Search.BreadthFirstSearch;
 import RSLBench.Search.DistanceInterface;
 import RSLBench.Search.Graph;
 import RSLBench.Search.SearchAlgorithm;
+import RSLBench.Search.SearchFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import rescuecore2.Constants;
-import rescuecore2.config.NoSuchConfigOptionException;
 import rescuecore2.standard.components.StandardAgent;
+import rescuecore2.standard.entities.Area;
 import rescuecore2.standard.entities.Building;
 import rescuecore2.standard.entities.Human;
 import rescuecore2.standard.entities.Refuge;
@@ -34,13 +34,11 @@ import rescuecore2.worldmodel.EntityID;
  */
 public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends StandardAgent<E> {
     private static final Logger Logger = LogManager.getLogger(PlatoonAbstractAgent.class);
-    
+
     private static final int RANDOM_WALK_LENGTH = 50;
-        
+
     //private static final String SAY_COMMUNICATION_MODEL = StandardCommunicationModel.class.getName();
     private static final String SPEAK_COMMUNICATION_MODEL = ChannelCommunicationModel.class.getName();
-    
-    public static final String KEY_SEARCH_CLASS = "agent.search.class";
 
     /**
        Whether to use AKSpeak messages or not.
@@ -66,19 +64,19 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
      * the connectivity graph of all places in the world
      */
     protected Graph connectivityGraph;
-    
+
     /**
      * a matrix containing the pre-computed distances between each two areas in the world
      */
     protected DistanceInterface distanceMatrix;
-    
+
     /**
      * The search algorithm.
      */
     protected SearchAlgorithm search;
-    
+
     protected EntityID randomExplorationGoal = null;
-    
+
     /**
      * Construct an AbstractSampleAgent.
      */
@@ -86,9 +84,9 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
     @Override
     protected void postConnect() {
         super.postConnect();
-        buildingIDs = new ArrayList<EntityID>();
-        roadIDs = new ArrayList<EntityID>();
-        refugeIDs = new ArrayList<EntityID>();
+        buildingIDs = new ArrayList<>();
+        roadIDs = new ArrayList<>();
+        refugeIDs = new ArrayList<>();
         for (StandardEntity next : model) {
             if (next instanceof Building) {
                 buildingIDs.add(next.getID());
@@ -100,12 +98,12 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
                 refugeIDs.add(next.getID());
             }
         }
-        
+
         // load correct search algorithm
-        search = selectSearchAlgorithm();
+        search = SearchFactory.buildSearchAlgorithm(config);
         connectivityGraph = new Graph(model);
         distanceMatrix = new DistanceInterface(model);
-        
+
         useSpeak = config.getValue(Constants.COMMUNICATION_MODEL_KEY).equals(SPEAK_COMMUNICATION_MODEL);
         Logger.debug("Communcation model: " + config.getValue(Constants.COMMUNICATION_MODEL_KEY));
         Logger.debug(useSpeak ? "Using speak model" : "Using say model");
@@ -116,20 +114,20 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
        @return A random walk.
     */
     protected List<EntityID> randomWalk() {
-        List<EntityID> result = new ArrayList<EntityID>(RANDOM_WALK_LENGTH);
-        Set<EntityID> seen = new HashSet<EntityID>();
+        List<EntityID> result = new ArrayList<>(RANDOM_WALK_LENGTH);
+        Set<EntityID> seen = new HashSet<>();
         EntityID current = ((Human)me()).getPosition();
         for (int i = 0; i < RANDOM_WALK_LENGTH; ++i) {
             result.add(current);
             seen.add(current);
-            List<EntityID> possible = new ArrayList<EntityID>(connectivityGraph.getNeighbors(current));
+            List<Area> possible = new ArrayList<>(connectivityGraph.getNeighbors(current));
             Collections.shuffle(possible, random);
             boolean found = false;
-            for (EntityID next : possible) {
-                if (seen.contains(next)) {
+            for (Area next : possible) {
+                if (seen.contains(next.getID())) {
                     continue;
                 }
-                current = next;
+                current = next.getID();
                 found = true;
                 break;
             }
@@ -140,7 +138,7 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
         }
         return result;
     }
-    
+
     protected List<EntityID> randomExplore()
     {
         // check if goal reached
@@ -155,7 +153,7 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
                 Logger.debug(Markers.BLUE, "RANDOM_EXPLORATION: goal reached");
             }
         }
-        
+
         // select new exploration goal
         if (randomExplorationGoal == null)
         {
@@ -176,46 +174,9 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
                 }
             }
         }
-        
+
         // plan path to goal
-        return search.search(position, randomExplorationGoal, connectivityGraph, distanceMatrix);
+        return search.search(position, randomExplorationGoal, connectivityGraph, distanceMatrix).getPathIds();
     }
-    
-    private SearchAlgorithm selectSearchAlgorithm()
-    {
-        // construct default search algorithm
-        SearchAlgorithm instance = new BreadthFirstSearch();
-        
-        // retrieve data from config
-        String searchClassName = config.getValue(KEY_SEARCH_CLASS);
-        try
-        {   
-            // instantiate search algorithm
-            Class<?> concreteSearchClass = Class.forName(searchClassName);
-            Object object = concreteSearchClass.newInstance();
-            if (object instanceof SearchAlgorithm)
-            {
-                instance = (SearchAlgorithm) object;
-                Logger.debug(Markers.LIGHT_BLUE, "Using search class: " + searchClassName);
-            }
-            else
-            {
-                Logger.error(Markers.RED, searchClassName + " is not a SearchAlgorithm.");
-            }
-        } catch (NoSuchConfigOptionException e)
-        {
-            Logger.warn(Markers.RED, "SearchAlgorithm config not found. Using BreadthFirstSearch.");
-        } catch (ClassNotFoundException e)
-        {
-            Logger.error("SearchAlgorithm could not be found: " + searchClassName);
-        } catch (InstantiationException e)
-        {
-            Logger.error("SearchAlgorithm " + searchClassName + " could not be instantiated. (abstract?!)");
-        } catch (IllegalAccessException e)
-        {
-            Logger.error("SearchAlgorithm " + searchClassName + " must have an empty constructor.");
-        }
-        
-        return instance;
-    }
+
 }

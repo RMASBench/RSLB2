@@ -1,6 +1,5 @@
 package RSLBench.Search;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -17,12 +16,12 @@ public final class Graph
     private Map<Area, Set<Area>> graph;
     private int accessCount;
     private StandardWorldModel world;
-    
+
 //    public Graph(Map<EntityID, Set<EntityID>> graph)
 //    {
 //        this.graph = graph;
 //    }
-    
+
     public Graph(StandardWorldModel world)
     {
         this.world = world;
@@ -48,10 +47,10 @@ public final class Graph
             }
         }
     }
-    
+
     /**
      * Retrieves all neighbors of a specific node in the graph.
-     * 
+     *
      * @param id
      *            the entity id of the node.
      * @return set containing the entity ids of all neighbor nodes.
@@ -60,6 +59,15 @@ public final class Graph
     {
         accessCount++;
         return graph.get(id);
+    }
+
+    public Set<Area> getNeighbors(EntityID id) {
+        StandardEntity entity = world.getEntity(id);
+        if (!(entity instanceof Area)) {
+            throw new RuntimeException("Requested neighbors of a non-area entity " + id);
+        }
+
+        return getNeighbors((Area)entity);
     }
 
     public int getAccessCount()
@@ -71,7 +79,7 @@ public final class Graph
     {
         this.accessCount = 0;
     }
-    
+
     public StandardWorldModel getWorld() {
         return world;
     }

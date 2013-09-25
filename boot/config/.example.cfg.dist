@@ -26,6 +26,7 @@ agent.search.class: RSLBench.Search.BreadthFirstSearch
 
 # Utility function to use
 util.class: RSLBench.Helpers.Utility.SecondUtilityFunction
+#util.class: RSLBench.Helpers.Utility.BlockadesUtilityFunction
 
 # Trade-off between building utility and distance utility
 # The bigger the value the bigger the influence of distance.
@@ -35,6 +36,10 @@ util.trade_off: 10
 # This is the major parameter when deciding the maximum number of agents
 # to assign to a single fire.
 util.fire_brigade_area: 100
+
+# Penalty applied to blocked target fires (use only in conjunction 
+# with the BlockadesUtilityFunction)
+util.blockade.penalty: 100
 
 # Hysteresis factor to prevent target switching due to pathing issues
 # The higher the factor, the higher the stickiness.

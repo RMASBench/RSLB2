@@ -8,6 +8,7 @@ import RSLBench.Helpers.Stats;
 import RSLBench.Constants;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import RSLBench.PlatoonAbstractAgent;
+import RSLBench.Search.SearchFactory;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -86,7 +87,7 @@ public abstract class AbstractSolver implements Solver
         keys.add(Constants.KEY_UTIL_HYSTERESIS);
         keys.add(Constants.KEY_MAP_NAME);
         keys.add(Constants.KEY_MAP_SCENARIO);
-        keys.add(PlatoonAbstractAgent.KEY_SEARCH_CLASS);
+        keys.add(SearchFactory.KEY_SEARCH_CLASS);
         return keys;
     }
 

@@ -10,6 +10,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.standard.entities.Area;
+import rescuecore2.standard.entities.Blockade;
 import rescuecore2.standard.entities.StandardEntity;
 import rescuecore2.worldmodel.EntityID;
 
@@ -21,19 +22,21 @@ public abstract class AbstractSearchAlgorithm implements SearchAlgorithm {
     private static final Logger Logger = LogManager.getLogger(AbstractSearchAlgorithm.class);
 
     @Override
-    public List<EntityID> search(EntityID start, EntityID goal, Graph graph, DistanceInterface distanceMatrix) {
+    public SearchResults search(EntityID start, EntityID goal, Graph graph, DistanceInterface distanceMatrix) {
         Area init = getArea(graph, start);
         List<Area> ends = toAreas(graph, goal);
-        return toEntityIDs(search(init, ends, graph, distanceMatrix));
+        SearchResults result = search(init, ends, graph, distanceMatrix);
+        return result;
     }
 
-    public abstract List<Area> search(Area start, Collection<Area> goals, Graph graph, DistanceInterface distanceMatrix);
+    public abstract SearchResults search(Area start, Collection<Area> goals, Graph graph, DistanceInterface distanceMatrix);
 
     @Override
-    public List<EntityID> search(EntityID start, Collection<EntityID> goals, Graph graph, DistanceInterface distanceMatrix) {
+    public SearchResults search(EntityID start, Collection<EntityID> goals, Graph graph, DistanceInterface distanceMatrix) {
         Area init = getArea(graph, start);
         List<Area> ends = toAreas(graph, goals);
-        return toEntityIDs(search(init, ends, graph, distanceMatrix));
+        SearchResults result = search(init, ends, graph, distanceMatrix);
+        return result;
     }
 
     protected Area getArea(Graph graph, EntityID id) {
@@ -66,5 +69,19 @@ public abstract class AbstractSearchAlgorithm implements SearchAlgorithm {
         ends.add(getArea(graph, goal));
         return ends;
     }
-    
+
+    protected void addBlockers(Graph graph, List<Blockade> blockers, Area zone) {
+        // Check whether the path is blocked
+        if (zone.isBlockadesDefined()) {
+            Logger.debug("Blockades detected in {}.", zone);
+            for (EntityID b : zone.getBlockades()) {
+                Blockade blockade = (Blockade)(graph.getWorld().getEntity(b));
+                Logger.trace("Blockade {} (cost: {})", blockade, blockade.getRepairCost());
+                if (blockade.getRepairCost() > 0) {
+                    blockers.add(blockade);
+                }
+            }
+        }
+    }
+
 }

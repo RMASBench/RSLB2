@@ -1,7 +1,9 @@
 package RSLBench.Search;
 
 import RSLBench.Algorithms.BMS.RSLBenchCommunicationAdapter;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -20,7 +22,7 @@ public class BreadthFirstSearch extends AbstractSearchAlgorithm
     private static final Logger Logger = LogManager.getLogger(BreadthFirstSearch.class);
 
     @Override
-    public List<Area> search(Area start, Collection<Area> goals, Graph graph, DistanceInterface distanceMatrix)
+    public SearchResults search(Area start, Collection<Area> goals, Graph graph, DistanceInterface distanceMatrix)
     {
         List<Area> open = new LinkedList<>();
         Map<Area, Area> ancestors = new HashMap<>();
@@ -36,14 +38,14 @@ public class BreadthFirstSearch extends AbstractSearchAlgorithm
                 found = true;
                 break;
             }
-            
+
             Collection<Area> neighbours = graph.getNeighbors(next);
             if (neighbours.isEmpty()) {
                 continue;
             }
-            
+
             for (Area neighbour : neighbours) {
-                
+
                 if (isGoal(neighbour, goals)) {
                     ancestors.put(neighbour, next);
                     next = neighbour;
@@ -58,29 +60,23 @@ public class BreadthFirstSearch extends AbstractSearchAlgorithm
             }
 
         } while (!found && !open.isEmpty());
-        
+
         if (!found) {
             // No path
             return null;
         }
-        
+
         // Walk back from goal to start
         Area current = next;
-        List<EntityID> blockers = new LinkedList<>();
-        List<Area> path = new LinkedList<>();
+        SearchResults result = new SearchResults();
+        List<Blockade> blockers = new ArrayList<>();
+        List<Area> path = new ArrayList<>();
+        List<EntityID> entityPath = new ArrayList<>();
         do
         {
-            path.add(0, current);
-
-            // Check whether the path is blocked
-            if (current.isBlockadesDefined()) {
-                for (EntityID b : current.getBlockades()) {
-                    Blockade blockade = (Blockade)(graph.getWorld().getEntity(b));
-                    if (blockade.getRepairCost() > 0) {
-                        blockers.add(0, b);
-                    }
-                }
-            }
+            path.add(current);
+            entityPath.add(current.getID());
+            addBlockers(graph, blockers, current);
 
             current = ancestors.get(current);
             if (current == null)
@@ -88,7 +84,15 @@ public class BreadthFirstSearch extends AbstractSearchAlgorithm
                 throw new RuntimeException("Found a node with no ancestor! Something is broken.");
             }
         } while (current != start);
-        return path;
+
+        Collections.reverse(path);
+        Collections.reverse(entityPath);
+        Collections.reverse(blockers);
+
+        result.setPathAreas(path);
+        result.setPathIds(entityPath);
+        result.setPathBlocks(blockers);
+        return result;
     }
 
     private boolean isGoal(Area e, Collection<Area> test)

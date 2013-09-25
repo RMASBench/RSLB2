@@ -23,6 +23,8 @@ import java.util.UUID;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import rescuecore2.worldmodel.WorldModel;
+import rescuecore2.worldmodel.WorldModelListener;
 
 /**
  * It is a "fake" agent that does not appears in the graphic simulation, but that serves as a "station"
@@ -41,7 +43,7 @@ public class CenterAgent extends StandardAgent<Building>
 
     /** Config key to the maximum time allowed for the main oslver */
     public static final String CONF_KEY_TIME = "time";
-    
+
     private Solver solver = null;
     private Exporter exporter = null;
     private ArrayList<EntityID> agents = new ArrayList<>();
@@ -55,7 +57,7 @@ public class CenterAgent extends StandardAgent<Building>
             agents.add(fagent.getID());
         }
     }
-    
+
     @Override
     public String toString()
     {
@@ -72,6 +74,32 @@ public class CenterAgent extends StandardAgent<Building>
     @Override
     public void postConnect() {
         super.postConnect();
+
+        Logger.warn("Checking for blockades...");
+        for (StandardEntity e : model.getAllEntities()) {
+            if (e instanceof Blockade) {
+                Logger.warn("Initial blockade detected: " + e);
+            }
+        }
+
+        model.addWorldModelListener(new WorldModelListener<StandardEntity>() {
+            @Override
+            public void entityAdded(WorldModel<? extends StandardEntity> model,
+                    StandardEntity e) {
+                if (e instanceof Blockade) {
+                    Logger.warn("New blockade introduced: " + e);
+                }
+            }
+
+            @Override
+            public void entityRemoved(WorldModel<? extends StandardEntity> model,
+                    StandardEntity e) {
+                if (e instanceof Blockade) {
+                    Logger.warn("Blockade removed: " + e);
+                }
+            }
+        });
+
         initializeParameters();
 
         if (config.getBooleanValue(Constants.KEY_EXPORT)) {
@@ -206,7 +234,7 @@ public class CenterAgent extends StandardAgent<Building>
     {
         return EnumSet.of(StandardEntityURN.FIRE_STATION, StandardEntityURN.AMBULANCE_CENTRE, StandardEntityURN.POLICE_OFFICE);
     }
-    
+
     /**
      * It returns the burning buildings
      * @return a collection of burning buildings.

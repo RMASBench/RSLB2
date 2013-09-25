@@ -1,7 +1,6 @@
 package RSLBench.Search;
 
 import java.util.Collection;
-import java.util.List;
 
 import rescuecore2.worldmodel.EntityID;
 
@@ -9,7 +8,7 @@ public interface SearchAlgorithm
 {
     /**
      * Do a search from one location to the closest of a set of goals.
-     * 
+     *
      * @param start
      *            The location we start at.
      * @param goal
@@ -23,12 +22,12 @@ public interface SearchAlgorithm
      *            two entities in the world.
      * @return The path from start to one of the goals, or null if no path can be found.
      */
-    public List<EntityID> search(EntityID start, EntityID goal,
+    public SearchResults search(EntityID start, EntityID goal,
             Graph graph, DistanceInterface distanceMatrix);
-    
+
     /**
      * Do a search from one location to the closest of a set of goals.
-     * 
+     *
      * @param start
      *            The location we start at.
      * @param goals
@@ -42,6 +41,6 @@ public interface SearchAlgorithm
      *            two entities in the world.
      * @return The path from start to one of the goals, or null if no path can be found.
      */
-    public List<EntityID> search(EntityID start, Collection<EntityID> goals,
+    public SearchResults search(EntityID start, Collection<EntityID> goals,
             Graph graph, DistanceInterface distanceMatrix);
 }

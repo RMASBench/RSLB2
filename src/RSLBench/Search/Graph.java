@@ -7,14 +7,16 @@ import java.util.Set;
 
 import rescuecore2.misc.collections.LazyMap;
 import rescuecore2.standard.entities.Area;
+import rescuecore2.standard.entities.StandardEntity;
 import rescuecore2.standard.entities.StandardWorldModel;
 import rescuecore2.worldmodel.Entity;
 import rescuecore2.worldmodel.EntityID;
 
-public class Graph
+public final class Graph
 {
-    private Map<EntityID, Set<EntityID>> graph;
+    private Map<Area, Set<Area>> graph;
     private int accessCount;
+    private StandardWorldModel world;
     
 //    public Graph(Map<EntityID, Set<EntityID>> graph)
 //    {
@@ -23,21 +25,26 @@ public class Graph
     
     public Graph(StandardWorldModel world)
     {
+        this.world = world;
         resetAccessCount();
-        graph = new LazyMap<EntityID, Set<EntityID>>()
+        graph = new LazyMap<Area, Set<Area>>()
         {
             @Override
-            public Set<EntityID> createValue()
+            public Set<Area> createValue()
             {
-                return new HashSet<EntityID>();
+                return new HashSet<>();
             }
         };
         for (Entity next : world)
         {
-            if (next instanceof Area)
-            {
-                Collection<EntityID> areaNeighbours = ((Area) next).getNeighbours();
-                graph.get(next.getID()).addAll(areaNeighbours);
+            if (!(next instanceof Area)) {
+                continue;
+            }
+
+            Area area = (Area)next;
+            for (EntityID neighbor : area.getNeighbours()) {
+                StandardEntity entity = world.getEntity(neighbor);
+                graph.get(area).add((Area) entity);
             }
         }
     }
@@ -49,7 +56,7 @@ public class Graph
      *            the entity id of the node.
      * @return set containing the entity ids of all neighbor nodes.
      */
-    public Set<EntityID> getNeighbors(EntityID id)
+    public Set<Area> getNeighbors(Area id)
     {
         accessCount++;
         return graph.get(id);
@@ -65,5 +72,8 @@ public class Graph
         this.accessCount = 0;
     }
     
-    
+    public StandardWorldModel getWorld() {
+        return world;
+    }
+
 }

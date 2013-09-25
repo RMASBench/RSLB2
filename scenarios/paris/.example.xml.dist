@@ -31,4 +31,8 @@
   <scenario:firebrigade scenario:location="15160"/>
   <scenario:firebrigade scenario:location="15160"/>
   <scenario:firebrigade scenario:location="15160"/>
+
+  <!-- The blockades -->
+  <scenario:blockade scenario:location="63077" cost="10" />
+  
 </scenario:scenario>

@@ -24,6 +24,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import rescuecore2.standard.entities.Area;
 
 
 /**
@@ -115,7 +116,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
         // //////////////////////////////////////
         if (me.isWaterDefined() && me.getWater() == 0) {
             // Head for a refuge
-            List<EntityID> path = search.search(me().getPosition(), refugeIDs,
+            List<Area> path = search.search(me().getPosition(), refugeIDs,
                     connectivityGraph, distanceMatrix);
             if (path != null) {
                 // Logger.debugColor("Moving to refuge", //Logger.FG_MAGENTA);

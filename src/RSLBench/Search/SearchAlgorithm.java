@@ -23,7 +23,7 @@ public interface SearchAlgorithm
      *            two entities in the world.
      * @return The path from start to one of the goals, or null if no path can be found.
      */
-    public List<EntityID> search(EntityID start, EntityID goal, 
+    public List<EntityID> search(EntityID start, EntityID goal,
             Graph graph, DistanceInterface distanceMatrix);
     
     /**
@@ -42,6 +42,6 @@ public interface SearchAlgorithm
      *            two entities in the world.
      * @return The path from start to one of the goals, or null if no path can be found.
      */
-    public List<EntityID> search(EntityID start, Collection<EntityID> goals, 
+    public List<EntityID> search(EntityID start, Collection<EntityID> goals,
             Graph graph, DistanceInterface distanceMatrix);
 }

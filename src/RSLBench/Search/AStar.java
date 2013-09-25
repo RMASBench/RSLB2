@@ -3,7 +3,6 @@ package RSLBench.Search;
 import RSLBench.Helpers.Logging.Markers;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -11,40 +10,31 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import rescuecore2.standard.entities.Area;
 
-import rescuecore2.worldmodel.EntityID;
 
-public class AStar implements SearchAlgorithm
+public class AStar extends AbstractSearchAlgorithm
 {
     private static final Logger Logger = LogManager.getLogger(AStar.class);
-    
-    @Override
-    public List<EntityID> search(EntityID start, EntityID goal, Graph graph, DistanceInterface distanceMatrix)
-    {
-        Logger.debug(Markers.GREEN, "start single target search");
-        HashSet<EntityID> goals = new HashSet<EntityID>();
-        goals.add(goal);
-        return search(start, goals, graph, distanceMatrix);
-    }
 
     @Override
-    public List<EntityID> search(EntityID start, Collection<EntityID> goals, Graph graph, DistanceInterface distanceMatrix)
+    public List<Area> search(Area start, Collection<Area> goals, Graph graph, DistanceInterface distanceMatrix)
     {
         Logger.debug(Markers.GREEN, "start multi target search");
         
         PriorityQueue<SearchNode> openList = new PriorityQueue<>();
-        Map<EntityID, SearchNode> closedList = new HashMap<>();
+        Map<Area, SearchNode> closedList = new HashMap<>();
         
         // reverse search: add all goals to the open list
-        for (EntityID id: goals)
+        for (Area id: goals)
         {
-            int heuristicValue = distanceMatrix.getDistance(id, start);
+            int heuristicValue = distanceMatrix.getDistance(id.getID(), start.getID());
             openList.add(new SearchNode(id, null, 0, heuristicValue));
         }
         
         SearchNode currentNode = null;
         boolean searchComplete = false;
-        Set<EntityID> neighbors;
+        Set<Area> neighbors;
         while (! openList.isEmpty() && ! searchComplete)
         {
             currentNode = openList.remove();
@@ -70,13 +60,13 @@ public class AStar implements SearchAlgorithm
             
             // expand node
             neighbors = graph.getNeighbors(currentNode.getNodeID());
-            for (EntityID id: neighbors)
+            for (Area id: neighbors)
             {
                 if (! closedList.containsKey(id))
                 {
                     // if this neighbor is not closed, add it to the open list
-                    int distanceToCurrentNode = distanceMatrix.getDistance(id, currentNode.getNodeID());
-                    int heuristicValue = distanceMatrix.getDistance(id, start);
+                    int distanceToCurrentNode = distanceMatrix.getDistance(id.getID(), currentNode.getNodeID().getID());
+                    int heuristicValue = distanceMatrix.getDistance(id.getID(), start.getID());
                     openList.add(new SearchNode(id, currentNode, distanceToCurrentNode, heuristicValue));
                 }
             }
@@ -88,7 +78,7 @@ public class AStar implements SearchAlgorithm
             return null;
         }
         // construct the path
-        List<EntityID> path = new LinkedList<>();
+        List<Area> path = new LinkedList<>();
         while (currentNode.getParent() != null)
         {
             path.add(currentNode.getNodeID());

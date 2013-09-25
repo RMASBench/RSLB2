@@ -1,5 +1,6 @@
 package RSLBench.Search;
 
+import rescuecore2.standard.entities.Area;
 import rescuecore2.worldmodel.EntityID;
 
 public class SearchNode implements Comparable<SearchNode>
@@ -7,7 +8,7 @@ public class SearchNode implements Comparable<SearchNode>
     private int pathLength;
     private int heuristicValue;
     
-    private EntityID nodeID;
+    private Area nodeID;
     private SearchNode parent;
     
     /**
@@ -24,7 +25,7 @@ public class SearchNode implements Comparable<SearchNode>
      * @param heuristicValue
      *            The heuristic value for this node.
      */
-    public SearchNode(EntityID nodeID, SearchNode parent, int distanceToParent, int heuristicValue)
+    public SearchNode(Area nodeID, SearchNode parent, int distanceToParent, int heuristicValue)
     {
         this.nodeID = nodeID;
         this.parent = parent;
@@ -50,7 +51,7 @@ public class SearchNode implements Comparable<SearchNode>
         return heuristicValue;
     }
 
-    public EntityID getNodeID()
+    public Area getNodeID()
     {
         return nodeID;
     }

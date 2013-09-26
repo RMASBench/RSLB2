@@ -226,11 +226,17 @@ function startSims {
 
     if [ ! -z "$BLOCKADES" ]; then
         PROGRAM="-cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$BLOCKADE_SIM_PATH/dist/BlockadeLoader.jar: rescuecore2.LaunchComponents rslb2.blockadeloader.BlockadeLoader --loadabletypes.inspect.dir=$RSL_SIM_PATH/jars --kernel.port=$PORT $*"
-        echo "Launching $PROGRAM"
         OUTFILE="$LOGDIR/blockade.log"
         launch
+        PID_BLOCKADES=$!
 
-        waitFor $LOGDIR/blockade.log "connected" $!
+        PROGRAM="-cp $CP:$RSL_SIM_PATH/jars/rescuecore2.jar:$RSL_SIM_PATH/jars/standard.jar:$RSL_SIM_PATH/jars/clear.jar: rescuecore2.LaunchComponents clear.ClearSimulator -c $SCONFIGDIR/clear.cfg --kernel.port=$PORT $*"
+        OUTFILE="$LOGDIR/clear.log"
+        launch
+        PID_CLEAR=$!
+
+        waitFor $LOGDIR/blockade.log "connected" $PID_BLOCKADES
+        waitFor $LOGDIR/clear.log "connected" $PID_CLEAR
     fi
 
     # Wait for all simulators to start

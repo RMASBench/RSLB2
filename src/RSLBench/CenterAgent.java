@@ -19,10 +19,14 @@ import RSLBench.Helpers.Exporter;
 import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Utility.UtilityFactory;
 import RSLBench.Helpers.Utility.UtilityMatrix;
+import java.util.Iterator;
 import java.util.UUID;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import rescuecore2.worldmodel.Entity;
+import rescuecore2.worldmodel.EntityListener;
+import rescuecore2.worldmodel.Property;
 import rescuecore2.worldmodel.WorldModel;
 import rescuecore2.worldmodel.WorldModelListener;
 
@@ -49,13 +53,17 @@ public class CenterAgent extends StandardAgent<Building>
     private ArrayList<EntityID> agents = new ArrayList<>();
     private Assignment lastAssignment = new Assignment();
     private List<PlatoonFireAgent> fireAgents;
+    private List<PlatoonPoliceAgent> policeAgents;
+    private List<Blockade> blockades = new ArrayList<>();
 
-    public CenterAgent(List<PlatoonFireAgent> fireAgents) {
+    public CenterAgent(List<PlatoonFireAgent> fireAgents,
+            List<PlatoonPoliceAgent> policeAgents) {
     	Logger.info(Markers.BLUE, "Center Agent CREATED");
         this.fireAgents = fireAgents;
         for (PlatoonFireAgent fagent : fireAgents) {
             agents.add(fagent.getID());
         }
+        this.policeAgents = policeAgents;
     }
 
     @Override
@@ -87,7 +95,8 @@ public class CenterAgent extends StandardAgent<Building>
             public void entityAdded(WorldModel<? extends StandardEntity> model,
                     StandardEntity e) {
                 if (e instanceof Blockade) {
-                    Logger.warn("New blockade introduced: " + e);
+                    Logger.info("New blockade introduced: " + e);
+                    blockades.add((Blockade)e);
                 }
             }
 
@@ -95,7 +104,10 @@ public class CenterAgent extends StandardAgent<Building>
             public void entityRemoved(WorldModel<? extends StandardEntity> model,
                     StandardEntity e) {
                 if (e instanceof Blockade) {
-                    Logger.warn("Blockade removed: " + e);
+                    Logger.info("Blockade removed: " + e);
+                    for (PlatoonPoliceAgent police : policeAgents) {
+                        police.removeBlockade((Blockade)e);
+                    }
                 }
             }
         });
@@ -192,9 +204,23 @@ public class CenterAgent extends StandardAgent<Building>
     @Override
     protected void think(int time, ChangeSet changed, Collection<Command> heard)
     {
+        // Cleanup non-existant blockades
+        Iterator<Blockade> it = blockades.iterator();
+        while (it.hasNext()) {
+            Blockade blockade = it.next();
+            StandardEntity roadEntity = model.getEntity(blockade.getPosition());
+            if (roadEntity instanceof Road) {
+                List<EntityID> roadBlockades = ((Road)roadEntity).getBlockades();
+                if (!roadBlockades.contains(blockade.getID())) {
+                    it.remove();
+                    model.removeEntity(blockade.getID());
+                }
+            }
+        }
+
         Collection<EntityID> burning = getBurningBuildings();
-        Logger.info(Markers.WHITE, "TIME IS {} | {} known burning buildings.",
-                new Object[]{time, burning.size()});
+        Logger.info(Markers.WHITE, "TIME IS {} | {} burning buildings | {} blockades",
+                new Object[]{time, burning.size(), blockades.size()});
 
         if (time < config.getIntValue(Constants.KEY_START_EXPERIMENT_TIME)) {
             Logger.debug("Waiting until experiment starts.");
@@ -202,8 +228,8 @@ public class CenterAgent extends StandardAgent<Building>
         }
 
         // Stop the simulation if all fires have been extinguished
-        if (burning.isEmpty()) {
-            Logger.info("All fires extinguished. Good job!");
+        if (burning.isEmpty() ) {//&& blockades.isEmpty()) {
+            Logger.info("All fires extinguished and blockades removed. Good job!");
             System.exit(0);
         }
 

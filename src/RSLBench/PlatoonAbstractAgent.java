@@ -1,4 +1,4 @@
-package RSLBench;
+    package RSLBench;
 
 import RSLBench.Helpers.Logging.Markers;
 import java.util.ArrayList;
@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import rescuecore2.Constants;
 import rescuecore2.standard.components.StandardAgent;
 import rescuecore2.standard.entities.Area;
+import rescuecore2.standard.entities.Blockade;
 import rescuecore2.standard.entities.Building;
 import rescuecore2.standard.entities.Human;
 import rescuecore2.standard.entities.Refuge;
@@ -34,6 +35,8 @@ import rescuecore2.worldmodel.EntityID;
  */
 public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends StandardAgent<E> {
     private static final Logger Logger = LogManager.getLogger(PlatoonAbstractAgent.class);
+
+    public static final String THINK_TIME_KEY = "kernel.agents.think-time";
 
     private static final int RANDOM_WALK_LENGTH = 50;
 
@@ -177,6 +180,16 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
 
         // plan path to goal
         return search.search(position, randomExplorationGoal, connectivityGraph, distanceMatrix).getPathIds();
+    }
+
+    public void removeBlockade(Blockade blockade) {
+        if (model == null) {
+            Logger.error("Null model in agent {}", this);
+        }
+        if (blockade == null) {
+            Logger.error("Null blockade in agent {}", this);
+        }
+        model.removeEntity(blockade.getID());
     }
 
 }

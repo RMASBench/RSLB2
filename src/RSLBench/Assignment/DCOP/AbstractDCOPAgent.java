@@ -4,7 +4,6 @@
  */
 package RSLBench.Assignment.DCOP;
 
-import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Helpers.Utility.UtilityMatrix;
 import rescuecore2.config.Config;
 import rescuecore2.worldmodel.EntityID;

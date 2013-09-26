@@ -21,13 +21,13 @@ import rescuecore2.standard.entities.StandardEntityFactory;
 import rescuecore2.standard.entities.StandardPropertyFactory;
 import rescuecore2.standard.messages.StandardMessageFactory;
 /**
- * Launcher for the agents. 
- * This will launch as many instances of each of the 
+ * Launcher for the agents.
+ * This will launch as many instances of each of the
  * agents as possible, all using one connection.
  */
 public final class Launcher {
     private static final Logger Logger = LogManager.getLogger(Launcher.class);
-    
+
     private static final String FIRE_BRIGADE_FLAG = "-fb";
     private static final String POLICE_FORCE_FLAG = "-pf";
     private static final String AMBULANCE_TEAM_FLAG = "-at";
@@ -35,7 +35,7 @@ public final class Launcher {
 
     private Launcher() {}
 
-    
+
     /**
      *  Launches the instances of the agents.
      *  @param args The following arguments are understood: -p <port>, -h <hostname>, -fb <fire brigades>, -pf <police forces>, -at <ambulance teams>
@@ -55,15 +55,15 @@ public final class Launcher {
             int pf = -1;
             int at = -1;
             // CHECKSTYLE:OFF:ModifiedControlVariable
-            
+
             for (int i = 0; i < args.length; ++i) {
                 if (args[i].equals(FIRE_BRIGADE_FLAG)) {
                     fb = Integer.parseInt(args[++i]);
                     Logger.debug(Markers.GREEN, "fb="+fb);
                 }
                 else if (args[i].equals(POLICE_FORCE_FLAG)) {
-                    //pf = Integer.parseInt(args[++i]);
-                	Logger.warn("Police forces are not supported yet!");
+                    pf = Integer.parseInt(args[++i]);
+                    Logger.debug(Markers.GREEN, "pf="+pf);
                 }
                 else if (args[i].equals(AMBULANCE_TEAM_FLAG)) {
                     //at = Integer.parseInt(args[++i]);
@@ -73,7 +73,7 @@ public final class Launcher {
                     Logger.warn("Unrecognised option: " + args[i]);
                 }
             }
-            
+
             // CHECKSTYLE:ON:ModifiedControlVariable
             ComponentLauncher launcher = new TCPComponentLauncher(host, port, config);
             connect(launcher, fb, pf, at, config);
@@ -82,14 +82,14 @@ public final class Launcher {
             Logger.error("Error connecting agents", e);
         }
         catch (ConfigException e) {
-            Logger.error("Configuration error", e); 
+            Logger.error("Configuration error", e);
         }
         catch (OutOfMemoryError e) {
             Logger.error("Memory exhausted!", e);
             System.exit(0);
         }
     }
-    
+
     /**
      * It connects the agents to the kernel.
      * @param launcher: the launcher
@@ -98,10 +98,11 @@ public final class Launcher {
      * @param at: number of ambulances
      * @param config: configuration file
      * @throws InterruptedException
-     * @throws ConnectionException 
+     * @throws ConnectionException
      */
     private static void connect(ComponentLauncher launcher, int fb, int pf, int at, Config config) throws InterruptedException, ConnectionException {
         List<PlatoonFireAgent> fireAgents = new ArrayList<>();
+        List<PlatoonPoliceAgent> policeAgents = new ArrayList<>();
 
         int i = 0;
         try {
@@ -123,16 +124,19 @@ public final class Launcher {
         catch (ComponentConnectionException e) {
             Logger.info("failed: " + e.getMessage());
         }
-/*        try {
+        try {
             while (pf-- != 0) {
                 Logger.info("Connecting police force " + (i++) + "...");
-                launcher.connect(new SamplePoliceForce());
+                PlatoonPoliceAgent policeAgent = new PlatoonPoliceAgent();
+                launcher.connect(policeAgent);
+                policeAgents.add(policeAgent);
                 Logger.info("success");
             }
         }
         catch (ComponentConnectionException e) {
             Logger.info("failed: " + e.getMessage());
         }
+/*
         try {
             while (at-- != 0) {
                 Logger.info("Connecting ambulance team " + (i++) + "...");
@@ -147,7 +151,7 @@ public final class Launcher {
         try {
             while (true) {
                 Logger.info("Connecting center " + (i++) + "...");
-                launcher.connect(new CenterAgent(fireAgents));
+                launcher.connect(new CenterAgent(fireAgents, policeAgents));
                 Logger.info("success");
             }
         }

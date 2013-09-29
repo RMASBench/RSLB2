@@ -38,38 +38,38 @@ package RSLBench.Algorithms.BMS;
 
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.HashMap;
+
+import es.csic.iiia.maxsum.AtMostOneFactor;
+import es.csic.iiia.maxsum.Factor;
+import es.csic.iiia.maxsum.MaxOperator;
+import es.csic.iiia.maxsum.Maximize;
+import es.csic.iiia.maxsum.CompositeIndependentFactor;
+import es.csic.iiia.maxsum.IndependentFactor;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import rescuecore2.worldmodel.EntityID;
+import rescuecore2.config.Config;
 
+import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Helpers.Utility.ProblemDefinition;
-import es.csic.iiia.maxsum.CardinalityFactor;
-
-import es.csic.iiia.maxsum.Factor;
-import es.csic.iiia.maxsum.MaxOperator;
-import es.csic.iiia.maxsum.Maximize;
-import es.csic.iiia.maxsum.SelectorFactor;
-import es.csic.iiia.maxsum.CardinalityFunction;
-import es.csic.iiia.maxsum.CompositeIndependentFactor;
-import es.csic.iiia.maxsum.IndependentFactor;
-import java.util.HashMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import rescuecore2.config.Config;
 
 /**
- * This is a binary max-sum agent.
+ * This is a binary max-sum police agent.
  */
-public class BMSFireAgent implements DCOPAgent {
-    private static final Logger Logger = LogManager.getLogger(BMSFireAgent.class);
+public class BMSPoliceAgent implements DCOPAgent {
+    private static final Logger Logger = LogManager.getLogger(BMSPoliceAgent.class);
 
     private static final MaxOperator MAX_OPERATOR = new Maximize();
     
     private EntityID id;
     private ProblemDefinition utilities;
-    private SelectorFactor<EntityID> variableNode;
+    private AtMostOneFactor<EntityID> variableNode;
     private HashMap<EntityID, Factor<EntityID>> factors;
     private HashMap<EntityID, EntityID> factorLocations;
     private RSLBenchCommunicationAdapter communicationAdapter;
@@ -77,18 +77,18 @@ public class BMSFireAgent implements DCOPAgent {
     private long constraintChecks;
     
     /**
-     * Initialize this max-sum agent (firefighting team)
+     * Initialize this max-sum agent (police team)
      * 
-     * @param agentID The platform ID of the firefighting team
-     * @param utilityM A "utility maxtrix" that contains <em>all</em> u_at values
+     * @param agentID The platform ID of the police agent
+     * @param problem The current scenario as a problem definition
      */
     @Override
-    public void initialize(Config config, EntityID agentID, ProblemDefinition utilityM) {
+    public void initialize(Config config, EntityID agentID, ProblemDefinition problem) {
         Logger.trace("Initializing agent {}", agentID);
         
         this.id = agentID;
         this.targetId = null;
-        this.utilities = utilityM;
+        this.utilities = problem;
         
         // Reset internal structures
         factors = new HashMap<>();
@@ -96,10 +96,10 @@ public class BMSFireAgent implements DCOPAgent {
         communicationAdapter = new RSLBenchCommunicationAdapter();
 
         // Build the variable node
-        addSelectorNode();
+        addPoliceFactor();
 
-        // And the fire utility nodes that correspond to this agent
-        addUtilityNodes();
+        // And the blockade factor nodes that correspond to this agent
+        addBlockadeFactors();
         
         // Finally, compute the location of each factor in the simulation
         computeFactorLocations();
@@ -120,99 +120,88 @@ public class BMSFireAgent implements DCOPAgent {
     /**
      * Creates a selector node for the agent's "variable".
      */
-    private void addSelectorNode() {
-        this.variableNode = new SelectorFactor<>();
+    private void addPoliceFactor() {
+        this.variableNode = new AtMostOneFactor<>();
         
         // The agent's factor is the selector plus the independent utilities
-        // of this agent for each fire.
+        // of this agent for each blockade.
         CompositeIndependentFactor<EntityID> agentFactor = new CompositeIndependentFactor<>();
         agentFactor.setInnerFactor(variableNode);
         
         IndependentFactor<EntityID> utils = new IndependentFactor<>();
         agentFactor.setIndependentFactor(utils);
-        for (EntityID fire : utilities.getFires()) {
+        for (EntityID blockade : utilities.getBlockades()) {
             // Link the agent to each fire
-            agentFactor.addNeighbor(fire);
+            agentFactor.addNeighbor(blockade);
             // ... and populate the utilities
-            final double value = utilities.getFireUtility(id, fire);
-            utils.setPotential(fire, value);
-            Logger.trace("Utility for {}: {}", new Object[]{fire, value});
+            final double value = utilities.getPoliceUtility(id, blockade);
+            utils.setPotential(blockade, value);
+            Logger.trace("Utility for {}: {}", new Object[]{blockade, value});
         }
         
         addFactor(id, agentFactor);
     }
     
     /** 
-     * Create the utility nodes of the fires "controlled" by this agent.
+     * Create the factor nodes of the blockades "controlled" by this agent.
      * 
-     * Utility functions get assigned to the agents according to their 
-     * indices within the utilities list of agents and targets.
+     * Blockade factors are assigned to the police agents according to their
+     * indices within the utilities list of police brigades and blockades.
      * 
-     * Agent i gets all fires f s.t. f mod len(agents) == i
-     * If there are 2 agents and 5 utility functions, the assignment goes
-     * like that:
-     * Agent 0 (agents.get(0)) gets Fires 0, 2, 4
-     * Agent 1 (agents.get(1)) gets Fires 1, 3
+     * Agent i gets all blockades f s.t. f mod len(agents) == i
+     * If there are 2 police agents and 5 blockade functions, the assignment
+     * goes like that:
+     * Agent 0 (agents.get(0)) gets Blockades 0, 2, 4
+     * Agent 1 (agents.get(1)) gets Blockades 1, 3
      * 
      **/
-    private void addUtilityNodes() {
-        ArrayList<EntityID> agents = utilities.getFireAgents();
-        ArrayList<EntityID> fires  = utilities.getFires();
+    private void addBlockadeFactors() {
+        ArrayList<EntityID> agents = utilities.getPoliceAgents();
+        ArrayList<EntityID> blockades  = utilities.getBlockades();
         final int nAgents = agents.size();
-        final int nFires  = fires.size();
-        final int nAgent  = agents.indexOf(id);
+        final int nBlockades = blockades.size();
+        final int nAgent = agents.indexOf(id);
         
-        // Iterate over the fires whose utility functions must run within this
-        // agent.
-        for (int i = nAgent; i < nFires; i += nAgents) {
-            final EntityID fire = fires.get(i);
+        // Iterate over the blockades whose factors must run within this agent
+        for (int i = nAgent; i < nBlockades; i += nAgents) {
+            final EntityID blockade = blockades.get(i);
             
-            // Build the utility node
-            CardinalityFactor<EntityID> f = new CardinalityFactor<>();
+            // Build the factor node
+            AtMostOneFactor<EntityID> f = new AtMostOneFactor<>();
             
-            // Set the maximum number of agents that should be attending this
-            // fire
-            CardinalityFunction wf = new CardinalityFunction() {
-                @Override
-                public double getCost(int nActiveVariables) {
-                    return - utilities.getUtilityPenalty(fire, nActiveVariables);
-                }
-            };
-            f.setFunction(wf);
-            
-            // Link the fire with all agents
+            // Link the blockade with all agents
             for (EntityID agent : agents) {
                 f.addNeighbor(agent);
             }
             
             // Finally add the factor to this agent
-            addFactor(fire, f);
+            addFactor(blockade, f);
         }
     }
     
     /**
      * Creates a map of factor id to the agent id where this factor is running,
-     * for all factors within the simulation.
+     * for all factors related to the police team.
      * 
-     * @see #addUtilityNodes() for information on how the logical factors are
+     * @see #addBlockadeFactors() for information on how the logical factors are
      * assigned to agents.
      */
     private void computeFactorLocations() {
-        ArrayList<EntityID> agents = utilities.getFireAgents();
-        ArrayList<EntityID> fires  = utilities.getFires();
+        ArrayList<EntityID> agents = utilities.getPoliceAgents();
+        ArrayList<EntityID> blockades = utilities.getBlockades();
         final int nAgents = agents.size();
-        final int nFires  = fires.size();
+        final int nBlockades = blockades.size();
         
         // Easy part: each agent selector runs on the corresponding agent
         for (EntityID agent : agents) {
             factorLocations.put(agent, agent);
         }
         
-        // "Harder" part: each fire f runs on agent f mod len(agents)
-        for (int i = 0; i < nFires; i++) {
+        // "Harder" part: each blockade f runs on agent f mod len(agents)
+        for (int i = 0; i < nBlockades; i++) {
             EntityID agent = agents.get(i % nAgents);
-            EntityID fire  = fires.get(i);
-            factorLocations.put(fire, agent);
+            EntityID blockade = blockades.get(i);
+            factorLocations.put(blockade, agent);
         }
     }
 
@@ -236,8 +225,10 @@ public class BMSFireAgent implements DCOPAgent {
         // Now extract our choice
         targetId = variableNode.select();
         if (targetId == null) {
-            Logger.error("Agent {} chose no target!", id);
-            System.exit(1);
+            Logger.debug("Agent {} chose no target!", id);
+            targetId = Assignment.UNKNOWN_TARGET_ID;
+        } else {
+            Logger.debug("Agent {} chooses target {}", id, targetId);
         }
         Logger.trace("improveAssignment end.");
 

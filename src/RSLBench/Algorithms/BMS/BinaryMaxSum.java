@@ -20,6 +20,8 @@ public class BinaryMaxSum extends DCOPSolver {
         switch(type) {
             case FIRE_BRIGADE:
                 return new BMSFireAgent();
+            case POLICE_FORCE:
+                return new BMSPoliceAgent();
             default:
                 throw new UnsupportedOperationException("The Binary Max-Sum solver does not support agents of type " + type);
         }

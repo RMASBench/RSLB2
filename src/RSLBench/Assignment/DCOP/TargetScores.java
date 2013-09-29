@@ -63,7 +63,7 @@ public class TargetScores {
                 - utilities.getUtilityPenalty(target, nAgents);
 
         // Finally, the score for this agent is its utility minus the penalty
-        return utilities.getUtility(agent, target) - penalty;
+        return utilities.getFireUtility(agent, target) - penalty;
     }
 
     /**

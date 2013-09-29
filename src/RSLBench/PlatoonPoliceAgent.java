@@ -11,9 +11,6 @@ import rescuecore2.worldmodel.ChangeSet;
 import rescuecore2.worldmodel.EntityID;
 import RSLBench.Helpers.Logging.Markers;
 import java.util.EnumSet;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.standard.entities.Blockade;
@@ -36,15 +33,8 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
     /** EntityID of the road where the blockade that this agent should remove is located */
     private EntityID assignedTarget = Assignment.UNKNOWN_TARGET_ID;
 
-    /** Queue to receive assignments from the central */
-    private BlockingQueue<EntityID> assignmentQueue = new ArrayBlockingQueue<>(1);
-
     public PlatoonPoliceAgent() {
     	Logger.debug(Markers.BLUE, "Platoon Police Agent CREATED");
-    }
-
-    public boolean enqueueAssignment(EntityID target) {
-        return assignmentQueue.offer(target);
     }
 
     @Override
@@ -79,13 +69,7 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
         // Wait until the station sends us an assignment
         ////////////////////////////////////////////////////////////////////////
         Logger.debug("Agent {} waiting for command.", getID());
-        try {
-            assignedTarget = assignmentQueue.poll(
-                    config.getIntValue(THINK_TIME_KEY)-100, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException ex) {
-            Logger.error("Agent {} unable to fetch its assingment.",
-                    ex, getID());
-        }
+        assignedTarget = fetchAssignment();
         if (assignedTarget != null) {
             Logger.debug("Agent {} got target {}", getID(), assignedTarget);
         } else {
@@ -100,6 +84,8 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
         // If we have a target, approach or clear it
         // ///////////////////////////////
         if (assignedTarget != null && !assignedTarget.equals(Assignment.UNKNOWN_TARGET_ID)) {
+            EntityID bID = assignedTarget;
+            assignedTarget = ((Blockade)model.getEntity(bID)).getPosition();
 
             // Clear if in range
             if (model.getDistance(me.getPosition(), assignedTarget) <= distance) {

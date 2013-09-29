@@ -12,6 +12,9 @@ import RSLBench.Search.DistanceInterface;
 import RSLBench.Search.Graph;
 import RSLBench.Search.SearchAlgorithm;
 import RSLBench.Search.SearchFactory;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -42,6 +45,9 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
 
     //private static final String SAY_COMMUNICATION_MODEL = StandardCommunicationModel.class.getName();
     private static final String SPEAK_COMMUNICATION_MODEL = ChannelCommunicationModel.class.getName();
+
+    /** Queue to receive assignments from the central */
+    private BlockingQueue<EntityID> assignmentQueue = new ArrayBlockingQueue<>(1);
 
     /**
        Whether to use AKSpeak messages or not.
@@ -111,6 +117,32 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
         Logger.debug("Communcation model: " + config.getValue(Constants.COMMUNICATION_MODEL_KEY));
         Logger.debug(useSpeak ? "Using speak model" : "Using say model");
     }
+
+    public boolean enqueueAssignment(EntityID target) {
+        return assignmentQueue.offer(target);
+    }
+
+    /**
+     * Fetch the latest assignment as computed by the DCOP algorithm.
+     *
+     * @return EntityID of the target assigned to this agent.
+     */
+    protected EntityID fetchAssignment() {
+        EntityID assignment = null;
+        
+        Logger.debug("Agent {} waiting for command.", getID());
+        try {
+            assignment = assignmentQueue.poll(
+                    config.getIntValue(THINK_TIME_KEY) - 100, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ex) {
+            Logger.error("Agent {} unable to fetch its assingment.",
+                    ex, getID());
+            return null;
+        }
+        Logger.debug("Agent {} approaching {}!", getID(), assignment);
+        return assignment;
+    }
+
 
     /**
        Construct a random walk starting from this agent's current location to a random building.

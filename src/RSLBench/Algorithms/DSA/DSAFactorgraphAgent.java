@@ -92,7 +92,7 @@ public class DSAFactorgraphAgent extends DSAAgent {
                 if (agent._utilityM != null) {
                     double bestTargetUtility = 0;
                     for (EntityID t : agent._utilityM.getFires()) {
-                        double util = agent._utilityM.getUtility(agentID, t);
+                        double util = agent._utilityM.getFireUtility(agentID, t);
                         if (bestTargetUtility < util) {
                             bestTargetUtility = util;
                             agent._targetID = t;
@@ -165,10 +165,10 @@ public class DSAFactorgraphAgent extends DSAAgent {
                 else {
                     ArrayList<EntityID> myTargets = _agentNeighbours.get(agent);
                     EntityID worstTarget = function;
-                    double targetUtility = _utilityM.getUtility(agent, worstTarget);
+                    double targetUtility = _utilityM.getFireUtility(agent, worstTarget);
                     double worstUtility = targetUtility;
                     for (EntityID target: myTargets) {
-                        double oldUtility = _utilityM.getUtility(agent, target);
+                        double oldUtility = _utilityM.getFireUtility(agent, target);
                         if (oldUtility < worstUtility) {
                             worstUtility = oldUtility;
                             worstTarget = target;

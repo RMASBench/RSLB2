@@ -67,7 +67,7 @@ public class Exporter {
                 separator = "";
                 for (EntityID target : utility.getFires()) {
                     out.write(separator);
-                    out.write(Double.toString(utility.getUtility(agent, target)));
+                    out.write(Double.toString(utility.getFireUtility(agent, target)));
                     separator = " ";
                 }
                 out.newLine();

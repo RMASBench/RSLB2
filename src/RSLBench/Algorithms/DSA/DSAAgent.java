@@ -54,7 +54,7 @@ public class DSAAgent implements DCOPAgent {
         // Find the target with the highest utility and initialize required agents for each target 
         double bestTargetUtility = Double.NEGATIVE_INFINITY;
         for (EntityID t : _utilityM.getFires()) {
-            double util = _utilityM.getUtility(agentID, t);
+            double util = _utilityM.getFireUtility(agentID, t);
             if (bestTargetUtility < util) {
                 bestTargetUtility = util;
                 _targetID = t;

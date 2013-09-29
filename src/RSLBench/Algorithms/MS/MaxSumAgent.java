@@ -242,10 +242,10 @@ public class MaxSumAgent implements DCOPAgent {
                 _nMexForFG += 2;
                 HashSet<NodeFunction> assignedToMe = tempVar.getNeighbour();
                 EntityID worstTarget = new EntityID(tarID);
-                double targetUtility = _utilityM.getUtility(agent, worstTarget);
+                double targetUtility = _utilityM.getFireUtility(agent, worstTarget);
                 double worstUtility = targetUtility;
                 for (NodeFunction assigned : assignedToMe) {
-                    double oldUtility = _utilityM.getUtility(agent, new EntityID(assigned.getId()));
+                    double oldUtility = _utilityM.getFireUtility(agent, new EntityID(assigned.getId()));
                     if (oldUtility < worstUtility) {
                         worstUtility = oldUtility;
                         worstTarget = new EntityID(assigned.getId());
@@ -292,7 +292,7 @@ public class MaxSumAgent implements DCOPAgent {
                         countAgent++;
                         NodeVariable var = (NodeVariable) prova.next();
                         //System.out.print(var.getId());
-                        cost = cost + _utilityM.getUtility(new EntityID(var.getId()), new EntityID(targetID));
+                        cost = cost + _utilityM.getFireUtility(new EntityID(var.getId()), new EntityID(targetID));
                     }
                 }
                 cost -= _utilityM.getUtilityPenalty(new EntityID(targetID), countAgent);

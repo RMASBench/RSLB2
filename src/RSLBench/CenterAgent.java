@@ -262,11 +262,16 @@ public class CenterAgent extends StandardAgent<Building>
         lastAssignment = solver.solve(time, problem);
 
         // Send assignment to agents
-        for (PlatoonFireAgent fagent : fireAgents) {
+        sendAssignments(fireAgents);
+        sendAssignments(policeAgents);
+    }
+
+    private void sendAssignments(List<? extends PlatoonAbstractAgent> agents) {
+        for (PlatoonAbstractAgent agent : agents) {
             if (lastAssignment != null) {
-                fagent.enqueueAssignment(lastAssignment.getAssignment(fagent.getID()));
+                agent.enqueueAssignment(lastAssignment.getAssignment(agent.getID()));
             } else {
-                fagent.enqueueAssignment(Assignment.UNKNOWN_TARGET_ID);
+                agent.enqueueAssignment(Assignment.UNKNOWN_TARGET_ID);
             }
         }
     }

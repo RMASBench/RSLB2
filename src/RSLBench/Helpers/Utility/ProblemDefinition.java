@@ -11,7 +11,6 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.config.Config;
-import rescuecore2.standard.entities.StandardEntity;
 
 import rescuecore2.standard.entities.StandardWorldModel;
 import rescuecore2.worldmodel.EntityID;
@@ -136,22 +135,35 @@ public class ProblemDefinition {
                     utility = 1e15;
                 }
 
-                fireUtilityMatrix[i][j] = utility;
+                policeUtilityMatrix[i][j] = utility;
             }
         }
     }
 
     /**
-     * Reads the utility value for the specified agent and target.
+     * Reads the utility value for the specified fire brigade and target fire.
      *
-     * @param agentID
-     * @param targetID
+     * @param firefighter id of the fire brigade
+     * @param fire id of the fire
      * @return the utility value for the specified agent and target.
      */
-    public double getUtility(EntityID agentID, EntityID targetID) {
-        final int i = id2idx.get(agentID);
-        final int j = id2idx.get(targetID);
+    public double getFireUtility(EntityID firefigher, EntityID fire) {
+        final int i = id2idx.get(firefigher);
+        final int j = id2idx.get(fire);
         return fireUtilityMatrix[i][j];
+    }
+
+    /**
+     * Reads the utility value for the specified police agent and blockade.
+     *
+     * @param police id of the police agent
+     * @param blockade id of the blockade
+     * @return the utility value for the specified police and blockade.
+     */
+    public double getPoliceUtility(EntityID police, EntityID blockade) {
+        final int i = id2idx.get(police);
+        final int j = id2idx.get(blockade);
+        return policeUtilityMatrix[i][j];
     }
 
     /**
@@ -182,7 +194,7 @@ public class ProblemDefinition {
     public List<EntityID> getNBestFires(int N, EntityID fireAgent) {
         Map<EntityID, Double> map = new HashMap<>();
         for (EntityID target : fires) {
-            map.put(target, getUtility(fireAgent, target));
+            map.put(target, getFireUtility(fireAgent, target));
         }
         List<EntityID> res = sortByValue(map);
         ArrayList<EntityID> list = new ArrayList<>();
@@ -202,7 +214,7 @@ public class ProblemDefinition {
     public List<EntityID> getNBestFireAgents(int N, EntityID fire) {
         Map<EntityID, Double> map = new HashMap<>();
         for (EntityID agent : fireAgents) {
-            map.put(agent, getUtility(agent, fire));
+            map.put(agent, getFireUtility(agent, fire));
         }
         List<EntityID> res = sortByValue(map);
         ArrayList<EntityID> list = new ArrayList<>();
@@ -247,8 +259,8 @@ public class ProblemDefinition {
         double best = -Double.MAX_VALUE;
         EntityID targetID = fires.get(0);
         for (EntityID t : fires) {
-            if (getUtility(agentID, t) > best) {
-                best = getUtility(agentID, t);
+            if (getFireUtility(agentID, t) > best) {
+                best = getFireUtility(agentID, t);
                 targetID = t;
             }
         }
@@ -299,12 +311,19 @@ public class ProblemDefinition {
     }
 
     /**
-     * Returns the considered targets
-     *
-     * @return the targets
+     * Returns a list of fires in the problem.
+     * @return list of fires.
      */
     public ArrayList<EntityID> getFires() {
         return fires;
+    }
+
+    /**
+     * Returns a list of blockades in the problem.
+     * @return list of blockades.
+     */
+    public ArrayList<EntityID> getBlockades() {
+        return blockades;
     }
 
     /**
@@ -339,7 +358,7 @@ public class ProblemDefinition {
         HashMap<EntityID, Integer> nAgentsPerTarget = new HashMap<>();
         for (EntityID agent : fireAgents) {
             EntityID target = solution.getAssignment(agent);
-            utility += getUtility(agent, target);
+            utility += getFireUtility(agent, target);
 
             // Add 1 to the target count
             int nAgents = nAgentsPerTarget.containsKey(target)

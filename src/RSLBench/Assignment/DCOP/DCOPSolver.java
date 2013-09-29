@@ -11,6 +11,7 @@ import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Utility.ProblemDefinition;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import rescuecore2.standard.entities.FireBrigade;
 import rescuecore2.standard.entities.StandardEntity;
 import rescuecore2.standard.entities.StandardEntityURN;
 
@@ -233,6 +234,10 @@ public abstract class DCOPSolver extends AbstractSolver {
         Logger.debug("Initiating greedy improvement. Initial value {}", utility.getUtility(initial));
         Assignment assignment = new Assignment(initial);
         for (DCOPAgent agent : agents) {
+            StandardEntity e = utility.getWorld().getEntity(agent.getAgentID());
+            if (!(e instanceof FireBrigade)) {
+                continue;
+            }
             final EntityID agentID = agent.getAgentID();
 
             // Consider previous assignments

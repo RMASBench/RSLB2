@@ -6,7 +6,7 @@ package RSLBench.Algorithms.DSA;
 
 import RSLBench.Assignment.DCOP.TargetScores;
 import RSLBench.Assignment.Assignment;
-import RSLBench.Helpers.Utility.UtilityMatrix;
+import RSLBench.Helpers.Utility.ProblemDefinition;
 import RSLBench.Constants;
 import java.util.*;
 import rescuecore2.config.Config;
@@ -26,12 +26,12 @@ public class DSAFactorgraphAgent extends DSAAgent {
         private static HashMap<EntityID, ArrayList<EntityID>> _consideredVariables = new HashMap<EntityID, ArrayList<EntityID>>();
         private int _funPerAgent=4;
         private int _dependencies;
-        private UtilityMatrix _oldUtilityMatrix = null;
+        private ProblemDefinition _oldUtilityMatrix = null;
         private static boolean toReset= false;
         //private static int _number = 1;
         
         @Override
-        public void initialize(Config config, EntityID agentID, UtilityMatrix utilityM) {
+        public void initialize(Config config, EntityID agentID, ProblemDefinition utilityM) {
             //_number++;
             this.resetStructures();
             
@@ -44,7 +44,7 @@ public class DSAFactorgraphAgent extends DSAAgent {
             _dependencies = config.getIntValue(Constants.KEY_MAXSUM_NEIGHBORS);
             
             agents.add(this);
-            List<EntityID> targets = utilityM.getNBestTargets(_utilityM.getNumTargets(), _agentID);
+            List<EntityID> targets = utilityM.getNBestFires(_utilityM.getNumFires(), _agentID);
             
             //assegno le funzioni agli agenti
             int i = 0;
@@ -67,11 +67,11 @@ public class DSAFactorgraphAgent extends DSAAgent {
         
         for(EntityID function: myFunctions) {
             int count = 0;
-            List<EntityID> bestAgents = _utilityM.getNBestAgents(_utilityM.getNumTargets(), function);
+            List<EntityID> bestAgents = _utilityM.getNBestFireAgents(_utilityM.getNumFires(), function);
             this.buildNeighborhood(function, bestAgents, count);
         }
         
-        if (agents.size() == _utilityM.getNumAgents()) {
+        if (agents.size() == _utilityM.getNumFireAgents()) {
             ArrayList<EntityID> agentsIDs = new ArrayList<EntityID>();
             for (DSAFactorgraphAgent agent: agents) {
                 agentsIDs.add(agent.getAgentID());
@@ -91,7 +91,7 @@ public class DSAFactorgraphAgent extends DSAAgent {
         // Find the target with the highest utility and initialize required agents for each target 
                 if (agent._utilityM != null) {
                     double bestTargetUtility = 0;
-                    for (EntityID t : agent._utilityM.getTargets()) {
+                    for (EntityID t : agent._utilityM.getFires()) {
                         double util = agent._utilityM.getUtility(agentID, t);
                         if (bestTargetUtility < util) {
                             bestTargetUtility = util;
@@ -196,7 +196,7 @@ public class DSAFactorgraphAgent extends DSAAgent {
         
     public void newNeighbour(EntityID function, EntityID removedVariable) {
         ArrayList<EntityID> possibleNewNeighbours = new ArrayList<EntityID>();
-        List<EntityID> best = _utilityM.getNBestAgents(_utilityM.getNumAgents(), function);
+        List<EntityID> best = _utilityM.getNBestFireAgents(_utilityM.getNumFireAgents(), function);
         ArrayList alreadyConsidered = _consideredVariables.get(function);
         for (EntityID possibleNewNeighbour: best) {
             if (!alreadyConsidered.contains(possibleNewNeighbour))  {

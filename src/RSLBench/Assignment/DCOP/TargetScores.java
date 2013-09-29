@@ -1,6 +1,6 @@
 package RSLBench.Assignment.DCOP;
 
-import RSLBench.Helpers.Utility.UtilityMatrix;
+import RSLBench.Helpers.Utility.ProblemDefinition;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -13,7 +13,7 @@ import rescuecore2.worldmodel.EntityID;
  */
 public class TargetScores {
     private HashMap<EntityID, Integer> _numAssignedAgents;
-    private UtilityMatrix utilities;
+    private ProblemDefinition utilities;
     private EntityID agent;
 
     /**
@@ -21,7 +21,7 @@ public class TargetScores {
      * @param agent agent that is evaluating different target options.
      * @param utilities problem scenario in terms of utility.
      */
-    public TargetScores(EntityID agent, UtilityMatrix utilities) {
+    public TargetScores(EntityID agent, ProblemDefinition utilities) {
         _numAssignedAgents = new HashMap<>();
         this.utilities = utilities;
         this.agent = agent;

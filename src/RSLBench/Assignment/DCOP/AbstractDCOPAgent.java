@@ -4,7 +4,7 @@
  */
 package RSLBench.Assignment.DCOP;
 
-import RSLBench.Helpers.Utility.UtilityMatrix;
+import RSLBench.Helpers.Utility.ProblemDefinition;
 import rescuecore2.config.Config;
 import rescuecore2.worldmodel.EntityID;
 
@@ -15,7 +15,7 @@ import rescuecore2.worldmodel.EntityID;
 public abstract class AbstractDCOPAgent implements DCOPAgent {
     protected EntityID agentID;
     protected EntityID targetID;
-    protected UtilityMatrix utilities;
+    protected ProblemDefinition utilities;
 
     @Override
     public EntityID getAgentID() {
@@ -28,7 +28,7 @@ public abstract class AbstractDCOPAgent implements DCOPAgent {
     }
 
     @Override
-    public void initialize(Config config, EntityID agentID, UtilityMatrix utility) {
+    public void initialize(Config config, EntityID agentID, ProblemDefinition utility) {
         utilities = utility;
         this.agentID = agentID;
     }

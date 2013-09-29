@@ -6,6 +6,7 @@ package RSLBench.Helpers.Utility;
 
 import rescuecore2.config.Config;
 import rescuecore2.standard.entities.StandardWorldModel;
+import rescuecore2.worldmodel.EntityID;
 
 /**
  * Skeletal implementation of a utility function.
@@ -24,6 +25,11 @@ public abstract class AbstractUtilityFunction implements UtilityFunction {
     @Override
     public void setConfig(Config config) {
         this.config = config;
+    }
+
+    @Override
+    public double getPoliceUtility(EntityID policeAgent, EntityID blockade) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
 }

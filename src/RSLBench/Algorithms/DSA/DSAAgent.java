@@ -6,7 +6,7 @@ import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Helpers.Logging.Markers;
-import RSLBench.Helpers.Utility.UtilityMatrix;
+import RSLBench.Helpers.Utility.ProblemDefinition;
 import RSLBench.Helpers.SimpleID;
 
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ import rescuecore2.worldmodel.EntityID;
 public class DSAAgent implements DCOPAgent {
 
     private static final Logger Logger = LogManager.getLogger(DSAAgent.class);
-    protected UtilityMatrix _utilityM = null;
+    protected ProblemDefinition _utilityM = null;
     protected EntityID _agentID;
     protected EntityID _targetID;
     protected Collection<Message> _neighborAssignments = null;
@@ -42,18 +42,18 @@ public class DSAAgent implements DCOPAgent {
     }
 
     @Override
-    public void initialize(Config config, EntityID agentID, UtilityMatrix utilityM) {
+    public void initialize(Config config, EntityID agentID, ProblemDefinition utilityM) {
         _agentID = agentID;
         _utilityM = utilityM;
         _targetScores = new TargetScores(agentID, utilityM);
         _targetID = Assignment.UNKNOWN_TARGET_ID;
         this.config = config;
 
-        Logger.debug(Markers.LIGHT_BLUE, "A [" + SimpleID.conv(agentID) + "] initializing with " + _utilityM.getNumTargets() + " targets.");
+        Logger.debug(Markers.LIGHT_BLUE, "A [" + SimpleID.conv(agentID) + "] initializing with " + _utilityM.getNumFires() + " targets.");
 
         // Find the target with the highest utility and initialize required agents for each target 
         double bestTargetUtility = Double.NEGATIVE_INFINITY;
-        for (EntityID t : _utilityM.getTargets()) {
+        for (EntityID t : _utilityM.getFires()) {
             double util = _utilityM.getUtility(agentID, t);
             if (bestTargetUtility < util) {
                 bestTargetUtility = util;
@@ -62,7 +62,7 @@ public class DSAAgent implements DCOPAgent {
         }
 
         Logger.debug(Markers.LIGHT_BLUE, "A [" + SimpleID.conv(agentID) + "] init done!");
-        neighbors = new HashSet<>(_utilityM.getAgents());
+        neighbors = new HashSet<>(_utilityM.getFireAgents());
         neighbors.remove(_agentID);
     }
 
@@ -95,7 +95,7 @@ public class DSAAgent implements DCOPAgent {
         EntityID bestTarget = _targetID;
         
         //Logger.debugColor(Markers.LIGHT_BLUE, "["+ _agentID +"]  BEFORE -> target: " + _targetID +" score: "+bestScore);
-        for (EntityID t : _utilityM.getTargets()) {
+        for (EntityID t : _utilityM.getFires()) {
             double score = _targetScores.computeScore(t);
             if (score > bestScore) {
                 bestScore = score;

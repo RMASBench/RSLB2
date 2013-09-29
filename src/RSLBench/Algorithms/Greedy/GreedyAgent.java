@@ -25,7 +25,7 @@ public class GreedyAgent extends DefaultDCOPAgent {
     @Override
     public boolean improveAssignment() {
         double best = Double.NEGATIVE_INFINITY;
-        for (EntityID target : utilities.getTargets()) {
+        for (EntityID target : utilities.getFires()) {
             double value = utilities.getUtility(agentID, target);
             if (value > best) {
                 targetID = target;

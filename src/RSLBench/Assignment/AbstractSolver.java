@@ -6,7 +6,7 @@ import rescuecore2.config.Config;
 import rescuecore2.standard.entities.StandardWorldModel;
 import RSLBench.Helpers.Stats;
 import RSLBench.Constants;
-import RSLBench.Helpers.Utility.UtilityMatrix;
+import RSLBench.Helpers.Utility.ProblemDefinition;
 import RSLBench.PlatoonAbstractAgent;
 import RSLBench.Search.SearchFactory;
 import java.util.List;
@@ -101,10 +101,10 @@ public abstract class AbstractSolver implements Solver
      * (for all the agents and alla the targets).
      * @return a mapping for each agent to a target.
      */
-    public abstract Assignment compute(UtilityMatrix utility);
+    public abstract Assignment compute(ProblemDefinition utility);
 
     @Override
-    public Assignment solve(int time, UtilityMatrix utility) {
+    public Assignment solve(int time, ProblemDefinition utility) {
         final long start = System.currentTimeMillis();
         stats.report("time", time);
         Logger.debug("Starting {} solver.", getIdentifier());
@@ -133,7 +133,7 @@ public abstract class AbstractSolver implements Solver
         stats.report("score", scoreFunction.score(worldModel, new Timestep(time)));
         stats.report("utility", utility.getUtility(solution));
         stats.report("violations", utility.getViolations(solution));
-        stats.report("solvable", utility.getTotalMaxAgents() >= utility.getNumAgents());
+        stats.report("solvable", utility.getTotalMaxAgents() >= utility.getNumFireAgents());
 
         Logger.debug("DA Simulator done");
         stats.report("cpu_time", cputime);

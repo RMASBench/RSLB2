@@ -44,7 +44,7 @@ import rescuecore2.worldmodel.EntityID;
 import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
-import RSLBench.Helpers.Utility.UtilityMatrix;
+import RSLBench.Helpers.Utility.ProblemDefinition;
 import es.csic.iiia.maxsum.CardinalityFactor;
 
 import es.csic.iiia.maxsum.Factor;
@@ -68,7 +68,7 @@ public class BMSAgent implements DCOPAgent {
     private static final MaxOperator MAX_OPERATOR = new Maximize();
     
     private EntityID id;
-    private UtilityMatrix utilities;
+    private ProblemDefinition utilities;
     private SelectorFactor<EntityID> variableNode;
     private HashMap<EntityID, Factor<EntityID>> factors;
     private HashMap<EntityID, EntityID> factorLocations;
@@ -83,7 +83,7 @@ public class BMSAgent implements DCOPAgent {
      * @param utilityM A "utility maxtrix" that contains <em>all</em> u_at values
      */
     @Override
-    public void initialize(Config config, EntityID agentID, UtilityMatrix utilityM) {
+    public void initialize(Config config, EntityID agentID, ProblemDefinition utilityM) {
         Logger.trace("Initializing agent {}", agentID);
         
         this.id = agentID;
@@ -130,7 +130,7 @@ public class BMSAgent implements DCOPAgent {
         
         IndependentFactor<EntityID> utils = new IndependentFactor<>();
         agentFactor.setIndependentFactor(utils);
-        for (EntityID fire : utilities.getTargets()) {
+        for (EntityID fire : utilities.getFires()) {
             // Link the agent to each fire
             agentFactor.addNeighbor(fire);
             // ... and populate the utilities
@@ -156,8 +156,8 @@ public class BMSAgent implements DCOPAgent {
      * 
      **/
     private void addUtilityNodes() {
-        ArrayList<EntityID> agents = utilities.getAgents();
-        ArrayList<EntityID> fires  = utilities.getTargets();
+        ArrayList<EntityID> agents = utilities.getFireAgents();
+        ArrayList<EntityID> fires  = utilities.getFires();
         final int nAgents = agents.size();
         final int nFires  = fires.size();
         final int nAgent  = agents.indexOf(id);
@@ -198,8 +198,8 @@ public class BMSAgent implements DCOPAgent {
      * assigned to agents.
      */
     private void computeFactorLocations() {
-        ArrayList<EntityID> agents = utilities.getAgents();
-        ArrayList<EntityID> fires  = utilities.getTargets();
+        ArrayList<EntityID> agents = utilities.getFireAgents();
+        ArrayList<EntityID> fires  = utilities.getFires();
         final int nAgents = agents.size();
         final int nFires  = fires.size();
         

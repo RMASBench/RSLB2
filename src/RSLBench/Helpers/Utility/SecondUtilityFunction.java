@@ -7,6 +7,7 @@ package RSLBench.Helpers.Utility;
 import RSLBench.Constants;
 import RSLBench.Helpers.Distance;
 import RSLBench.PlatoonFireAgent;
+import RSLBench.PlatoonPoliceAgent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.misc.Pair;
@@ -24,7 +25,7 @@ public class SecondUtilityFunction extends AbstractUtilityFunction {
     private Double maxDistance = null;
 
     @Override
-    public double getUtility(EntityID agent, EntityID target) {
+    public double getFireUtility(EntityID agent, EntityID target) {
         if (maxDistance == null) {
             maxDistance = getMaxDistance();
         }
@@ -40,7 +41,7 @@ public class SecondUtilityFunction extends AbstractUtilityFunction {
             utility = 1;
         }
 
-        double distance = Distance.distance(agent, target, world);
+        double distance = Distance.humanToBuilding(agent, target, world);
         double threshold = config.getFloatValue(PlatoonFireAgent.MAX_DISTANCE_KEY);
         if (distance < threshold) {
             distance = 0;
@@ -55,6 +56,27 @@ public class SecondUtilityFunction extends AbstractUtilityFunction {
         utility = utility - factor * tradeoff;
 
         //Logger.warn("Distance {}, factor {}, utility {}", distance, factor, utility);
+        return utility;
+    }
+
+    @Override
+    public double getPoliceUtility(EntityID policeAgent, EntityID blockade) {
+        if (maxDistance == null) {
+            maxDistance = getMaxDistance();
+        }
+
+        double distance = Distance.humanToBlockade(policeAgent, blockade, world);
+        double threshold = config.getFloatValue(PlatoonPoliceAgent.DISTANCE_KEY);
+        if (distance < threshold) {
+            distance = 0;
+        }
+        double utility = distance/maxDistance;
+        utility = Math.pow(utility, 2);
+
+        // Add some noise to break ties
+        utility += config.getRandom().nextDouble()/10000;
+        Logger.warn("Utility from police {} to blockade {}: {}", policeAgent, blockade, utility);
+        
         return utility;
     }
 

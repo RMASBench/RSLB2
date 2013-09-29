@@ -18,7 +18,7 @@ import RSLBench.Assignment.Solver;
 import RSLBench.Helpers.Exporter;
 import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Utility.UtilityFactory;
-import RSLBench.Helpers.Utility.UtilityMatrix;
+import RSLBench.Helpers.Utility.ProblemDefinition;
 import java.util.Iterator;
 import java.util.UUID;
 import org.apache.logging.log4j.Level;
@@ -50,7 +50,8 @@ public class CenterAgent extends StandardAgent<Building>
 
     private Solver solver = null;
     private Exporter exporter = null;
-    private ArrayList<EntityID> agents = new ArrayList<>();
+    private ArrayList<EntityID> fireAgentsIDs = new ArrayList<>();
+    private ArrayList<EntityID> policeAgentsIDs = new ArrayList<>();
     private Assignment lastAssignment = new Assignment();
     private List<PlatoonFireAgent> fireAgents;
     private List<PlatoonPoliceAgent> policeAgents;
@@ -61,9 +62,12 @@ public class CenterAgent extends StandardAgent<Building>
     	Logger.info(Markers.BLUE, "Center Agent CREATED");
         this.fireAgents = fireAgents;
         for (PlatoonFireAgent fagent : fireAgents) {
-            agents.add(fagent.getID());
+            fireAgentsIDs.add(fagent.getID());
         }
         this.policeAgents = policeAgents;
+        for (PlatoonPoliceAgent pagent : policeAgents) {
+            policeAgentsIDs.add(pagent.getID());
+        }
     }
 
     @Override
@@ -82,14 +86,7 @@ public class CenterAgent extends StandardAgent<Building>
     @Override
     public void postConnect() {
         super.postConnect();
-
-        Logger.warn("Checking for blockades...");
-        for (StandardEntity e : model.getAllEntities()) {
-            if (e instanceof Blockade) {
-                Logger.warn("Initial blockade detected: " + e);
-            }
-        }
-
+        
         model.addWorldModelListener(new WorldModelListener<StandardEntity>() {
             @Override
             public void entityAdded(WorldModel<? extends StandardEntity> model,
@@ -100,13 +97,26 @@ public class CenterAgent extends StandardAgent<Building>
                 }
             }
 
+            /**
+             * Notifies all agents that a blockade has been removed (cleared).
+             * This is necessary because the kernel never informs agents about
+             * this fact.
+             *
+             * The alternative would be to add an EntityListener to each road
+             * and work out from there, but memory requirements and efficiency
+             * would be much worse that way.
+             */
             @Override
             public void entityRemoved(WorldModel<? extends StandardEntity> model,
                     StandardEntity e) {
                 if (e instanceof Blockade) {
+                    Blockade blockade = (Blockade)e;
                     Logger.info("Blockade removed: " + e);
+                    for (PlatoonFireAgent fireAgent : fireAgents) {
+                        fireAgent.removeBlockade(blockade);
+                    }
                     for (PlatoonPoliceAgent police : policeAgents) {
-                        police.removeBlockade((Blockade)e);
+                        police.removeBlockade(blockade);
                     }
                 }
             }
@@ -205,6 +215,7 @@ public class CenterAgent extends StandardAgent<Building>
     protected void think(int time, ChangeSet changed, Collection<Command> heard)
     {
         // Cleanup non-existant blockades
+        ArrayList<EntityID> blockadeIDs = new ArrayList<>();
         Iterator<Blockade> it = blockades.iterator();
         while (it.hasNext()) {
             Blockade blockade = it.next();
@@ -214,36 +225,41 @@ public class CenterAgent extends StandardAgent<Building>
                 if (!roadBlockades.contains(blockade.getID())) {
                     it.remove();
                     model.removeEntity(blockade.getID());
+                } else {
+                    blockadeIDs.add(blockade.getID());
                 }
             }
         }
 
+        // Report scenario status
         Collection<EntityID> burning = getBurningBuildings();
         Logger.info(Markers.WHITE, "TIME IS {} | {} burning buildings | {} blockades",
                 new Object[]{time, burning.size(), blockades.size()});
 
+        // Skip steps until the experiment start time
         if (time < config.getIntValue(Constants.KEY_START_EXPERIMENT_TIME)) {
             Logger.debug("Waiting until experiment starts.");
             return;
         }
 
-        // Stop the simulation if all fires have been extinguished
-        if (burning.isEmpty() ) {//&& blockades.isEmpty()) {
+        // Simulation termination conditions
+        if (burning.isEmpty() && blockades.isEmpty()) {
             Logger.info("All fires extinguished and blockades removed. Good job!");
             System.exit(0);
         }
 
         // Build the problem
-        ArrayList<EntityID> targets = new ArrayList<>(burning);
-        UtilityMatrix utility = new UtilityMatrix(config, agents, targets, lastAssignment, model);
+        ArrayList<EntityID> fires = new ArrayList<>(burning);
+        ProblemDefinition problem = new ProblemDefinition(config, fireAgentsIDs,
+                fires, policeAgentsIDs, blockadeIDs, lastAssignment, model);
 
         // Export the problem if required
         if (exporter != null) {
-            exporter.export(utility);
+            exporter.export(problem);
         }
 
         // Compute assignment
-        lastAssignment = solver.solve(time, utility);
+        lastAssignment = solver.solve(time, problem);
 
         // Send assignment to agents
         for (PlatoonFireAgent fagent : fireAgents) {

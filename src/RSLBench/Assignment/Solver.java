@@ -1,6 +1,6 @@
 package RSLBench.Assignment;
 
-import RSLBench.Helpers.Utility.UtilityMatrix;
+import RSLBench.Helpers.Utility.ProblemDefinition;
 import java.util.List;
 import rescuecore2.config.Config;
 import rescuecore2.standard.entities.StandardWorldModel;
@@ -37,7 +37,7 @@ public interface Solver
      * @param utility utility object describing the allocation problem.
      * @return assignment of agents to targets.
      */
-    public Assignment solve(int time, UtilityMatrix utility);
+    public Assignment solve(int time, ProblemDefinition utility);
 
     /**
      * Get the list of configuration keys employed by this solver.

@@ -5,7 +5,7 @@ import java.util.Collection;
 import rescuecore2.worldmodel.EntityID;
 
 import RSLBench.Comm.Message;
-import RSLBench.Helpers.Utility.UtilityMatrix;
+import RSLBench.Helpers.Utility.ProblemDefinition;
 import RSLBench.Comm.CommunicationLayer;
 import rescuecore2.config.Config;
 /**
@@ -22,7 +22,7 @@ public interface DCOPAgent
      * @param utility: a matrix that contains all the agent-target utilities
      * (for all the agents and alla the targets). 
      */
-    public void initialize(Config config, EntityID agentID, UtilityMatrix utility);
+    public void initialize(Config config, EntityID agentID, ProblemDefinition utility);
     
     /**
      * Considering all the messages received from other agents, tries to find

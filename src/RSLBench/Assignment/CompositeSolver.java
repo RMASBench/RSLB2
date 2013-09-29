@@ -4,7 +4,7 @@
  */
 package RSLBench.Assignment;
 
-import RSLBench.Helpers.Utility.UtilityMatrix;
+import RSLBench.Helpers.Utility.ProblemDefinition;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
@@ -45,7 +45,7 @@ public class CompositeSolver implements Solver {
     }
 
     @Override
-    public Assignment solve(int time, UtilityMatrix utility) {
+    public Assignment solve(int time, ProblemDefinition utility) {
         Assignment solution = mainSolver.solve(time, utility);
         for (Solver s : testSolvers) {
             s.solve(time, utility);

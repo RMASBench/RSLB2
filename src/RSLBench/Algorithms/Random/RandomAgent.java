@@ -5,7 +5,7 @@
 package RSLBench.Algorithms.Random;
 
 import RSLBench.Assignment.DCOP.DefaultDCOPAgent;
-import RSLBench.Helpers.Utility.UtilityMatrix;
+import RSLBench.Helpers.Utility.ProblemDefinition;
 import rescuecore2.config.Config;
 import rescuecore2.worldmodel.EntityID;
 
@@ -19,7 +19,7 @@ public class RandomAgent extends DefaultDCOPAgent {
     private java.util.Random random;
 
     @Override
-    public void initialize(Config config, EntityID agentID, UtilityMatrix utility) {
+    public void initialize(Config config, EntityID agentID, ProblemDefinition utility) {
         super.initialize(config, agentID, utility);
         random = config.getRandom();
     }
@@ -28,8 +28,8 @@ public class RandomAgent extends DefaultDCOPAgent {
 
     @Override
     public boolean improveAssignment() {
-        int choice = random.nextInt(utilities.getNumTargets());
-        targetID = utilities.getTargets().get(choice);
+        int choice = random.nextInt(utilities.getNumFires());
+        targetID = utilities.getFires().get(choice);
         return true;
     }
 

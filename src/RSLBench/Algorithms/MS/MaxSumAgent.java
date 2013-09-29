@@ -9,7 +9,7 @@ import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 
-import RSLBench.Helpers.Utility.UtilityMatrix;
+import RSLBench.Helpers.Utility.ProblemDefinition;
 import RSLBench.Constants;
 import java.util.Collection;
 import java.util.HashSet;
@@ -39,7 +39,7 @@ import rescuecore2.config.Config;
 public class MaxSumAgent implements DCOPAgent {
     private static final Logger Logger = LogManager.getLogger(MaxSumAgent.class);
 
-    private static UtilityMatrix _utilityM = null;
+    private static ProblemDefinition _utilityM = null;
     private EntityID _agentID;
     private EntityID _targetID = Assignment.UNKNOWN_TARGET_ID;
     private static MailMan _com = new MailMan();
@@ -69,7 +69,7 @@ public class MaxSumAgent implements DCOPAgent {
     private static ArrayList<MaxSumAgent> _allAgents = new ArrayList<MaxSumAgent>();
     
     @Override
-    public void initialize(Config config, EntityID agentID, UtilityMatrix utilityM) {
+    public void initialize(Config config, EntityID agentID, ProblemDefinition utilityM) {
         this.resetStructures();
         
         _nMexForFG = 0;
@@ -90,7 +90,7 @@ public class MaxSumAgent implements DCOPAgent {
         _maxSumAgent.addNodeVariable(nodevariable);
 
         // Assegnamento delle funzioni agli agenti
-        List<EntityID> targets = _utilityM.getNBestTargets(_localNumberOfTargets, _agentID);
+        List<EntityID> targets = _utilityM.getNBestFires(_localNumberOfTargets, _agentID);
         /*FileWriter fw = null;
         try {
         fw = new FileWriter("history.txt", true);
@@ -127,12 +127,12 @@ public class MaxSumAgent implements DCOPAgent {
         for (NodeFunction nodeTarget : _maxSumAgent.getFunctions()) {
             int count = 0;
             EntityID target = new EntityID(nodeTarget.getId());
-            List<EntityID> bestAgents = _utilityM.getNBestAgents(_utilityM.getNumAgents(), target);
+            List<EntityID> bestAgents = _utilityM.getNBestFireAgents(_utilityM.getNumFireAgents(), target);
             //System.out.println("");
             this.buildNeighborhood(target, bestAgents, count);
         }
 
-        if (_initializedAgents == _utilityM.getNumAgents()) {
+        if (_initializedAgents == _utilityM.getNumFireAgents()) {
             //System.out.println("Sono nel tuplebuilder");
             tupleBuilder();
             reassignFunctions();
@@ -170,7 +170,7 @@ public class MaxSumAgent implements DCOPAgent {
         fw = new FileWriter("history.txt", true);
         } catch (IOException i) {
         }*/
-        ArrayList<EntityID> agents = (ArrayList<EntityID>) _utilityM.getAgents();
+        ArrayList<EntityID> agents = (ArrayList<EntityID>) _utilityM.getFireAgents();
         for (EntityID agent : agents) {
             AgentMS_Sync maxSumAgent = AgentMS_Sync.getAgent(agent.getValue());
 //Agent maxSumAgent = Agent.getAgent(agent.getValue());
@@ -681,7 +681,7 @@ public class MaxSumAgent implements DCOPAgent {
             System.exit(0);
         }
         HashSet<NodeVariable> neighbours = nodefunction.getNeighbour();
-        List<EntityID> best = _utilityM.getNBestAgents(_utilityM.getNumAgents(), function);
+        List<EntityID> best = _utilityM.getNBestFireAgents(_utilityM.getNumFireAgents(), function);
         ArrayList alreadyConsidered = _consideredVariables.get(function);
         for (EntityID possibleNewNeighbour : best) {
             if (!alreadyConsidered.contains(possibleNewNeighbour)) {

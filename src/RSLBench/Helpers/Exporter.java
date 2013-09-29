@@ -5,7 +5,7 @@
 package RSLBench.Helpers;
 
 import RSLBench.Constants;
-import RSLBench.Helpers.Utility.UtilityMatrix;
+import RSLBench.Helpers.Utility.ProblemDefinition;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -31,7 +31,7 @@ public class Exporter {
         counter = 0;
     }
 
-    public void export(UtilityMatrix utility) {
+    public void export(ProblemDefinition utility) {
         counter++;
         File folder = new File(
                 config.getValue(Constants.KEY_EXPORT_PATH) + '/' +
@@ -43,11 +43,11 @@ public class Exporter {
         export(utility, folder.getPath() + "/" + counter + ".def");
     }
 
-    private void export(UtilityMatrix utility, String file) {
+    private void export(ProblemDefinition utility, String file) {
         try (BufferedWriter out = new BufferedWriter(new FileWriter(file, false))) {
-            out.write(Integer.toString(utility.getNumAgents()));
+            out.write(Integer.toString(utility.getNumFireAgents()));
             out.write(" ");
-            out.write(Integer.toString(utility.getNumTargets()));
+            out.write(Integer.toString(utility.getNumFires()));
             out.write(" ");
             out.write(Double.toString(config.getFloatValue(Constants.KEY_UTIL_K)));
             out.write(" ");
@@ -55,7 +55,7 @@ public class Exporter {
             out.newLine();
 
             String separator = "";
-            for (EntityID target : utility.getTargets()) {
+            for (EntityID target : utility.getFires()) {
                 out.write(separator);
                 int count = utility.getRequiredAgentCount(target);
                 out.write(Integer.toString(count));
@@ -63,9 +63,9 @@ public class Exporter {
             }
             out.newLine();
 
-            for (EntityID agent : utility.getAgents()) {
+            for (EntityID agent : utility.getFireAgents()) {
                 separator = "";
-                for (EntityID target : utility.getTargets()) {
+                for (EntityID target : utility.getFires()) {
                     out.write(separator);
                     out.write(Double.toString(utility.getUtility(agent, target)));
                     separator = " ";

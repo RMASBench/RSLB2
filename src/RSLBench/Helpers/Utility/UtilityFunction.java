@@ -32,11 +32,19 @@ public interface UtilityFunction {
     /**
      * Get the utility obtained if the given agent attends the given target.
      * 
-     * @param agent agent attending
-     * @param target target being attended
+     * @param fireAgent agent attending.
+     * @param fire fire being attended.
      * @return utility obtained if agent is allocated to target
      */
-    public double getUtility(EntityID agent, EntityID target);
+    public double getFireUtility(EntityID fireAgent, EntityID fire);
+
+    /**
+     * Get the utility obtained if the given police attends the given blockade.
+     * @param policeAgent agent attending.
+     * @param blockade blockade being attended.
+     * @return
+     */
+    public double getPoliceUtility(EntityID policeAgent, EntityID blockade);
 
     /**
      * Get the maximum number of agents that can be allocated to <em<target</em>.

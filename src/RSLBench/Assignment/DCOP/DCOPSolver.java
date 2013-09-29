@@ -8,7 +8,7 @@ import java.util.List;
 import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Helpers.Logging.Markers;
-import RSLBench.Helpers.Utility.UtilityMatrix;
+import RSLBench.Helpers.Utility.ProblemDefinition;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -56,7 +56,7 @@ public abstract class DCOPSolver extends AbstractSolver {
     }
 
     @Override
-    public Assignment compute(UtilityMatrix utility) {
+    public Assignment compute(ProblemDefinition utility) {
         long startTime = System.currentTimeMillis();
         boolean ranOutOfTime = false;
         CommunicationLayer comLayer = new CommunicationLayer();
@@ -203,9 +203,9 @@ public abstract class DCOPSolver extends AbstractSolver {
      *
      * @param utilityM: the utility matrix
      */
-    private void initializeAgents(UtilityMatrix utilityM) {
+    private void initializeAgents(ProblemDefinition utilityM) {
         agents = new ArrayList<>();
-        for (EntityID agentID : utilityM.getAgents()) {
+        for (EntityID agentID : utilityM.getFireAgents()) {
             DCOPAgent agent = buildAgent();
             // TODO: if required give only local utility matrix to each agent!!!
             agent.initialize(config, agentID, utilityM);
@@ -224,7 +224,7 @@ public abstract class DCOPSolver extends AbstractSolver {
      *
      * @param initial current assignment.
      */
-    public Assignment greedyImprovement(UtilityMatrix utility, 
+    public Assignment greedyImprovement(ProblemDefinition utility, 
             Assignment initial)
     {
         Logger.debug("Initiating greedy improvement. Initial value {}", utility.getUtility(initial));
@@ -243,7 +243,7 @@ public abstract class DCOPSolver extends AbstractSolver {
             // Compute the best target for ourselves
             EntityID bestTarget = assignment.getAssignment(agentID);
             double bestScore = scores.computeScore(bestTarget);
-            for (EntityID t : utility.getTargets()) {
+            for (EntityID t : utility.getFires()) {
                 double score = scores.computeScore(t);
                 if (score > bestScore) {
                     bestScore = score;

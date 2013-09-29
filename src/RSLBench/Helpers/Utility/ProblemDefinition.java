@@ -17,79 +17,127 @@ import rescuecore2.worldmodel.EntityID;
 
 
 /**
- * This class represents a matrix that contains the utility for each
- * agent-target pair that exists in the world model. The utility is calculated
- * only considering the distance between the agent and the target and the
- * burning level of the target (the more recent the fire, the higher the
- * utility).
- *
+ * This class represents the current world status as utilities.
+ * 
+ * Utilities are calculated using the configured UtilityFunction.
  */
-public class UtilityMatrix {
-    private static final Logger Logger = LogManager.getLogger(UtilityMatrix.class);
+public class ProblemDefinition {
+    private static final Logger Logger = LogManager.getLogger(ProblemDefinition.class);
 
     private UtilityFunction utilityFunction;
-    private ArrayList<EntityID> _agents;
-    private ArrayList<EntityID> _targets;
-    private StandardWorldModel _world;
+    private ArrayList<EntityID> fireAgents;
+    private ArrayList<EntityID> policeAgents;
+    private ArrayList<EntityID> fires;
+    private ArrayList<EntityID> blockades;
+    private StandardWorldModel world;
     private Config config;
     HashMap<EntityID, EntityID> _agentLocations;
 
-    // Indexes and matrix of the utility noises
-    Map<EntityID, Integer> agent2idx;
-    Map<EntityID, Integer> target2idx;
-    double[][] utilityMatrix;
+    // Indexes entities to indices
+    Map<EntityID, Integer> id2idx;
+    double[][] fireUtilityMatrix;
+    double[][] policeUtilityMatrix;
 
     /**
-     * It creates a utility matrix
+     * Creates a problem definition
      *
-     * @param agents a list of agents
-     * @param targets a list of targets
+     * @param fireAgents a list of agents
+     * @param fires a list of targets
      * @param lastAssignment the assignment computed in the last iteration
      * @param agentLocations the agent locations
      * @param world the model of the world
      */
-    public UtilityMatrix(Config config, ArrayList<EntityID> agents, ArrayList<EntityID> targets, Assignment lastAssignment, StandardWorldModel world) {
-        _agents = agents;
-        _targets = targets;
-        _world = world;
+    public ProblemDefinition(Config config, ArrayList<EntityID> fireAgents,
+            ArrayList<EntityID> fires, ArrayList<EntityID> policeAgents,
+            ArrayList<EntityID> blockades, Assignment lastAssignment,
+            StandardWorldModel world) {
+        this.fireAgents = fireAgents;
+        this.fires = fires;
+        this.policeAgents = policeAgents;
+        this.blockades = blockades;
+        
+        this.world = world;
         this.config = config;
 
+        long initialTime = System.currentTimeMillis();
         utilityFunction = UtilityFactory.buildFunction();
         utilityFunction.setWorld(world);
         utilityFunction.setConfig(config);
-        Logger.debug("UM has been initialized!");
 
-        // Build the utility matrix. This is necessary because utility functions
-        // may not be consistent (they may introduce a small random noise to
-        // break ties)
-        final int nAgents = agents.size();
-        final int nTargets = targets.size();
-        agent2idx = new HashMap<>(nAgents);
-        target2idx = new HashMap<>(nTargets);
-        utilityMatrix = new double[nAgents][nTargets];
+        buildFirefightersUtilityMatrix(lastAssignment);
+        buildPoliceUtilityMatrix(lastAssignment);
+
+        long elapsedTime = System.currentTimeMillis() - initialTime;
+        Logger.debug("Problem definition initialized in {}ms.", elapsedTime);
+    }
+
+    /**
+     * Build the firefighters (fire brigades to fires) utility matrix.
+     *
+     * This is necessary because utility functions may not be consistent
+     * (they may introduce a small random noise to break ties), whereas the
+     * problem repoted utilities must stay consistent.
+     */
+    private void buildFirefightersUtilityMatrix(Assignment lastAssignment) {
+        final int nAgents = fireAgents.size();
+        final int nTargets = fires.size();
+        id2idx = new HashMap<>(nAgents+nTargets);
+        fireUtilityMatrix = new double[nAgents][nTargets];
         for (int i=0; i<nAgents; i++) {
-            final EntityID agent = agents.get(i);
-            agent2idx.put(agent, i);
+            final EntityID agent = fireAgents.get(i);
+            id2idx.put(agent, i);
 
             for (int j=0; j<nTargets; j++) {
-                final EntityID target = targets.get(j);
+                final EntityID target = fires.get(j);
                 if (i == 0) {
-                    target2idx.put(target, j);
+                    id2idx.put(target, j);
                 }
 
-                double utility = utilityFunction.getUtility(agent, target);
+                double utility = utilityFunction.getFireUtility(agent, target);
 
                 // Apply hysteresis factor if configured
                 if (lastAssignment.getAssignment(agent).equals(target)) {
                     utility *= config.getFloatValue(Constants.KEY_UTIL_HYSTERESIS);
                 }
-                
+
                 // Set a cap on max utility
                 if (Double.isInfinite(utility)) {
                     utility = 1e15;
                 }
 
-                utilityMatrix[i][j] = utility;
+                fireUtilityMatrix[i][j] = utility;
+            }
+        }
+    }
+
+    private void buildPoliceUtilityMatrix(Assignment lastAssignment) {
+        final int nAgents = policeAgents.size();
+        final int nTargets = blockades.size();
+        id2idx = new HashMap<>(nAgents+nTargets);
+        policeUtilityMatrix = new double[nAgents][nTargets];
+        for (int i=0; i<nAgents; i++) {
+            final EntityID agent = policeAgents.get(i);
+            id2idx.put(agent, i);
+
+            for (int j=0; j<nTargets; j++) {
+                final EntityID target = blockades.get(j);
+                if (i == 0) {
+                    id2idx.put(target, j);
+                }
+
+                double utility = utilityFunction.getPoliceUtility(agent, target);
+
+                // Apply hysteresis factor if configured
+                if (lastAssignment.getAssignment(agent).equals(target)) {
+                    utility *= config.getFloatValue(Constants.KEY_UTIL_HYSTERESIS);
+                }
+
+                // Set a cap on max utility
+                if (Double.isInfinite(utility)) {
+                    utility = 1e15;
+                }
+
+                fireUtilityMatrix[i][j] = utility;
             }
         }
     }
@@ -102,41 +150,40 @@ public class UtilityMatrix {
      * @return the utility value for the specified agent and target.
      */
     public double getUtility(EntityID agentID, EntityID targetID) {
-        final int i = agent2idx.get(agentID);
-        final int j = target2idx.get(targetID);
-        return utilityMatrix[i][j];
+        final int i = id2idx.get(agentID);
+        final int j = id2idx.get(targetID);
+        return fireUtilityMatrix[i][j];
     }
 
     /**
-     * Returns the number of agents in the matrix
+     * Returns the number of fire brigade agents in the matrix
      *
-     * @return the number of agents considered in the matrix.
+     * @return the number of firie brigade agents considered in the matrix.
      */
-    public int getNumAgents() {
-        return _agents.size();
+    public int getNumFireAgents() {
+        return fireAgents.size();
     }
 
     /**
-     * Returns the number of targets in the utility matrix
+     * Returns the number of fires in the problem.
      *
-     * @return the number of targets considered in the matrix.
+     * @return the number of fires.
      */
-    public int getNumTargets() {
-        return _targets.size();
+    public int getNumFires() {
+        return fires.size();
     }
 
     /**
-     * Returns the N targets with the highest utility for the agents
+     * Returns the N fires with the highest utility for the given agent.
      *
      * @param N: the number of targets to be returned
-     * @param agents: the targets are sorted considering, for each target, the
-     * utility with the agents in agents
+     * @param fireAgent: the agent considered
      * @return a list of EntityID of targets ordered by utility value
      */
-    public List<EntityID> getNBestTargets(int N, EntityID agent) {
+    public List<EntityID> getNBestFires(int N, EntityID fireAgent) {
         Map<EntityID, Double> map = new HashMap<>();
-        for (EntityID target : _targets) {
-            map.put(target, getUtility(agent, target));
+        for (EntityID target : fires) {
+            map.put(target, getUtility(fireAgent, target));
         }
         List<EntityID> res = sortByValue(map);
         ArrayList<EntityID> list = new ArrayList<>();
@@ -147,18 +194,16 @@ public class UtilityMatrix {
     }
 
     /**
-     * Dual of the getNBestTargets method
+     * Dual of the getNBestFires method
      *
-     * @param N: the number of agents to be returned
-     * @param targets: the agents are sorted considering, for each agent, the
-     * utility with the targets in targets.
-     * @TODO Actually single target: refactor!
-     * @return a list of EntityID of agents ordered by utility value
+     * @param N: the number of fire agents to be returned.
+     * @param fire: the fire being considered.
+     * @return a list of fire agents EntityIDs ordered by utility value
      */
-    public List<EntityID> getNBestAgents(int N, EntityID target) {
+    public List<EntityID> getNBestFireAgents(int N, EntityID fire) {
         Map<EntityID, Double> map = new HashMap<>();
-        for (EntityID agent : _agents) {
-            map.put(agent, getUtility(agent, target));
+        for (EntityID agent : fireAgents) {
+            map.put(agent, getUtility(agent, fire));
         }
         List<EntityID> res = sortByValue(map);
         ArrayList<EntityID> list = new ArrayList<>();
@@ -201,8 +246,8 @@ public class UtilityMatrix {
      */
     public EntityID getHighestTargetForAgent(EntityID agentID) {
         double best = -Double.MAX_VALUE;
-        EntityID targetID = _targets.get(0);
-        for (EntityID t : _targets) {
+        EntityID targetID = fires.get(0);
+        for (EntityID t : fires) {
             if (getUtility(agentID, t) > best) {
                 best = getUtility(agentID, t);
                 targetID = t;
@@ -213,31 +258,31 @@ public class UtilityMatrix {
 
     /**
      * Returns an estimate of how many agents are required for a specific
-     * target.
+     * fire.
      *
-     * @param targetID the id of the target
+     * @param fire the id of the target
      * @return the amount of agents required or zero if targetID is out of
      * range.
      */
-    public int getRequiredAgentCount(EntityID targetID) {
+    public int getRequiredAgentCount(EntityID fire) {
         if (utilityFunction == null) {
             Logger.error("Utility matrix has not been initialized!!");
             System.exit(1);
         }
 
-        return utilityFunction.getRequiredAgentCount(targetID);
+        return utilityFunction.getRequiredAgentCount(fire);
     }
 
     /**
      * Returns the utility penalty incurred when the given number of agents
-     * are assigned to the given target.
+     * are assigned to the given fire.
      *
-     * @param target target assigned to some agents
+     * @param fire target assigned to some agents
      * @param nAgents number of agents assigned to that target
      * @return utility penalty incurred by this assignment
      */
-    public double getUtilityPenalty(EntityID target, int nAgents) {
-        int maxAgents = getRequiredAgentCount(target);
+    public double getUtilityPenalty(EntityID fire, int nAgents) {
+        int maxAgents = getRequiredAgentCount(fire);
         if (maxAgents >= nAgents) {
             return 0;
         }
@@ -251,7 +296,7 @@ public class UtilityMatrix {
      * @return the world model
      */
     public StandardWorldModel getWorld() {
-        return _world;
+        return world;
     }
 
     /**
@@ -259,7 +304,7 @@ public class UtilityMatrix {
      *
      * @return the locations of the agents
      */
-    public HashMap<EntityID, EntityID> getAgentLocations() {
+    public HashMap<EntityID, EntityID> getFireAgentLocations() {
         return _agentLocations;
     }
 
@@ -268,8 +313,8 @@ public class UtilityMatrix {
      *
      * @return the targets
      */
-    public ArrayList<EntityID> getTargets() {
-        return _targets;
+    public ArrayList<EntityID> getFires() {
+        return fires;
     }
 
     /**
@@ -277,8 +322,8 @@ public class UtilityMatrix {
      *
      * @return the agents
      */
-    public ArrayList<EntityID> getAgents() {
-        return _agents;
+    public ArrayList<EntityID> getFireAgents() {
+        return fireAgents;
     }
 
     /**
@@ -295,7 +340,7 @@ public class UtilityMatrix {
         double utility = 0;
 
         HashMap<EntityID, Integer> nAgentsPerTarget = new HashMap<>();
-        for (EntityID agent : _agents) {
+        for (EntityID agent : fireAgents) {
             EntityID target = solution.getAssignment(agent);
             utility += getUtility(agent, target);
 
@@ -324,7 +369,7 @@ public class UtilityMatrix {
         int count = 0;
 
         HashMap<EntityID, Integer> nAgentsPerTarget = new HashMap<>();
-        for (EntityID agent : _agents) {
+        for (EntityID agent : fireAgents) {
             EntityID target = solution.getAssignment(agent);
             int nAgents = nAgentsPerTarget.containsKey(target)
                     ? nAgentsPerTarget.get(target) : 0;
@@ -353,7 +398,7 @@ public class UtilityMatrix {
      */
     public int getTotalMaxAgents() {
         int count = 0;
-        for (EntityID target : _targets) {
+        for (EntityID target : fires) {
             count += getRequiredAgentCount(target);
         }
         return count;

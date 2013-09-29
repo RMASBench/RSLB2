@@ -43,13 +43,13 @@ public class BlockadesUtilityFunction extends SecondUtilityFunction {
     }
 
     @Override
-    public double getUtility(EntityID agent, EntityID target) {
-        Logger.warn("Utility from {} to {}", agent, target);
+    public double getFireUtility(EntityID agent, EntityID target) {
         Human hagent = (Human)world.getEntity(agent);
         EntityID position = hagent.getPosition();
         SearchResults results = search.search(position, target, connectivityGraph, distanceMatrix);
 
-        double utility = super.getUtility(agent, target);
+        double utility = super.getFireUtility(agent, target);
+        Logger.warn("Base utility from fire brigade {} to fire {}: {}", agent, target, utility);
         List<Blockade> blockades = results.getPathBlocks();
         if (!blockades.isEmpty()) {
             Logger.warn("Agent {} blocked from reaching fire {} by {}", agent, target, blockades.get(0).getID());

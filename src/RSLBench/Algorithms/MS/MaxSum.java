@@ -8,6 +8,7 @@ import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Assignment.DCOP.DCOPSolver;
 import RSLBench.Constants;
 import java.util.List;
+import rescuecore2.standard.entities.StandardEntityURN;
 
 /**
  *
@@ -16,8 +17,13 @@ import java.util.List;
 public class MaxSum extends DCOPSolver {
 
     @Override
-    protected DCOPAgent buildAgent() {
-        return new MaxSumAgent();
+    protected DCOPAgent buildAgent(StandardEntityURN type) {
+        switch(type) {
+            case FIRE_BRIGADE:
+                return new MaxSumAgent();
+            default:
+                throw new UnsupportedOperationException("The Max-Sum solver does not support agents of type " + type);
+        }
     }
 
     @Override

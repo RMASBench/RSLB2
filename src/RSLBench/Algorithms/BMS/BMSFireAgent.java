@@ -62,8 +62,8 @@ import rescuecore2.config.Config;
 /**
  * This is a binary max-sum agent.
  */
-public class BMSAgent implements DCOPAgent {
-    private static final Logger Logger = LogManager.getLogger(BMSAgent.class);
+public class BMSFireAgent implements DCOPAgent {
+    private static final Logger Logger = LogManager.getLogger(BMSFireAgent.class);
 
     private static final MaxOperator MAX_OPERATOR = new Maximize();
     

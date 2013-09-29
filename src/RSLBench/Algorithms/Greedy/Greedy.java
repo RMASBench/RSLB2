@@ -6,6 +6,7 @@ package RSLBench.Algorithms.Greedy;
 
 import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Assignment.DCOP.DCOPSolver;
+import rescuecore2.standard.entities.StandardEntityURN;
 
 /**
  *
@@ -14,8 +15,13 @@ import RSLBench.Assignment.DCOP.DCOPSolver;
 public class Greedy extends DCOPSolver {
 
     @Override
-    protected DCOPAgent buildAgent() {
-        return new GreedyAgent();
+    protected DCOPAgent buildAgent(StandardEntityURN type) {
+        switch(type) {
+            case FIRE_BRIGADE:
+                return new GreedyAgent();
+            default:
+                throw new UnsupportedOperationException("The Greedy solver does not support agents of type " + type);
+        }
     }
 
     @Override

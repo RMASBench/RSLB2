@@ -11,6 +11,8 @@ import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Utility.ProblemDefinition;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import rescuecore2.standard.entities.StandardEntity;
+import rescuecore2.standard.entities.StandardEntityURN;
 
 import rescuecore2.worldmodel.EntityID;
 
@@ -40,10 +42,6 @@ public abstract class DCOPSolver extends AbstractSolver {
 
     public DCOPSolver() {
         utilities = new ArrayList<>();
-
-        // This is to force the jvm to load the classes, preventing this from
-        // counting towards the cpu time of the first iteration of the algo.
-        buildAgent();
     }
 
     @Override
@@ -201,21 +199,26 @@ public abstract class DCOPSolver extends AbstractSolver {
      * initialize method of the specific DCOP algorithm used for the
      * computation)
      *
-     * @param utilityM: the utility matrix
+     * @param problem the problem definition.
      */
-    private void initializeAgents(ProblemDefinition utilityM) {
+    private void initializeAgents(ProblemDefinition problem) {
         agents = new ArrayList<>();
-        for (EntityID agentID : utilityM.getFireAgents()) {
-            DCOPAgent agent = buildAgent();
-            // TODO: if required give only local utility matrix to each agent!!!
-            agent.initialize(config, agentID, utilityM);
-            agents.add(agent);
-        }
-
+        initializeAgentType(problem, problem.getFireAgents());
+        initializeAgentType(problem, problem.getPoliceAgents());
         Logger.debug(Markers.BLUE, "Initialized " + agents.size() + " agents in " + getIdentifier());
     }
 
-    protected abstract DCOPAgent buildAgent();
+    private void initializeAgentType(ProblemDefinition problem, List<EntityID> ids) {
+        for (EntityID agentID : ids) {
+            StandardEntity entity = problem.getWorld().getEntity(agentID);
+            DCOPAgent agent = buildAgent(entity.getStandardURN());
+            // @TODO: if required give only local problem view to each agent!
+            agent.initialize(config, agentID, problem);
+            agents.add(agent);
+        }
+    }
+
+    protected abstract DCOPAgent buildAgent(StandardEntityURN type);
 
     /**
      * Operate on the (sequential) greedy algorithm.
@@ -224,7 +227,7 @@ public abstract class DCOPSolver extends AbstractSolver {
      *
      * @param initial current assignment.
      */
-    public Assignment greedyImprovement(ProblemDefinition utility, 
+    public Assignment greedyImprovement(ProblemDefinition utility,
             Assignment initial)
     {
         Logger.debug("Initiating greedy improvement. Initial value {}", utility.getUtility(initial));

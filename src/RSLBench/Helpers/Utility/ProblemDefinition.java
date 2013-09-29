@@ -11,6 +11,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.config.Config;
+import rescuecore2.standard.entities.StandardEntity;
 
 import rescuecore2.standard.entities.StandardWorldModel;
 import rescuecore2.worldmodel.EntityID;
@@ -31,20 +32,20 @@ public class ProblemDefinition {
     private ArrayList<EntityID> blockades;
     private StandardWorldModel world;
     private Config config;
-    HashMap<EntityID, EntityID> _agentLocations;
 
     // Indexes entities to indices
-    Map<EntityID, Integer> id2idx;
+    Map<EntityID, Integer> id2idx = new HashMap<>();
     double[][] fireUtilityMatrix;
     double[][] policeUtilityMatrix;
 
     /**
      * Creates a problem definition
      *
-     * @param fireAgents a list of agents
-     * @param fires a list of targets
+     * @param fireAgents a list of fire brigade agents
+     * @param fires a list of fires
+     * @param policeAgents a list of police agents
+     * @param blockades a list of blockades
      * @param lastAssignment the assignment computed in the last iteration
-     * @param agentLocations the agent locations
      * @param world the model of the world
      */
     public ProblemDefinition(Config config, ArrayList<EntityID> fireAgents,
@@ -81,7 +82,6 @@ public class ProblemDefinition {
     private void buildFirefightersUtilityMatrix(Assignment lastAssignment) {
         final int nAgents = fireAgents.size();
         final int nTargets = fires.size();
-        id2idx = new HashMap<>(nAgents+nTargets);
         fireUtilityMatrix = new double[nAgents][nTargets];
         for (int i=0; i<nAgents; i++) {
             final EntityID agent = fireAgents.get(i);
@@ -113,7 +113,6 @@ public class ProblemDefinition {
     private void buildPoliceUtilityMatrix(Assignment lastAssignment) {
         final int nAgents = policeAgents.size();
         final int nTargets = blockades.size();
-        id2idx = new HashMap<>(nAgents+nTargets);
         policeUtilityMatrix = new double[nAgents][nTargets];
         for (int i=0; i<nAgents; i++) {
             final EntityID agent = policeAgents.get(i);
@@ -300,15 +299,6 @@ public class ProblemDefinition {
     }
 
     /**
-     * Returns the location of the agents
-     *
-     * @return the locations of the agents
-     */
-    public HashMap<EntityID, EntityID> getFireAgentLocations() {
-        return _agentLocations;
-    }
-
-    /**
      * Returns the considered targets
      *
      * @return the targets
@@ -318,12 +308,19 @@ public class ProblemDefinition {
     }
 
     /**
-     * Returns the agents
-     *
-     * @return the agents
+     * Returns the fire agents.
+     * @return the fire agents.
      */
     public ArrayList<EntityID> getFireAgents() {
         return fireAgents;
+    }
+
+    /**
+     * Returns the police agents.
+     * @return the police agents.
+     */
+    public ArrayList<EntityID> getPoliceAgents() {
+        return policeAgents;
     }
 
     /**

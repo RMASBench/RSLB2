@@ -16,7 +16,7 @@ import rescuecore2.worldmodel.EntityID;
 
 /**
  * Utility function that mimicks the pre-utility functions evaluation.
- * 
+ *
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
 public class SecondUtilityFunction extends AbstractUtilityFunction {
@@ -48,7 +48,7 @@ public class SecondUtilityFunction extends AbstractUtilityFunction {
         }
         double factor = distance/maxDistance;
         factor = Math.pow(factor, 2);
-        
+
         // Add some noise to break ties
         factor += config.getRandom().nextDouble()/10000;
 
@@ -66,17 +66,18 @@ public class SecondUtilityFunction extends AbstractUtilityFunction {
         }
 
         double distance = Distance.humanToBlockade(policeAgent, blockade, world);
+        Logger.warn("Distance from police {} to blockade {}: {}", policeAgent, blockade, distance);
         double threshold = config.getFloatValue(PlatoonPoliceAgent.DISTANCE_KEY);
         if (distance < threshold) {
             distance = 0;
         }
         double utility = distance/maxDistance;
-        utility = Math.pow(utility, 2);
+        utility = 1-Math.pow(utility, 2);
 
         // Add some noise to break ties
         utility += config.getRandom().nextDouble()/10000;
         Logger.warn("Utility from police {} to blockade {}: {}", policeAgent, blockade, utility);
-        
+
         return utility;
     }
 
@@ -94,7 +95,7 @@ public class SecondUtilityFunction extends AbstractUtilityFunction {
     @Override
     public int getRequiredAgentCount(EntityID target) {
         Building b = (Building) world.getEntity(target);
-        
+
         int area = b.getTotalArea();
         double neededAgents = Math.ceil(area / config.getFloatValue(Constants.KEY_AREA_COVERED_BY_FIRE_BRIGADE));
 
@@ -107,5 +108,5 @@ public class SecondUtilityFunction extends AbstractUtilityFunction {
 
         return (int) Math.round(neededAgents);
     }
-    
+
 }

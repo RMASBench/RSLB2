@@ -49,10 +49,10 @@ public class BlockadesUtilityFunction extends SecondUtilityFunction {
         SearchResults results = search.search(position, target, connectivityGraph, distanceMatrix);
 
         double utility = super.getFireUtility(agent, target);
-        Logger.warn("Base utility from fire brigade {} to fire {}: {}", agent, target, utility);
+        Logger.debug("Base utility from fire brigade {} to fire {}: {}", agent, target, utility);
         List<Blockade> blockades = results.getPathBlocks();
         if (!blockades.isEmpty()) {
-            Logger.warn("Agent {} blocked from reaching fire {} by {}", agent, target, blockades.get(0).getID());
+            Logger.debug("Agent {} blocked from reaching fire {} by {}", agent, target, blockades.get(0).getID());
             utility -= config.getFloatValue(KEY_BLOCKED_PENALTY);
         }
 

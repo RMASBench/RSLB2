@@ -36,55 +36,48 @@
  */
 package RSLBench.Algorithms.BMS;
 
-import RSLBench.Comm.Message;
+import java.util.Objects;
 import rescuecore2.worldmodel.EntityID;
 
 /**
- * Message sent from a binary max-sum agent to another.
- * <p/>
- * The message includes the originating factor id, the intented recipient id,
- * and the actual single-valued message.
+ * Identifier of a BinaryMaxSum node.
  *
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
-public class BinaryMaxSumMessage implements Message {
+public final class NodeID {
 
-    private final NodeID senderFactor;
-    private final NodeID recipientFactor;
-    public final double message;
+    public final EntityID agent;
+    public final EntityID target;
 
-    /**
-     * Build a new binary max-sum message.
-     *
-     * @param message value of this message
-     * @param sender identifier of the sending factor
-     * @param recipient identifier of the recipient factor
-     */
-    public BinaryMaxSumMessage(double message, NodeID senderFactor,
-            NodeID recipientFactor) {
-        this.senderFactor = senderFactor;
-        this.recipientFactor = recipientFactor;
-        this.message = message;
-    }
-
-    /**
-     * Get the identifier of the sender factor.
-     * @return identifier of the sender factor.
-     */
-    public NodeID getSenderFactor() {
-        return senderFactor;
-    }
-
-    /**
-     * Get the identifier of the recipient factor.
-     * @return identifier of the recipient factor.
-     */
-    public NodeID getRecipientFactor() {
-        return recipientFactor;
+    public NodeID(EntityID agent, EntityID target) {
+        this.agent = agent;
+        this.target = target;
     }
 
     @Override
-    public int getBytes() {
-        return Message.BYTES_ENTITY_ID * 2 + Message.BYTES_UTILITY_VALUE;
+    public int hashCode() {
+        int hash = 5;
+        hash = 41 * hash + Objects.hashCode(this.agent);
+        hash = 41 * hash + Objects.hashCode(this.target);
+        return hash;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final NodeID other = (NodeID) obj;
+        if (!Objects.equals(this.agent, other.agent)) {
+            return false;
+        }
+        if (!Objects.equals(this.target, other.target)) {
+            return false;
+        }
+        return true;
+    }
+
 }

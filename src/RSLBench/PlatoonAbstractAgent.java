@@ -129,7 +129,7 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
      */
     protected EntityID fetchAssignment() {
         EntityID assignment = null;
-        
+
         Logger.debug("Agent {} waiting for command.", getID());
         try {
             assignment = assignmentQueue.poll(
@@ -201,6 +201,10 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
             {
                 index += step;
                 index %= roadArray.length;
+                if (index<0 || index > roadArray.length-1) {
+                    continue;
+                }
+
                 Entity entity = roadArray[index];
                 if (model.getDistance(position, entity.getID()) > 20000)
                 {

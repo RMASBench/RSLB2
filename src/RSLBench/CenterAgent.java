@@ -24,9 +24,6 @@ import java.util.UUID;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import rescuecore2.worldmodel.Entity;
-import rescuecore2.worldmodel.EntityListener;
-import rescuecore2.worldmodel.Property;
 import rescuecore2.worldmodel.WorldModel;
 import rescuecore2.worldmodel.WorldModelListener;
 
@@ -86,7 +83,7 @@ public class CenterAgent extends StandardAgent<Building>
     @Override
     public void postConnect() {
         super.postConnect();
-        
+
         model.addWorldModelListener(new WorldModelListener<StandardEntity>() {
             @Override
             public void entityAdded(WorldModel<? extends StandardEntity> model,

@@ -2,6 +2,11 @@ package RSLBench.Helpers.Utility;
 
 import RSLBench.Assignment.Assignment;
 import RSLBench.Constants;
+import RSLBench.Search.DistanceInterface;
+import RSLBench.Search.Graph;
+import RSLBench.Search.SearchAlgorithm;
+import RSLBench.Search.SearchFactory;
+import RSLBench.Search.SearchResults;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -11,6 +16,9 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.config.Config;
+import rescuecore2.misc.Pair;
+import rescuecore2.standard.entities.Blockade;
+import rescuecore2.standard.entities.Human;
 
 import rescuecore2.standard.entities.StandardWorldModel;
 import rescuecore2.worldmodel.EntityID;
@@ -18,7 +26,7 @@ import rescuecore2.worldmodel.EntityID;
 
 /**
  * This class represents the current world status as utilities.
- * 
+ *
  * Utilities are calculated using the configured UtilityFunction.
  */
 public class ProblemDefinition {
@@ -36,6 +44,11 @@ public class ProblemDefinition {
     Map<EntityID, Integer> id2idx = new HashMap<>();
     double[][] fireUtilityMatrix;
     double[][] policeUtilityMatrix;
+
+    // Utilities to perform searches
+    private SearchAlgorithm search;
+    private Graph connectivityGraph;
+    private DistanceInterface distanceMatrix;
 
     /**
      * Creates a problem definition
@@ -55,9 +68,14 @@ public class ProblemDefinition {
         this.fires = fires;
         this.policeAgents = policeAgents;
         this.blockades = blockades;
-        
+
         this.world = world;
         this.config = config;
+
+        // Utilities to check which agents are blocked from reaching wich targets
+        search = SearchFactory.buildSearchAlgorithm(config);
+        connectivityGraph = new Graph(world);
+        distanceMatrix = new DistanceInterface(world);
 
         long initialTime = System.currentTimeMillis();
         utilityFunction = UtilityFactory.buildFunction();
@@ -67,8 +85,23 @@ public class ProblemDefinition {
         buildFirefightersUtilityMatrix(lastAssignment);
         buildPoliceUtilityMatrix(lastAssignment);
 
+        // Compute blocked targets... only if there actually are some blockades in the simulation!
+        if (blockades.size() > 0) {
+            computeBlockedFireAgents();
+            computeBlockedPoliceAgents();
+        }
+
         long elapsedTime = System.currentTimeMillis() - initialTime;
         Logger.debug("Problem definition initialized in {}ms.", elapsedTime);
+    }
+
+    /**
+     * Get the simulator configuration for this run.
+     *
+     * @return simulator configuration object
+     */
+    public Config getConfig() {
+        return config;
     }
 
     /**
@@ -141,6 +174,44 @@ public class ProblemDefinition {
     }
 
     /**
+     * Holds the precomputed map from <em>(agent, target)</em> to <em>(blockade</em> preventing
+     * that agent from reaching that target.
+     */
+    private HashMap<Pair<EntityID, EntityID>, EntityID> blockedAgents = new HashMap<>();
+
+    private void computeBlockedFireAgents() {
+        for (EntityID agent : getFireAgents()) {
+            for (EntityID target: getFires()) {
+                Human hagent = (Human)world.getEntity(agent);
+                EntityID position = hagent.getPosition();
+                SearchResults results = search.search(position, target, connectivityGraph, distanceMatrix);
+                List<Blockade> pathBlockades = results.getPathBlocks();
+                if (!pathBlockades.isEmpty()) {
+                    Logger.debug("Firefighter {} blocked from reaching fire {} by {}", agent, target, pathBlockades.get(0).getID());
+                    blockedAgents.put(new Pair<>(agent, target), pathBlockades.get(0).getID());
+                }
+            }
+        }
+    }
+
+    private void computeBlockedPoliceAgents() {
+        for (EntityID agent : getPoliceAgents()) {
+            for (EntityID target: getBlockades()) {
+                Human hagent = (Human)world.getEntity(agent);
+                EntityID agentPosition = hagent.getPosition();
+                Blockade blockade = (Blockade)world.getEntity(target);
+                EntityID targetPosition = blockade.getPosition();
+                SearchResults results = search.search(agentPosition, targetPosition, connectivityGraph, distanceMatrix);
+                List<Blockade> pathBlockades = results.getPathBlocks();
+                if (!pathBlockades.isEmpty() && !pathBlockades.get(0).getID().equals(target)) {
+                    Logger.debug("Police agent {} blocked from reaching blockade {} by {}", agent, target, pathBlockades.get(0).getID());
+                    blockedAgents.put(new Pair<>(agent, target), pathBlockades.get(0).getID());
+                }
+            }
+        }
+    }
+
+    /**
      * Reads the utility value for the specified fire brigade and target fire.
      *
      * @param firefighter id of the fire brigade
@@ -164,6 +235,28 @@ public class ProblemDefinition {
         final int i = id2idx.get(police);
         final int j = id2idx.get(blockade);
         return policeUtilityMatrix[i][j];
+    }
+
+    /**
+     * Check if the given agent is blocked from reaching the given target.
+     *
+     * @param agent agent trying to reach a target
+     * @param target target that the agent wants to reach
+     * @return <em>true</em> if there's a blockade in the path, or <em>false</em> otherwise.
+     */
+    public boolean isAgentBlocked(EntityID agent, EntityID target) {
+        return blockedAgents.containsKey(new Pair<>(agent, target));
+    }
+
+    /**
+     * Get the blockade preventing the given agent from reaching the given target.
+     *
+     * @param agent agent trying to reach a target
+     * @param target target that the agent wants to reach
+     * @return <em>true</em> if there's a blockade in the path, or <em>false</em> otherwise.
+     */
+    public EntityID getBlockingBlockade(EntityID agent, EntityID target) {
+        return blockedAgents.get(new Pair<>(agent, target));
     }
 
     /**

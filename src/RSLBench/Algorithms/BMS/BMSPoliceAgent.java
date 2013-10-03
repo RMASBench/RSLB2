@@ -40,12 +40,12 @@ import java.util.Collection;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import es.csic.iiia.maxsum.AtMostOneFactor;
+import es.csic.iiia.maxsum.factors.AtMostOneFactor;
 import es.csic.iiia.maxsum.Factor;
 import es.csic.iiia.maxsum.MaxOperator;
 import es.csic.iiia.maxsum.Maximize;
-import es.csic.iiia.maxsum.CompositeIndependentFactor;
-import es.csic.iiia.maxsum.IndependentFactor;
+import es.csic.iiia.maxsum.factors.CompositeIndependentFactor;
+import es.csic.iiia.maxsum.factors.IndependentFactor;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,6 +57,7 @@ import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
+import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
 
 /**
@@ -68,7 +69,7 @@ public class BMSPoliceAgent implements DCOPAgent {
     private static final MaxOperator MAX_OPERATOR = new Maximize();
 
     private EntityID id;
-    private ProblemDefinition utilities;
+    private ProblemDefinition problem;
     private AtMostOneFactor<NodeID> variableNode;
     private HashMap<NodeID, Factor<NodeID>> factors;
     private HashMap<NodeID, EntityID> factorLocations;
@@ -88,7 +89,7 @@ public class BMSPoliceAgent implements DCOPAgent {
 
         this.id = agentID;
         this.targetId = null;
-        this.utilities = problem;
+        this.problem = problem;
 
         // Reset internal structures
         factors = new HashMap<>();
@@ -130,13 +131,18 @@ public class BMSPoliceAgent implements DCOPAgent {
 
         IndependentFactor<NodeID> utils = new IndependentFactor<>();
         agentFactor.setIndependentFactor(utils);
-        for (EntityID blockade : utilities.getBlockades()) {
+        for (EntityID blockade : problem.getBlockades()) {
             NodeID blockadeID = new NodeID(null, blockade);
             // Link the agent to each fire
             agentFactor.addNeighbor(blockadeID);
+
             // ... and populate the utilities
-            final double value = utilities.getPoliceUtility(id, blockade);
+            double value = problem.getPoliceUtility(id, blockade);
+            if (problem.isAgentBlocked(id, blockade)) {
+                value -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
+            }
             utils.setPotential(blockadeID, value);
+
             Logger.trace("Utility for {}: {}", new Object[]{blockade, value});
         }
 
@@ -157,8 +163,8 @@ public class BMSPoliceAgent implements DCOPAgent {
      *
      **/
     private void addBlockadeFactors() {
-        ArrayList<EntityID> agents = utilities.getPoliceAgents();
-        ArrayList<EntityID> blockades  = utilities.getBlockades();
+        ArrayList<EntityID> agents = problem.getPoliceAgents();
+        ArrayList<EntityID> blockades  = problem.getBlockades();
         final int nAgents = agents.size();
         final int nBlockades = blockades.size();
         final int nAgent = agents.indexOf(id);
@@ -188,8 +194,8 @@ public class BMSPoliceAgent implements DCOPAgent {
      * assigned to agents.
      */
     private void computeFactorLocations() {
-        ArrayList<EntityID> agents = utilities.getPoliceAgents();
-        ArrayList<EntityID> blockades = utilities.getBlockades();
+        ArrayList<EntityID> agents = problem.getPoliceAgents();
+        ArrayList<EntityID> blockades = problem.getBlockades();
         final int nAgents = agents.size();
         final int nBlockades = blockades.size();
 

@@ -3,7 +3,7 @@ package RSLBench;
 public class Constants {
     public final static int STATION_CHANNEL = 1;
     public final static int PLATOON_CHANNEL = 1;
-    
+
     /** The time at which the experiment starts */
     public static final String KEY_START_EXPERIMENT_TIME = "experiment.start_time";
 
@@ -21,7 +21,7 @@ public class Constants {
 
     /** Amount of area covered by a single fire brigade. */
     public static final String KEY_AREA_COVERED_BY_FIRE_BRIGADE = "util.fire_brigade_area";
-    
+
     /**
      * This factor controls the influence of travel costs on the utility for
      * targets. As bigger as the factor as bigger the influence.
@@ -33,6 +33,9 @@ public class Constants {
 
     /** Alpha value to use in the workload model */
     public static String KEY_UTIL_ALPHA = "util.alpha";
+
+    /** Key to the penalty applied when a target fire is blocked */
+    public static final String KEY_BLOCKED_PENALTY = "util.blockade.penalty";
 
     /**
      * when true and there is no target assigned by the station, the agent

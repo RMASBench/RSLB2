@@ -26,7 +26,6 @@ agent.search.class: RSLBench.Search.BreadthFirstSearch
 
 # Utility function to use
 util.class: RSLBench.Helpers.Utility.SecondUtilityFunction
-#util.class: RSLBench.Helpers.Utility.BlockadesUtilityFunction
 
 # Trade-off between building utility and distance utility
 # The bigger the value the bigger the influence of distance.

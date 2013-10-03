@@ -44,16 +44,17 @@ import rescuecore2.worldmodel.EntityID;
 import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
+import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
-import es.csic.iiia.maxsum.CardinalityFactor;
+import es.csic.iiia.maxsum.factors.CardinalityFactor;
 
 import es.csic.iiia.maxsum.Factor;
 import es.csic.iiia.maxsum.MaxOperator;
 import es.csic.iiia.maxsum.Maximize;
-import es.csic.iiia.maxsum.SelectorFactor;
-import es.csic.iiia.maxsum.CardinalityFunction;
-import es.csic.iiia.maxsum.CompositeIndependentFactor;
-import es.csic.iiia.maxsum.IndependentFactor;
+import es.csic.iiia.maxsum.factors.SelectorFactor;
+import es.csic.iiia.maxsum.factors.cardinality.CardinalityFunction;
+import es.csic.iiia.maxsum.factors.CompositeIndependentFactor;
+import es.csic.iiia.maxsum.factors.IndependentFactor;
 import java.util.HashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -68,7 +69,7 @@ public class BMSFireAgent implements DCOPAgent {
     private static final MaxOperator MAX_OPERATOR = new Maximize();
 
     private EntityID id;
-    private ProblemDefinition utilities;
+    private ProblemDefinition problem;
     private SelectorFactor<NodeID> variableNode;
     private HashMap<NodeID, Factor<NodeID>> factors;
     private HashMap<NodeID, EntityID> factorLocations;
@@ -80,15 +81,15 @@ public class BMSFireAgent implements DCOPAgent {
      * Initialize this max-sum agent (firefighting team)
      *
      * @param agentID The platform ID of the firefighting team
-     * @param utilityM A "utility maxtrix" that contains <em>all</em> u_at values
+     * @param problem A "utility maxtrix" that contains <em>all</em> u_at values
      */
     @Override
-    public void initialize(Config config, EntityID agentID, ProblemDefinition utilityM) {
+    public void initialize(Config config, EntityID agentID, ProblemDefinition problem) {
         Logger.trace("Initializing agent {}", agentID);
 
         this.id = agentID;
         this.targetId = null;
-        this.utilities = utilityM;
+        this.problem = problem;
 
         // Reset internal structures
         factors = new HashMap<>();
@@ -130,12 +131,17 @@ public class BMSFireAgent implements DCOPAgent {
 
         IndependentFactor<NodeID> utils = new IndependentFactor<>();
         agentFactor.setIndependentFactor(utils);
-        for (EntityID fire : utilities.getFires()) {
+        for (EntityID fire : problem.getFires()) {
             NodeID fireID = new NodeID(null, fire);
             // Link the agent to each fire
             agentFactor.addNeighbor(fireID);
+
             // ... and populate the utilities
-            final double value = utilities.getFireUtility(id, fire);
+            double value = problem.getFireUtility(id, fire);
+            if (problem.isAgentBlocked(id, fire)) {
+                value -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
+            }
+            
             utils.setPotential(fireID, value);
             Logger.trace("Utility for {}: {}", new Object[]{fire, value});
         }
@@ -157,8 +163,8 @@ public class BMSFireAgent implements DCOPAgent {
      *
      **/
     private void addUtilityNodes() {
-        ArrayList<EntityID> agents = utilities.getFireAgents();
-        ArrayList<EntityID> fires  = utilities.getFires();
+        ArrayList<EntityID> agents = problem.getFireAgents();
+        ArrayList<EntityID> fires  = problem.getFires();
         final int nAgents = agents.size();
         final int nFires  = fires.size();
         final int nAgent  = agents.indexOf(id);
@@ -177,7 +183,7 @@ public class BMSFireAgent implements DCOPAgent {
             CardinalityFunction wf = new CardinalityFunction() {
                 @Override
                 public double getCost(int nActiveVariables) {
-                    return - utilities.getUtilityPenalty(fire, nActiveVariables);
+                    return - problem.getUtilityPenalty(fire, nActiveVariables);
                 }
             };
             f.setFunction(wf);
@@ -200,8 +206,8 @@ public class BMSFireAgent implements DCOPAgent {
      * assigned to agents.
      */
     private void computeFactorLocations() {
-        ArrayList<EntityID> agents = utilities.getFireAgents();
-        ArrayList<EntityID> fires  = utilities.getFires();
+        ArrayList<EntityID> agents = problem.getFireAgents();
+        ArrayList<EntityID> fires  = problem.getFires();
         final int nAgents = agents.size();
         final int nFires  = fires.size();
 

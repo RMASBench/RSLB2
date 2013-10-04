@@ -84,6 +84,8 @@ public class ProblemDefinition {
 
         buildFirefightersUtilityMatrix(lastAssignment);
         buildPoliceUtilityMatrix(lastAssignment);
+        computeBlockedFireAgents();
+        computeBlockedPoliceAgents();
 
         // Compute blocked targets... only if there actually are some blockades in the simulation!
         if (blockades.size() > 0) {

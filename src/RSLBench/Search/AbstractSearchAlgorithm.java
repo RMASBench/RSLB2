@@ -44,8 +44,8 @@ public abstract class AbstractSearchAlgorithm implements SearchAlgorithm {
         if (entity instanceof Area) {
             return (Area)entity;
         }
-        Logger.error("Unable to find are for entity " + id);
-        return null;
+        Logger.error("Entity {} is not an area.", entity);
+        throw new RuntimeException("Not an area.");
     }
 
     private List<EntityID> toEntityIDs(List<Area> path) {

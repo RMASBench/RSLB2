@@ -9,6 +9,8 @@ import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
 import RSLBench.PlatoonAbstractAgent;
 import RSLBench.Search.SearchFactory;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,6 +20,7 @@ import rescuecore2.standard.entities.StandardEntity;
 import rescuecore2.standard.entities.StandardEntityConstants;
 import rescuecore2.standard.entities.StandardEntityURN;
 import rescuecore2.standard.score.BuildingDamageScoreFunction;
+import rescuecore2.worldmodel.EntityID;
 
 /**
  * This class represents a sort of "collection point" and acts as a layer of communication
@@ -104,7 +107,7 @@ public abstract class AbstractSolver implements Solver
     public abstract Assignment compute(ProblemDefinition utility);
 
     @Override
-    public Assignment solve(int time, ProblemDefinition utility) {
+    public Assignment solve(int time, ProblemDefinition problem) {
         final long start = System.currentTimeMillis();
         stats.report("time", time);
         Logger.debug("Starting {} solver.", getIdentifier());
@@ -125,21 +128,82 @@ public abstract class AbstractSolver implements Solver
         stats.report("nOnceBurned", nOnceBurned);
         stats.report("nBurning", nBurning);
 
-        Assignment solution = compute(utility);
+        Assignment solution = compute(problem);
         long cputime = System.currentTimeMillis() - start;
         Logger.info("{} took {} ms.", getIdentifier(), cputime);
 
         // Compute score and utility obtained
         stats.report("score", scoreFunction.score(worldModel, new Timestep(time)));
-        stats.report("utility", utility.getUtility(solution));
-        stats.report("violations", utility.getViolations(solution));
-        stats.report("solvable", utility.getTotalMaxAgents() >= utility.getNumFireAgents());
+        stats.report("utility", getUtility(problem, solution));
+        stats.report("violations", problem.getViolations(solution));
+        stats.report("solvable", problem.getTotalMaxAgents() >= problem.getNumFireAgents());
 
         Logger.debug("DA Simulator done");
         stats.report("cpu_time", cputime);
 
         stats.reportStep();
         return solution;
+    }
+
+    /**
+     * Get the utility obtained by the given solution.
+     *
+     * @param solution solution to evaluate.
+     * @return utility obtained by this solution.
+     */
+    public double getUtility(ProblemDefinition problem, Assignment solution) {
+        if (solution == null) {
+            return Double.NaN;
+        }
+        double utility = 0;
+
+        HashSet<EntityID> blockadesAttended = new HashSet<>();
+        // Add individual police utilities
+        for (EntityID agent : problem.getPoliceAgents()) {
+            EntityID target = solution.getAssignment(agent);
+            if (target == Assignment.UNKNOWN_TARGET_ID) {
+                continue;
+            }
+
+            utility += problem.getPoliceUtility(agent, target);
+            if (problem.isPoliceAgentBlocked(agent, target)) {
+                utility -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
+            }
+
+            // Track assignments and violations
+            if (blockadesAttended.contains(target)) {
+                return Double.NEGATIVE_INFINITY;
+            }
+            blockadesAttended.add(target);
+        }
+
+        // Track individual utilities and count how many firefighters have chosen each fire
+        HashMap<EntityID, Integer> nAgentsPerTarget = new HashMap<>();
+        final boolean interteam = config.getBooleanValue(Constants.KEY_INTERTEAM_COORDINATION);
+        for (EntityID agent : problem.getFireAgents()) {
+            EntityID target = solution.getAssignment(agent);
+
+            // Individual utility (possibly penalized if blocked and not attended)
+            utility += problem.getFireUtility(agent, target);
+            if (problem.isFireAgentBlocked(agent, target)) {
+                if (!(interteam && blockadesAttended.contains(problem.getBlockadeBlockingFireAgent(agent, target)))) {
+                    utility -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
+                }
+            }
+
+            // Add 1 to the target count
+            int nAgents = nAgentsPerTarget.containsKey(target)
+                    ? nAgentsPerTarget.get(target) : 0;
+            nAgentsPerTarget.put(target, nAgents+1);
+        }
+
+        // Penalize overassignments of agents to fires
+        for (EntityID target : nAgentsPerTarget.keySet()) {
+            int assigned = nAgentsPerTarget.get(target);
+            utility -= problem.getUtilityPenalty(target, assigned);
+        }
+
+        return utility;
     }
 
 }

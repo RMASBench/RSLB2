@@ -73,6 +73,7 @@ public class BMSTeamFireAgent implements DCOPAgent {
     private EntityID id;
     private ProblemDefinition problem;
     private SelectorFactor<NodeID> variableNode;
+    private ArrayList<VariableFactor<NodeID>> variableFactors;
     private HashMap<NodeID, Factor<NodeID>> factors;
     private HashMap<NodeID, EntityID> factorLocations;
     private RSLBenchCommunicationAdapter communicationAdapter;
@@ -98,11 +99,11 @@ public class BMSTeamFireAgent implements DCOPAgent {
         factorLocations = new HashMap<>();
         communicationAdapter = new RSLBenchCommunicationAdapter();
 
-        // Build the selector node
-        addFirefighterFactor();
-
         // ... And the variable nodes
         addFirefighterToFireNodes();
+
+        // Build the selector node
+        addFirefighterFactor();
 
         // And the fire utility nodes that correspond to this agent
         addFireNodes();
@@ -124,9 +125,24 @@ public class BMSTeamFireAgent implements DCOPAgent {
     }
 
     /**
+     * Add the variable nodes for each agent to fire assignment.
+     */
+    private void addFirefighterToFireNodes() {
+        variableFactors = new ArrayList<>();
+        for (EntityID fire : problem.getFires()) {
+            VariableFactor<NodeID> variable = new VariableFactor<>();
+            variable.addNeighbor(new NodeID(id, null));
+            variable.addNeighbor(new NodeID(null, fire));
+            addFactor(new NodeID(id, fire), variable);
+            variableFactors.add(variable);
+        }
+    }
+
+    /**
      * Creates a selector node for the agent's "variable".
      */
     private void addFirefighterFactor() {
+        ArrayList<EntityID> fires = problem.getFires();
         this.variableNode = new SelectorFactor<>();
 
         // The agent's factor is the selector plus the independent utilities
@@ -136,18 +152,20 @@ public class BMSTeamFireAgent implements DCOPAgent {
 
         IndependentFactor<NodeID> utils = new IndependentFactor<>();
         agentFactor.setIndependentFactor(utils);
-        for (EntityID fire : problem.getFires()) {
+        for (int fireIndex=0; fireIndex<fires.size(); fireIndex++) {
+            final EntityID fire = fires.get(fireIndex);
             NodeID agentToFireID = new NodeID(id, fire);
             // Link the agent to each fire
             agentFactor.addNeighbor(agentToFireID);
 
             // ... and populate the utilities
             double value = problem.getFireUtility(id, fire);
-            if (problem.isAgentBlocked(id, fire)) {
+            if (problem.isFireAgentBlocked(id, fire)) {
                 value -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
 
                 // Connect with the blockade attended flag
-                addPenaltyRemovalFactor(problem.getBlockingBlockade(id, fire), fire);
+                addPenaltyRemovalFactor(problem.getBlockadeBlockingFireAgent(id, fire), fire,
+                        fireIndex);
             }
 
             utils.setPotential(agentToFireID, value);
@@ -162,24 +180,19 @@ public class BMSTeamFireAgent implements DCOPAgent {
      *
      * @param blockade blockade that penalizes unless being attended
      */
-    private void addPenaltyRemovalFactor(EntityID blockade, EntityID fire) {
+    private void addPenaltyRemovalFactor(EntityID blockade, EntityID fire, int fireIndex) {
+        Logger.warn("Adding penalty removal for firefighter {}, blockade{}, fire {}",
+                id, blockade, fire);
         AllActiveIncentiveFactor<NodeID> penaltyRemoval = new AllActiveIncentiveFactor<>();
         penaltyRemoval.setIncentive(problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY));
         penaltyRemoval.addNeighbor(new NodeID(id, fire));
         penaltyRemoval.addNeighbor(new NodeID(null, blockade));
-        addFactor(new NodeID(id, blockade), variableNode);
-    }
+        NodeID nodeID = new NodeID(id, fire, blockade);
+        addFactor(nodeID, penaltyRemoval);
+        factorLocations.put(nodeID, id);
 
-    /**
-     * Add the variable nodes for each agent to fire assignment.
-     */
-    private void addFirefighterToFireNodes() {
-        for (EntityID fire : problem.getFires()) {
-            VariableFactor<NodeID> variable = new VariableFactor<>();
-            variable.addNeighbor(new NodeID(id, null));
-            variable.addNeighbor(new NodeID(null, fire));
-            addFactor(new NodeID(id, fire), variable);
-        }
+        // Now we need to add it as neighbor of the variable factor node
+        variableFactors.get(fireIndex).addNeighbor(nodeID);
     }
 
     /**
@@ -255,11 +268,6 @@ public class BMSTeamFireAgent implements DCOPAgent {
             // Firefighter-to-fire variables
             for (EntityID fire : fires) {
                 factorLocations.put(new NodeID(agent, fire), agent);
-            }
-
-            // Blockade factors
-            for (EntityID blockade : blockades) {
-                factorLocations.put(new NodeID(agent, blockade), agent);
             }
         }
 

@@ -138,10 +138,10 @@ public class BMSFireAgent implements DCOPAgent {
 
             // ... and populate the utilities
             double value = problem.getFireUtility(id, fire);
-            if (problem.isAgentBlocked(id, fire)) {
+            if (problem.isFireAgentBlocked(id, fire)) {
                 value -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
             }
-            
+
             utils.setPotential(fireID, value);
             Logger.trace("Utility for {}: {}", new Object[]{fire, value});
         }

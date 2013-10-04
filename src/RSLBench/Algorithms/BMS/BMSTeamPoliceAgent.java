@@ -60,6 +60,8 @@ import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
 import es.csic.iiia.maxsum.factors.ConditionedSelectorFactor;
+import es.csic.iiia.maxsum.factors.VariableFactor;
+import rescuecore2.misc.Pair;
 
 /**
  * This is a binary max-sum police agent.
@@ -133,13 +135,13 @@ public class BMSTeamPoliceAgent implements DCOPAgent {
         IndependentFactor<NodeID> utils = new IndependentFactor<>();
         agentFactor.setIndependentFactor(utils);
         for (EntityID blockade : problem.getBlockades()) {
-            NodeID blockadeID = new NodeID(null, blockade);
+            NodeID blockadeID = new NodeID(blockade, null);
             // Link the agent to each fire
             agentFactor.addNeighbor(blockadeID);
 
             // ... and populate the utilities
             double value = problem.getPoliceUtility(id, blockade);
-            if (problem.isAgentBlocked(id, blockade)) {
+            if (problem.isPoliceAgentBlocked(id, blockade)) {
                 value -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
             }
             utils.setPotential(blockadeID, value);
@@ -176,17 +178,30 @@ public class BMSTeamPoliceAgent implements DCOPAgent {
 
             // Build the factor node
             ConditionedSelectorFactor<NodeID> f = new ConditionedSelectorFactor<>();
-            NodeID coordinationVariableID = new NodeID(null, blockade);
-            f.setConditionNeighbor(coordinationVariableID);
-            f.addNeighbor(coordinationVariableID);
+            NodeID cVariableID = new NodeID(null, blockade);
+            f.addNeighbor(cVariableID);
+            f.setConditionNeighbor(cVariableID);
 
             // Link the blockade with all agents
             for (EntityID agent : agents) {
                 f.addNeighbor(new NodeID(agent, null));
             }
 
-            // Finally add the factor to this agent
-            addFactor(new NodeID(null, blockade), f);
+            // Add the factor to this agent
+            addFactor(new NodeID(blockade, null), f);
+
+            // ... And now create the coordination variable for this blockade
+            VariableFactor<NodeID> cVariable = new VariableFactor<>();
+            cVariable.addNeighbor(new NodeID(blockade, null));
+            // Link with the firefighters nodes
+            for (Pair<EntityID, EntityID> entry : problem.getFireAgentsBlockedByBlockade(blockade)) {
+                EntityID fireAgent = entry.first();
+                EntityID fire = entry.second();
+                NodeID incentiveID = new NodeID(fireAgent, fire, blockade);
+                cVariable.addNeighbor(incentiveID);
+                factorLocations.put(incentiveID, fireAgent);
+            }
+            addFactor(cVariableID, cVariable);
         }
     }
 
@@ -208,11 +223,12 @@ public class BMSTeamPoliceAgent implements DCOPAgent {
             factorLocations.put(new NodeID(agent, null), agent);
         }
 
-        // "Harder" part: each blockade f runs on agent f mod len(agents)
+        // "Harder" part: each blockade f (and its coordination var) runs on agent f mod len(agents)
         for (int i = 0; i < nBlockades; i++) {
             EntityID agent = agents.get(i % nAgents);
             EntityID blockade = blockades.get(i);
             factorLocations.put(new NodeID(null, blockade), agent);
+            factorLocations.put(new NodeID(blockade, null), agent);
         }
     }
 
@@ -235,12 +251,12 @@ public class BMSTeamPoliceAgent implements DCOPAgent {
 
         // Now extract our choice
         NodeID target = variableNode.select();
-        if (target == null || target.target == null) {
-            Logger.debug("Agent {} chose no target!", id);
+        if (target == null || target.agent == null) {
+            Logger.trace("Agent {} chose no target!", id);
             targetId = Assignment.UNKNOWN_TARGET_ID;
         } else {
-            Logger.debug("Agent {} chooses target {}", id, targetId);
-            targetId = target.target;
+            Logger.trace("Agent {} chooses target {}", id, targetId);
+            targetId = target.agent;
         }
         Logger.trace("improveAssignment end.");
 

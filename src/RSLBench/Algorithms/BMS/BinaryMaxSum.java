@@ -4,8 +4,13 @@
  */
 package RSLBench.Algorithms.BMS;
 
+import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Assignment.DCOP.DCOPSolver;
+import RSLBench.Constants;
+import RSLBench.Helpers.Utility.ProblemDefinition;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import rescuecore2.standard.entities.StandardEntityURN;
 import static rescuecore2.standard.entities.StandardEntityURN.FIRE_BRIGADE;
 
@@ -14,13 +19,12 @@ import static rescuecore2.standard.entities.StandardEntityURN.FIRE_BRIGADE;
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
 public class BinaryMaxSum extends DCOPSolver {
-
-    /** Configuration key to enable/disable interteam coordination */
-    public final static String KEY_INTERTEAM_COORDINATION = "agent.interteam";
+    private static final Logger Logger = LogManager.getLogger(BinaryMaxSum.class);
 
     @Override
     protected DCOPAgent buildAgent(StandardEntityURN type) {
-        final boolean team = config.getBooleanValue("KEY_INTERTEAM_COORDINATION", false);
+        final boolean team = config.getBooleanValue(Constants.KEY_INTERTEAM_COORDINATION);
+
         switch(type) {
             case FIRE_BRIGADE:
                 return team ? new BMSTeamFireAgent() : new BMSFireAgent();
@@ -35,5 +39,12 @@ public class BinaryMaxSum extends DCOPSolver {
     public String getIdentifier() {
         return "BinaryMaxSum";
     }
+
+    @Override
+    public double getUtility(ProblemDefinition problem, Assignment solution) {
+        return super.getUtility(problem, solution);
+    }
+
+
 
 }

@@ -11,12 +11,20 @@ import rescuecore2.worldmodel.ChangeSet;
 import rescuecore2.worldmodel.EntityID;
 import RSLBench.Helpers.Logging.Markers;
 import java.util.EnumSet;
+import java.util.Iterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import rescuecore2.messages.control.KASense;
 import rescuecore2.standard.entities.Blockade;
 import rescuecore2.standard.entities.PoliceForce;
 import static rescuecore2.misc.Handy.objectsToIDs;
+import rescuecore2.misc.geometry.GeometryTools2D;
+import rescuecore2.misc.geometry.Line2D;
+import rescuecore2.misc.geometry.Point2D;
 import rescuecore2.standard.entities.Road;
+import rescuecore2.worldmodel.Entity;
+import rescuecore2.worldmodel.EntityListener;
+import rescuecore2.worldmodel.Property;
 
 
 
@@ -28,7 +36,7 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
     private static final Logger Logger = LogManager.getLogger(PlatoonPoliceAgent.class);
 
     public static final String DISTANCE_KEY = "clear.repair.distance";
-    private int distance;
+    private int range;
 
     /** EntityID of the road where the blockade that this agent should remove is located */
     private EntityID assignedTarget = Assignment.UNKNOWN_TARGET_ID;
@@ -46,8 +54,19 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
     protected void postConnect() {
         super.postConnect();
         model.indexClass(StandardEntityURN.ROAD);
-        distance = config.getIntValue(DISTANCE_KEY);
-        Logger.info("{} connected: clearing distance = {}", this, distance);
+        range = config.getIntValue(DISTANCE_KEY);
+
+        me().addEntityListener(new EntityListener() {
+            @Override
+            public void propertyChanged(Entity e, Property p, Object oldValue, Object newValue) {
+                if (p == me().getPositionProperty()) {
+                    Logger.error("Entity {} changes property {} from {} to {} (x={}, y={}, location={}).",
+                        e, p, oldValue, newValue, me().getX(), me().getY(), me().getLocation(model));
+                }
+            }
+        });
+
+        Logger.info("{} connected: clearing distance = {}", this, range);
     }
 
     @Override
@@ -79,16 +98,16 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
 
         // Start to act
         // /////////////////////////////////////////////////////////////////////
-        PoliceForce me = me();
 
         // If we have a target, approach or clear it
         // ///////////////////////////////
         if (assignedTarget != null && !assignedTarget.equals(Assignment.UNKNOWN_TARGET_ID)) {
             EntityID bID = assignedTarget;
-            assignedTarget = ((Blockade)model.getEntity(bID)).getPosition();
+            Blockade target = (Blockade)model.getEntity(bID);
+            assignedTarget = target.getPosition();
 
             // Clear if in range
-            if (model.getDistance(me.getPosition(), assignedTarget) <= distance) {
+            if (inRange(target)) {
                 Logger.debug(Markers.BLUE, "Police force {} clearing ASSIGNED target {}", getID(), assignedTarget);
                 clear(time, assignedTarget);
                 return;
@@ -97,7 +116,7 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
             // Approach it otherwise
             List<EntityID> path = planPathToRoad(assignedTarget);
             if (path != null) {
-                Logger.debug(Markers.MAGENTA, "Police force {} approaching ASSIGNED target {}", getID(), assignedTarget);
+                Logger.debug(Markers.MAGENTA, "Police force {} approaching ASSIGNED target {} through {}", getID(), assignedTarget, path);
                 sendMove(time, path);
             } else {
                 Logger.warn(Markers.RED, "Police force {} can't find a path to ASSIGNED target {}. Moving randomly.", getID(), assignedTarget);
@@ -129,7 +148,8 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
             }
 
             // Clear if in range
-            if (model.getDistance(me.getPosition(), bestTarget) <= distance) {
+            Blockade target = (Blockade)model.getEntity(bestTarget);
+            if (inRange(target)) {
                 Logger.debug(Markers.BLUE, "Police force {} clearing self-assigned target {}", getID(), bestTarget);
                 clear(time, bestTarget);
                 return;
@@ -146,6 +166,21 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
         }
 
         explore(time);
+    }
+
+    private boolean inRange(Blockade target) {
+        model.getDistance(assignedTarget, assignedTarget);
+        Point2D agentLocation = new Point2D(me().getX(), me().getY());
+        double bestDistance = Double.POSITIVE_INFINITY;
+        for (Line2D line : GeometryTools2D.pointsToLines(GeometryTools2D.vertexArrayToPoints(target.getApexes()), true)) {
+            Point2D closest = GeometryTools2D.getClosestPointOnSegment(line, agentLocation);
+            double distance = GeometryTools2D.getDistance(agentLocation, closest);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+            }
+        }
+        Logger.debug("Distance: {} (clear range: {})", bestDistance, range);
+        return bestDistance < range;
     }
 
     private void explore(int time) {
@@ -172,10 +207,10 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
      * @return a list of EntityID representing the path to the target
      */
     private List<EntityID> planPathToRoad(EntityID target) {
-        Collection<StandardEntity> targets = model.getObjectsInRange(target,
-                distance / 2);
-        return search.search(me().getPosition(), objectsToIDs(targets),
+        List<EntityID> path = search.search(me().getPosition(), target,
                 connectivityGraph, distanceMatrix).getPathIds();
+        // Add the blocked road as target, to get closer if necessary
+        return path;
     }
 
     /**

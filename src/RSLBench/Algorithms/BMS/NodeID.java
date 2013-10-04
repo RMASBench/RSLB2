@@ -48,17 +48,26 @@ public final class NodeID {
 
     public final EntityID agent;
     public final EntityID target;
+    public final EntityID blockedBy;
 
     public NodeID(EntityID agent, EntityID target) {
         this.agent = agent;
         this.target = target;
+        this.blockedBy = null;
+    }
+
+    public NodeID(EntityID agent, EntityID target, EntityID blockedBy) {
+        this.agent = agent;
+        this.target = target;
+        this.blockedBy = blockedBy;
     }
 
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 41 * hash + Objects.hashCode(this.agent);
-        hash = 41 * hash + Objects.hashCode(this.target);
+        int hash = 7;
+        hash = 59 * hash + Objects.hashCode(this.agent);
+        hash = 59 * hash + Objects.hashCode(this.target);
+        hash = 59 * hash + Objects.hashCode(this.blockedBy);
         return hash;
     }
 
@@ -77,7 +86,15 @@ public final class NodeID {
         if (!Objects.equals(this.target, other.target)) {
             return false;
         }
+        if (!Objects.equals(this.blockedBy, other.blockedBy)) {
+            return false;
+        }
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return "<" + agent + "," + target + ", " + blockedBy + ">";
     }
 
 }

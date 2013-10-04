@@ -8,9 +8,11 @@ import RSLBench.Search.SearchAlgorithm;
 import RSLBench.Search.SearchFactory;
 import RSLBench.Search.SearchResults;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
@@ -176,10 +178,24 @@ public class ProblemDefinition {
     }
 
     /**
-     * Holds the precomputed map from <em>(agent, target)</em> to <em>(blockade</em> preventing
+     * Holds the precomputed map from <em>(agent, target)</em> to <em>blockade</em> preventing
      * that agent from reaching that target.
      */
-    private HashMap<Pair<EntityID, EntityID>, EntityID> blockedAgents = new HashMap<>();
+    private HashMap<Pair<EntityID, EntityID>, EntityID> blockedFireAgents = new HashMap<>();
+    private HashMap<Pair<EntityID, EntityID>, EntityID> blockedPoliceAgents = new HashMap<>();
+
+    public Collection<Pair<EntityID, EntityID>> getFireAgentsBlockedByBlockade(EntityID blockade) {
+        Collection<Pair<EntityID, EntityID>> result = new HashSet<>();
+
+        for (Map.Entry<Pair<EntityID,EntityID>, EntityID> entry : blockedFireAgents.entrySet()) {
+            if (!entry.getValue().equals(blockade)) {
+                continue;
+            }
+            result.add(entry.getKey());
+        }
+
+        return result;
+    }
 
     private void computeBlockedFireAgents() {
         for (EntityID agent : getFireAgents()) {
@@ -190,7 +206,7 @@ public class ProblemDefinition {
                 List<Blockade> pathBlockades = results.getPathBlocks();
                 if (!pathBlockades.isEmpty()) {
                     Logger.debug("Firefighter {} blocked from reaching fire {} by {}", agent, target, pathBlockades.get(0).getID());
-                    blockedAgents.put(new Pair<>(agent, target), pathBlockades.get(0).getID());
+                    blockedFireAgents.put(new Pair<>(agent, target), pathBlockades.get(0).getID());
                 }
             }
         }
@@ -207,7 +223,7 @@ public class ProblemDefinition {
                 List<Blockade> pathBlockades = results.getPathBlocks();
                 if (!pathBlockades.isEmpty() && !pathBlockades.get(0).getID().equals(target)) {
                     Logger.debug("Police agent {} blocked from reaching blockade {} by {}", agent, target, pathBlockades.get(0).getID());
-                    blockedAgents.put(new Pair<>(agent, target), pathBlockades.get(0).getID());
+                    blockedPoliceAgents.put(new Pair<>(agent, target), pathBlockades.get(0).getID());
                 }
             }
         }
@@ -246,8 +262,19 @@ public class ProblemDefinition {
      * @param target target that the agent wants to reach
      * @return <em>true</em> if there's a blockade in the path, or <em>false</em> otherwise.
      */
-    public boolean isAgentBlocked(EntityID agent, EntityID target) {
-        return blockedAgents.containsKey(new Pair<>(agent, target));
+    public boolean isFireAgentBlocked(EntityID agent, EntityID target) {
+        return blockedFireAgents.containsKey(new Pair<>(agent, target));
+    }
+
+    /**
+     * Check if the given agent is blocked from reaching the given target.
+     *
+     * @param agent agent trying to reach a target
+     * @param target target that the agent wants to reach
+     * @return <em>true</em> if there's a blockade in the path, or <em>false</em> otherwise.
+     */
+    public boolean isPoliceAgentBlocked(EntityID agent, EntityID target) {
+        return blockedPoliceAgents.containsKey(new Pair<>(agent, target));
     }
 
     /**
@@ -257,8 +284,19 @@ public class ProblemDefinition {
      * @param target target that the agent wants to reach
      * @return <em>true</em> if there's a blockade in the path, or <em>false</em> otherwise.
      */
-    public EntityID getBlockingBlockade(EntityID agent, EntityID target) {
-        return blockedAgents.get(new Pair<>(agent, target));
+    public EntityID getBlockadeBlockingFireAgent(EntityID agent, EntityID target) {
+        return blockedFireAgents.get(new Pair<>(agent, target));
+    }
+
+    /**
+     * Get the blockade preventing the given agent from reaching the given target.
+     *
+     * @param agent agent trying to reach a target
+     * @param target target that the agent wants to reach
+     * @return <em>true</em> if there's a blockade in the path, or <em>false</em> otherwise.
+     */
+    public EntityID getBlockadeBlockingPoliceAgent(EntityID agent, EntityID target) {
+        return blockedPoliceAgents.get(new Pair<>(agent, target));
     }
 
     /**
@@ -435,39 +473,6 @@ public class ProblemDefinition {
      */
     public ArrayList<EntityID> getPoliceAgents() {
         return policeAgents;
-    }
-
-    /**
-     * Get the utility obtained by the given solution.
-     *
-     * @param solution solution to evaluate.
-     * @return utility obtained by this solution.
-     */
-    public double getUtility(Assignment solution) {
-        if (solution == null) {
-            return Double.NaN;
-        }
-
-        double utility = 0;
-
-        HashMap<EntityID, Integer> nAgentsPerTarget = new HashMap<>();
-        for (EntityID agent : fireAgents) {
-            EntityID target = solution.getAssignment(agent);
-            utility += getFireUtility(agent, target);
-
-            // Add 1 to the target count
-            int nAgents = nAgentsPerTarget.containsKey(target)
-                    ? nAgentsPerTarget.get(target) : 0;
-            nAgentsPerTarget.put(target, nAgents+1);
-        }
-
-        // Check violated constraints
-        for (EntityID target : nAgentsPerTarget.keySet()) {
-            int assigned = nAgentsPerTarget.get(target);
-            utility -= getUtilityPenalty(target, assigned);
-        }
-
-        return utility;
     }
 
     /**

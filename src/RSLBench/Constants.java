@@ -22,6 +22,9 @@ public class Constants {
     /** Amount of area covered by a single fire brigade. */
     public static final String KEY_AREA_COVERED_BY_FIRE_BRIGADE = "util.fire_brigade_area";
 
+    /** Configuration key to enable/disable interteam coordination */
+    public final static String KEY_INTERTEAM_COORDINATION = "agent.interteam";
+
     /**
      * This factor controls the influence of travel costs on the utility for
      * targets. As bigger as the factor as bigger the influence.

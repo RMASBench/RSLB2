@@ -55,11 +55,11 @@ public abstract class DCOPSolver extends AbstractSolver {
     }
 
     @Override
-    public Assignment compute(ProblemDefinition utility) {
+    public Assignment compute(ProblemDefinition problem) {
         long startTime = System.currentTimeMillis();
         boolean ranOutOfTime = false;
         CommunicationLayer comLayer = new CommunicationLayer();
-        initializeAgents(utility);
+        initializeAgents(problem);
 
         int totalNccc = 0;
         long bMessages = 0;
@@ -97,16 +97,14 @@ public abstract class DCOPSolver extends AbstractSolver {
                 done = done && !improved;
 
                 // Collect assignment
-                if (agent.getTargetID() != Assignment.UNKNOWN_TARGET_ID) {
-                    finalAssignment.assign(agent.getAgentID(), agent.getTargetID());
-                }
+                finalAssignment.assign(agent.getAgentID(), agent.getTargetID());
             }
 
             // Collect the best assignment visited
-            double assignmentUtility = utility.getUtility(finalAssignment);
+            double assignmentUtility = getUtility(problem, finalAssignment);
             totalNccc += nccc;
             iterations++;
-            utilities.add(utility.getUtility(finalAssignment));
+            utilities.add(getUtility(problem, finalAssignment));
 
             // Check the maximum time requirements
             long elapsedTime = System.currentTimeMillis() - startTime;
@@ -126,18 +124,18 @@ public abstract class DCOPSolver extends AbstractSolver {
 
         // Run sequential value propagation to make the solution consistent
         Assignment finalGreedy = ranOutOfTime ?
-                finalAssignment : greedyImprovement(utility, finalAssignment);
-        double finalAssignmentU = utility.getUtility(finalAssignment);
-        double finalGreedyU = utility.getUtility(finalGreedy);
+                finalAssignment : greedyImprovement(problem, finalAssignment);
+        double finalAssignmentU = getUtility(problem, finalAssignment);
+        double finalGreedyU = getUtility(problem, finalGreedy);
         if (finalAssignmentU > finalGreedyU) {
             Logger.error("Final assignment utility went from {} to {}",
                     finalAssignmentU, finalGreedyU);
         }
 
         Assignment bestGreedy = ranOutOfTime ?
-                bestAssignment : greedyImprovement(utility, bestAssignment);
-        double bestAssignmentU = utility.getUtility(bestAssignment);
-        double bestGreedyU = utility.getUtility(bestGreedy);
+                bestAssignment : greedyImprovement(problem, bestAssignment);
+        double bestAssignmentU = getUtility(problem, bestAssignment);
+        double bestGreedyU = getUtility(problem, bestGreedy);
         if (bestAssignmentU > bestGreedyU) {
             Logger.error("Greedy improvement lowered utility from {} to {}",
                     bestAssignmentU, bestGreedyU);
@@ -231,7 +229,7 @@ public abstract class DCOPSolver extends AbstractSolver {
     public Assignment greedyImprovement(ProblemDefinition utility,
             Assignment initial)
     {
-        Logger.debug("Initiating greedy improvement. Initial value {}", utility.getUtility(initial));
+        Logger.debug("Initiating greedy improvement. Initial value {}", getUtility(utility, initial));
         Assignment assignment = new Assignment(initial);
         for (DCOPAgent agent : agents) {
             StandardEntity e = utility.getWorld().getEntity(agent.getAgentID());
@@ -267,15 +265,15 @@ public abstract class DCOPSolver extends AbstractSolver {
                     Logger.debug("Agent {} switch: {} ({}) -> {} ({}) | Util from {} to {}", agentID,
                         initialTarget, scores.computeScore(initialTarget),
                         bestTarget, scores.computeScore(bestTarget),
-                        utility.getUtility(assignment),
-                        utility.getUtility(tmp));
+                        getUtility(utility, assignment),
+                        getUtility(utility, tmp));
                 }
             }
-            
+
             assignment.assign(agentID, bestTarget);
         }
 
         return assignment;
     }
-    
+
 }

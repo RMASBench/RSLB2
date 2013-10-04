@@ -138,7 +138,7 @@ public class BMSPoliceAgent implements DCOPAgent {
 
             // ... and populate the utilities
             double value = problem.getPoliceUtility(id, blockade);
-            if (problem.isAgentBlocked(id, blockade)) {
+            if (problem.isPoliceAgentBlocked(id, blockade)) {
                 value -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
             }
             utils.setPotential(blockadeID, value);

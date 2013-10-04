@@ -208,7 +208,7 @@ public class PlatoonFireAgent extends PlatoonAbstractAgent<FireBrigade>
     private List<EntityID> planPathToFire(EntityID target) {
         Collection<StandardEntity> targets = model.getObjectsInRange(target,
                 maxDistance / 2);
-        return search.search(me().getPosition(), objectsToIDs(targets),
+        return search.search(me().getPosition(), target,
                 connectivityGraph, distanceMatrix).getPathIds();
     }
 

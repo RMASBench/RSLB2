@@ -18,7 +18,7 @@ public class Distance {
     public static double humanToBuilding(EntityID agent, EntityID target, StandardWorldModel model) {
         Human hagent = (Human)model.getEntity(agent);
         EntityID position = hagent.getPosition();
-        return model.getDistance(position, target);
+        return model.getDistance(agent, target);
     }
 
     public static double humanToBlockade(EntityID agent, EntityID target, StandardWorldModel model) {
@@ -26,7 +26,7 @@ public class Distance {
         EntityID position = hagent.getPosition();
         Blockade blockade = (Blockade)model.getEntity(target);
         EntityID position2 = blockade.getPosition();
-        return model.getDistance(position, position2);
+        return model.getDistance(agent, position2);
     }
 
 }

@@ -45,7 +45,7 @@ public class RSLBenchCommunicationAdapter implements CommunicationAdapter<NodeID
         Logger.trace("Message from {} to {} : {}", new Object[]{sender, recipient, message});
         if (Double.isNaN(message) || Double.isInfinite(message)) {
             Logger.error("Factor {} tried to send {} to factor {}!", new Object[]{sender, message, recipient});
-            System.exit(0);
+            throw new RuntimeException("Invalid message sent!");
         }
 
         // The algorithm has converged unless there is at least one message

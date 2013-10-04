@@ -66,7 +66,7 @@ public class SecondUtilityFunction extends AbstractUtilityFunction {
         }
 
         double distance = Distance.humanToBlockade(policeAgent, blockade, world);
-        Logger.warn("Distance from police {} to blockade {}: {}", policeAgent, blockade, distance);
+        Logger.debug("Distance from police {} to blockade {}: {}", policeAgent, blockade, distance);
         double threshold = config.getFloatValue(PlatoonPoliceAgent.DISTANCE_KEY);
         if (distance < threshold) {
             distance = 0;
@@ -76,8 +76,9 @@ public class SecondUtilityFunction extends AbstractUtilityFunction {
 
         // Add some noise to break ties
         utility += config.getRandom().nextDouble()/10000;
-        Logger.warn("Utility from police {} to blockade {}: {}", policeAgent, blockade, utility);
+        utility /= 1000;
 
+        Logger.debug("Utility from police {} to blockade {}: {}", policeAgent, blockade, utility);
         return utility;
     }
 

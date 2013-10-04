@@ -15,13 +15,17 @@ import static rescuecore2.standard.entities.StandardEntityURN.FIRE_BRIGADE;
  */
 public class BinaryMaxSum extends DCOPSolver {
 
+    /** Configuration key to enable/disable interteam coordination */
+    public final static String KEY_INTERTEAM_COORDINATION = "agent.interteam";
+
     @Override
     protected DCOPAgent buildAgent(StandardEntityURN type) {
+        final boolean team = config.getBooleanValue("KEY_INTERTEAM_COORDINATION", false);
         switch(type) {
             case FIRE_BRIGADE:
-                return new BMSFireAgent();
+                return team ? new BMSTeamFireAgent() : new BMSFireAgent();
             case POLICE_FORCE:
-                return new BMSPoliceAgent();
+                return team ? new BMSTeamPoliceAgent() : new BMSPoliceAgent();
             default:
                 throw new UnsupportedOperationException("The Binary Max-Sum solver does not support agents of type " + type);
         }

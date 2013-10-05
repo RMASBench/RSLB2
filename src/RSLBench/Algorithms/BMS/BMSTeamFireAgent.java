@@ -181,7 +181,7 @@ public class BMSTeamFireAgent implements DCOPAgent {
      * @param blockade blockade that penalizes unless being attended
      */
     private void addPenaltyRemovalFactor(EntityID blockade, EntityID fire, int fireIndex) {
-        Logger.warn("Adding penalty removal for firefighter {}, blockade{}, fire {}",
+        Logger.debug("Adding penalty removal for firefighter {}, blockade {}, fire {}",
                 id, blockade, fire);
         AllActiveIncentiveFactor<NodeID> penaltyRemoval = new AllActiveIncentiveFactor<>();
         penaltyRemoval.setIncentive(problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY));

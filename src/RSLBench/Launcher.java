@@ -117,7 +117,7 @@ public final class Launcher {
                 // initializing at the same time increases the memory requirements
                 // of the kernel substantially.
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(100);
                 } catch (InterruptedException ex) {}
             }
         }
@@ -130,7 +130,14 @@ public final class Launcher {
                 PlatoonPoliceAgent policeAgent = new PlatoonPoliceAgent();
                 launcher.connect(policeAgent);
                 policeAgents.add(policeAgent);
-                Logger.info("success");
+
+                // Wait a bit, allowing the last agent to receive map info and
+                // so. This is added because it seems that multiple agents
+                // initializing at the same time increases the memory requirements
+                // of the kernel substantially.
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ex) {}
             }
         }
         catch (ComponentConnectionException e) {

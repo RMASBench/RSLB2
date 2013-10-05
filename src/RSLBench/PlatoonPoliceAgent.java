@@ -93,18 +93,20 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
         if (assignedTarget != null && !assignedTarget.equals(Assignment.UNKNOWN_TARGET_ID)) {
             EntityID bID = assignedTarget;
             Blockade target = (Blockade)model.getEntity(bID);
-            assignedTarget = target.getPosition();
+            if (target != null) {
+                assignedTarget = target.getPosition();
 
-            // Clear if in range
-            if (inRange(target)) {
-                Logger.debug(Markers.BLUE, "Police force {} clearing ASSIGNED target {}", getID(), assignedTarget);
-                clear(time, assignedTarget);
-                return;
-            }
+                // Clear if in range
+                if (inRange(target)) {
+                    Logger.debug(Markers.BLUE, "Police force {} clearing ASSIGNED target {}", getID(), assignedTarget);
+                    clear(time, assignedTarget);
+                    return;
+                }
 
-            // Approach it otherwise
-            if (approach(time, assignedTarget)) {
-                return;
+                // Approach it otherwise
+                if (approach(time, assignedTarget)) {
+                    return;
+                }
             }
         }
 

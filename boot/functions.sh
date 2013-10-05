@@ -193,7 +193,7 @@ function startKernel {
     else
         JVM_OPTS="-Djava.awt.headless=false"
     fi
-    JVM_OPTS="$JVM_OPTS -Xmx3G"
+    JVM_OPTS="$JVM_OPTS -Xmx4G"
     makeClasspath $RSL_SIM_PATH/jars $RSL_SIM_PATH/lib
     PROGRAM="-cp $CP kernel.StartKernel $KERNEL_OPTIONS"
     OUTFILE="$LOGDIR/kernel.log"
@@ -261,7 +261,7 @@ function startSims {
 }
 
 function startRslb2 {
-    JVM_OPTS="-Xmx3G -Dlog4j.configurationFile=file://$BASEDIR/supplement/log4j2.xml -Djava.awt.headless=true"
+    JVM_OPTS="-Xmx5G -Dlog4j.configurationFile=file://$BASEDIR/supplement/log4j2.xml -Djava.awt.headless=true"
     OPTS="-c $SCONFIGDIR/kernel.cfg -c $CONFIGDIR/$ALGORITHM.cfg --results.path=results/ --run=$UUID --kernel.port=$PORT"
     OPTS="$OPTS --random.seed=$SEED"
     if [ ! -z "$START_TIME" ]; then

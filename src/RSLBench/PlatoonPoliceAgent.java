@@ -10,14 +10,12 @@ import rescuecore2.standard.entities.StandardEntityURN;
 import rescuecore2.worldmodel.ChangeSet;
 import rescuecore2.worldmodel.EntityID;
 import RSLBench.Helpers.Logging.Markers;
+import RSLBench.Search.SearchResults;
 import java.util.EnumSet;
-import java.util.Iterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import rescuecore2.messages.control.KASense;
 import rescuecore2.standard.entities.Blockade;
 import rescuecore2.standard.entities.PoliceForce;
-import static rescuecore2.misc.Handy.objectsToIDs;
 import rescuecore2.misc.geometry.GeometryTools2D;
 import rescuecore2.misc.geometry.Line2D;
 import rescuecore2.misc.geometry.Point2D;
@@ -36,6 +34,8 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
     private static final Logger Logger = LogManager.getLogger(PlatoonPoliceAgent.class);
 
     public static final String DISTANCE_KEY = "clear.repair.distance";
+    public static final String KEY_CLEAR_PATHBLOCKS = "police.clear.pathblocks";
+
     private int range;
 
     /** EntityID of the road where the blockade that this agent should remove is located */
@@ -55,17 +55,6 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
         super.postConnect();
         model.indexClass(StandardEntityURN.ROAD);
         range = config.getIntValue(DISTANCE_KEY);
-
-        me().addEntityListener(new EntityListener() {
-            @Override
-            public void propertyChanged(Entity e, Property p, Object oldValue, Object newValue) {
-                if (p == me().getPositionProperty()) {
-                    Logger.error("Entity {} changes property {} from {} to {} (x={}, y={}, location={}).",
-                        e, p, oldValue, newValue, me().getX(), me().getY(), me().getLocation(model));
-                }
-            }
-        });
-
         Logger.info("{} connected: clearing distance = {}", this, range);
     }
 
@@ -114,15 +103,9 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
             }
 
             // Approach it otherwise
-            List<EntityID> path = planPathToRoad(assignedTarget);
-            if (path != null) {
-                Logger.debug(Markers.MAGENTA, "Police force {} approaching ASSIGNED target {} through {}", getID(), assignedTarget, path);
-                sendMove(time, path);
-            } else {
-                Logger.warn(Markers.RED, "Police force {} can't find a path to ASSIGNED target {}. Moving randomly.", getID(), assignedTarget);
-                sendMove(time, randomWalk());
+            if (approach(time, assignedTarget)) {
+                return;
             }
-            return;
         }
 
         // If agents can independently choose targets, do it
@@ -155,17 +138,37 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
                 return;
             }
 
-            List<EntityID> path = planPathToRoad(bestTarget);
-            if (path != null) {
-                Logger.info(Markers.BLUE, "Unassigned police force {} choses target {} by itself", getID(), bestTarget);
-                sendMove(time, path);
+            if (approach(time, bestTarget)) {
                 return;
-            } else {
-                Logger.warn(Markers.BLUE, "Unassigned police force {} can't find path to self-assigned target {}", getID(), bestTarget);
             }
         }
 
         explore(time);
+    }
+
+    private boolean approach(int time, EntityID target) {
+        SearchResults path = planPathToRoad(target);
+
+        List<EntityID> steps = path.getPathIds();
+        if (steps == null) {
+            Logger.warn(Markers.RED, "Police force {} can't find a path to ASSIGNED target {}. Moving randomly.", getID(), target);
+            sendMove(time, randomWalk());
+            return false;
+        }
+
+        if (config.getBooleanValue(KEY_CLEAR_PATHBLOCKS)) {
+            List<Blockade> blocks = path.getPathBlocks();
+            if (!blocks.isEmpty() && inRange(blocks.get(0))) {
+                Blockade block = blocks.get(0);
+                Logger.debug(Markers.MAGENTA, "Police force {} clearing blockade {} to reach ASSIGNED target {} through {}", getID(), block, target, path);
+                sendClear(time, block.getID());
+                return true;
+            }
+        }
+
+        Logger.debug(Markers.MAGENTA, "Police force {} approaching ASSIGNED target {} through {}", getID(), target, path);
+        sendMove(time, steps);
+        return true;
     }
 
     private boolean inRange(Blockade target) {
@@ -206,10 +209,9 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
      * @param target: the target
      * @return a list of EntityID representing the path to the target
      */
-    private List<EntityID> planPathToRoad(EntityID target) {
-        List<EntityID> path = search.search(me().getPosition(), target,
-                connectivityGraph, distanceMatrix).getPathIds();
-        // Add the blocked road as target, to get closer if necessary
+    private SearchResults planPathToRoad(EntityID target) {
+        SearchResults path = search.search(me().getPosition(), target,
+                connectivityGraph, distanceMatrix);
         return path;
     }
 

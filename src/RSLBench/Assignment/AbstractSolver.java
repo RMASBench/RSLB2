@@ -7,7 +7,7 @@ import rescuecore2.standard.entities.StandardWorldModel;
 import RSLBench.Helpers.Stats;
 import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
-import RSLBench.PlatoonAbstractAgent;
+import RSLBench.PlatoonPoliceAgent;
 import RSLBench.Search.SearchFactory;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -156,6 +156,7 @@ public abstract class AbstractSolver implements Solver
             return Double.NaN;
         }
         double utility = 0;
+        boolean POLICE_CLEAR_PATHBLOCKS = problem.getConfig().getBooleanValue(PlatoonPoliceAgent.KEY_CLEAR_PATHBLOCKS);
 
         HashSet<EntityID> blockadesAttended = new HashSet<>();
         // Add individual police utilities
@@ -166,8 +167,10 @@ public abstract class AbstractSolver implements Solver
             }
 
             utility += problem.getPoliceUtility(agent, target);
-            if (problem.isPoliceAgentBlocked(agent, target)) {
-                utility -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
+            if (problem.isPoliceAgentBlocked(agent, target)
+                    && !POLICE_CLEAR_PATHBLOCKS) {
+                double p = problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
+                utility -= POLICE_CLEAR_PATHBLOCKS ? p/2 : p;
             }
 
             // Track assignments and violations

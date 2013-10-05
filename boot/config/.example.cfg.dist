@@ -19,7 +19,11 @@ agent.only_assigned: true
 # agents.search.class: RSLBench.Search.AStar
 agent.search.class: RSLBench.Search.BreadthFirstSearch
 
-# Wether to perform interteam coordination or not
+# Whether police forces remove blockades that prevent them from
+# reaching their actual assigned blockade.
+police.clear.pathblocks: false
+
+# Whether to perform interteam coordination or not
 agent.interteam: false
 
 

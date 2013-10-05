@@ -59,6 +59,7 @@ import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
+import RSLBench.PlatoonPoliceAgent;
 
 /**
  * This is a binary max-sum police agent.
@@ -67,6 +68,9 @@ public class BMSPoliceAgent implements DCOPAgent {
     private static final Logger Logger = LogManager.getLogger(BMSPoliceAgent.class);
 
     private static final MaxOperator MAX_OPERATOR = new Maximize();
+
+    private boolean POLICE_CLEAR_PATHBLOCKS;
+    private double BLOCKED_PENALTY;
 
     private EntityID id;
     private ProblemDefinition problem;
@@ -86,6 +90,11 @@ public class BMSPoliceAgent implements DCOPAgent {
     @Override
     public void initialize(Config config, EntityID agentID, ProblemDefinition problem) {
         Logger.trace("Initializing agent {}", agentID);
+
+        POLICE_CLEAR_PATHBLOCKS = problem.getConfig().getBooleanValue(
+                PlatoonPoliceAgent.KEY_CLEAR_PATHBLOCKS);
+        BLOCKED_PENALTY = problem.getConfig().getFloatValue(
+                Constants.KEY_BLOCKED_PENALTY);
 
         this.id = agentID;
         this.targetId = null;
@@ -139,7 +148,7 @@ public class BMSPoliceAgent implements DCOPAgent {
             // ... and populate the utilities
             double value = problem.getPoliceUtility(id, blockade);
             if (problem.isPoliceAgentBlocked(id, blockade)) {
-                value -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
+                value -= POLICE_CLEAR_PATHBLOCKS ? BLOCKED_PENALTY/2 : BLOCKED_PENALTY;
             }
             utils.setPotential(blockadeID, value);
 

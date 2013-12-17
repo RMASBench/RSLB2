@@ -37,7 +37,6 @@
 package RSLBench.Algorithms.BMS;
 
 import RSLBench.Comm.Message;
-import rescuecore2.worldmodel.EntityID;
 
 /**
  * Message sent from a binary max-sum agent to another.
@@ -85,6 +84,9 @@ public class BinaryMaxSumMessage implements Message {
 
     @Override
     public int getBytes() {
-        return Message.BYTES_ENTITY_ID * 2 + Message.BYTES_UTILITY_VALUE;
+        // ID's are not necessary because it's a fully connected graph, so we
+        // can send out a structured large message instead of the individual
+        // ones.
+        return Message.BYTES_UTILITY_VALUE;
     }
 }

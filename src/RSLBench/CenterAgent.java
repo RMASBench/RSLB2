@@ -266,7 +266,11 @@ public class CenterAgent extends StandardAgent<Building>
     private void sendAssignments(List<? extends PlatoonAbstractAgent> agents) {
         for (PlatoonAbstractAgent agent : agents) {
             if (lastAssignment != null) {
-                agent.enqueueAssignment(lastAssignment.getAssignment(agent.getID()));
+                EntityID assignment = lastAssignment.getAssignment(agent.getID());
+                if (assignment == null) {
+                    Logger.error("Agent {} got a null assignment!", agent);
+                }
+                agent.enqueueAssignment(assignment);
             } else {
                 agent.enqueueAssignment(Assignment.UNKNOWN_TARGET_ID);
             }

@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.config.Config;
@@ -33,6 +34,8 @@ import rescuecore2.worldmodel.EntityID;
  */
 public class ProblemDefinition {
     private static final Logger Logger = LogManager.getLogger(ProblemDefinition.class);
+
+    private static final Random random = new Random(10L);
 
     private UtilityFunction utilityFunction;
     private ArrayList<EntityID> fireAgents;
@@ -347,7 +350,7 @@ public class ProblemDefinition {
     public List<EntityID> getNBestFireAgents(int N, EntityID fire) {
         Map<EntityID, Double> map = new HashMap<>();
         for (EntityID agent : fireAgents) {
-            map.put(agent, getFireUtility(agent, fire));
+            map.put(agent, random.nextDouble());
         }
         List<EntityID> res = sortByValue(map);
         ArrayList<EntityID> list = new ArrayList<>();
@@ -517,6 +520,7 @@ public class ProblemDefinition {
         for (EntityID target : fires) {
             count += getRequiredAgentCount(target);
         }
+        Logger.error("Total sum of max agents for fires: {}", count);
         return count;
     }
 

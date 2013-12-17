@@ -102,15 +102,15 @@ public abstract class DCOPSolver extends AbstractSolver {
 
             // Collect the best assignment visited
             double assignmentUtility = getUtility(problem, finalAssignment);
+            utilities.add(assignmentUtility);
             totalNccc += nccc;
             iterations++;
-            utilities.add(getUtility(problem, finalAssignment));
 
             // Check the maximum time requirements
             long elapsedTime = System.currentTimeMillis() - startTime;
             if (elapsedTime >= maxTime) {
-                Logger.info("Solver {} ran out of time (got {}, took {})",
-                        getIdentifier(), maxTime, elapsedTime);
+                Logger.info("Solver {} ran out of time (got {}, took {} to do {} iterations)",
+                        getIdentifier(), maxTime, elapsedTime, iterations);
                 ranOutOfTime = true;
                 break;
             }

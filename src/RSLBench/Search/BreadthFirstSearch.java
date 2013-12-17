@@ -1,11 +1,9 @@
 package RSLBench.Search;
 
-import RSLBench.Algorithms.BMS.RSLBenchCommunicationAdapter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -84,6 +82,7 @@ public class BreadthFirstSearch extends AbstractSearchAlgorithm
                 throw new RuntimeException("Found a node with no ancestor! Something is broken.");
             }
         } while (current != start);
+        addBlockers(graph, blockers, start);
 
         Collections.reverse(path);
         Collections.reverse(entityPath);

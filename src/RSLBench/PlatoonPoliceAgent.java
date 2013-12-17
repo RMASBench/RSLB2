@@ -20,9 +20,6 @@ import rescuecore2.misc.geometry.GeometryTools2D;
 import rescuecore2.misc.geometry.Line2D;
 import rescuecore2.misc.geometry.Point2D;
 import rescuecore2.standard.entities.Road;
-import rescuecore2.worldmodel.Entity;
-import rescuecore2.worldmodel.EntityListener;
-import rescuecore2.worldmodel.Property;
 
 
 
@@ -81,7 +78,7 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
         if (assignedTarget != null) {
             Logger.debug("Agent {} got target {}", getID(), assignedTarget);
         } else {
-            Logger.debug("Agent {} unable to fetch its assignment.", getID());
+            Logger.warn("Agent {} unable to fetch its assignment.", getID());
             assignedTarget = Assignment.UNKNOWN_TARGET_ID;
         }
 
@@ -174,7 +171,6 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
     }
 
     private boolean inRange(Blockade target) {
-        model.getDistance(assignedTarget, assignedTarget);
         Point2D agentLocation = new Point2D(me().getX(), me().getY());
         double bestDistance = Double.POSITIVE_INFINITY;
         for (Line2D line : GeometryTools2D.pointsToLines(GeometryTools2D.vertexArrayToPoints(target.getApexes()), true)) {

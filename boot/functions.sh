@@ -28,6 +28,8 @@ function printUsage {
 # Process arguments
 function processArgs {
     LOGDIR="logs/$UUID"
+    RESULTSDIR="results/"
+    RAYSDIR="rays/"
     MAP="paris"
     TEAM=""
     CONFIGDIR="$DIR/config"
@@ -142,6 +144,14 @@ function processArgs {
         exit 1
     fi
     LOGDIR=$(cd $LOGDIR; pwd)
+
+    # Ensure that the results and rays folders exist
+    if [ ! -d $RESULTSDIR ]; then
+        mkdir $RESULTSDIR
+    fi
+    if [ ! -d $RAYSDIR ]; then
+        mkdir $RAYSDIR
+    fi
 
     # Check that the user has specified some algorithm to run
     if [ -z "$ALGORITHM" ]; then

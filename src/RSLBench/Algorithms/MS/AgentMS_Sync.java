@@ -68,7 +68,7 @@ public class AgentMS_Sync {
      * NodeFunctions controlled by the AgentMS_Sync
      */
     private HashSet<NodeFunction> functions;
-    
+
     private AgentMS_Sync(int id){
         this.id = id;
         lastId = id;
@@ -104,7 +104,7 @@ public class AgentMS_Sync {
         this.postservice = postservice;
     }
 
-    
+
 
     public Set<NodeVariable> getVariables(){
         return this.variables;
@@ -148,7 +148,7 @@ public class AgentMS_Sync {
                     arrayf = Utils.shuffleArrayFY(arrayf);
 
                     // TODO: shuffling is DA WAY
-                    
+
                     for (Object nodeFunction : arrayf) {
                         //atLeastOneUpdated |= this.op.updateQ(variable, function, this.postservice);
                         atLeastOneUpdated |= this.op.updateQ((NodeVariable)nodeVariable, (NodeFunction)nodeFunction, this.postservice);
@@ -303,7 +303,7 @@ public class AgentMS_Sync {
      * @throws PostServiceNotSetException if no post service is set
      */
     public void sendZMessages() throws PostServiceNotSetException{
-        
+
         if (this.postservice == null){
             throw new PostServiceNotSetException();
         }
@@ -444,8 +444,8 @@ public class AgentMS_Sync {
         table = new HashMap<Integer, AgentMS_Sync>();
         lastId = -1;
     }
-    
-    
+
+
     public boolean readRMessages(Collection<Message> mexR) {
         Iterator<NodeVariable> iteratorv = this.getVariables().iterator();
         NodeVariable variable; // = null;
@@ -481,7 +481,7 @@ public class AgentMS_Sync {
         return true;
     }
 
-  
+
     public boolean readQMessages(Collection<Message> mexQ) throws PostServiceNotSetException {
 
         if (this.postservice == null) {
@@ -508,7 +508,7 @@ public class AgentMS_Sync {
                 if(ismyVariable(variable)) //STA VOLTA MI AFFIDO AL POSTSERVICE SOLO SE LA VARIABILE E' MIA QUINDI IL MEX E' INTERNO
                        this.op.readQmessages(function, variable, this.postservice);
                 //atLeastOneUpdated |= this.op.updateR(function, variable, this.postservice);
-         
+
             }
 
         }
@@ -525,8 +525,8 @@ public class AgentMS_Sync {
 
         return true;
     }
-    
-    
+
+
     private boolean ismyVariable(NodeVariable v) {
         Set<NodeVariable> variables = this.getVariables(); //mie variabili
         NodeVariable variable = null;
@@ -540,7 +540,7 @@ public class AgentMS_Sync {
         }
         return false;
     }
-    
+
     private boolean ismyFunction(NodeFunction f) {
         Set<NodeFunction> functions = this.getFunctions();
         NodeFunction function = null;
@@ -584,13 +584,13 @@ public class AgentMS_Sync {
                     for (Object nodeFunction : arrayf) {
                         //atLeastOneUpdated |= this.op.updateQ(variable, function, this.postservice);
                         atLeastOneUpdated |= this.op.updateQ((NodeVariable) nodeVariable, (NodeFunction) nodeFunction, this.postservice);
-                       
+
                     }
 
 
                 }*/
                 return null;
-               
+
 
             case 0:
             default:
@@ -598,7 +598,7 @@ public class AgentMS_Sync {
                 Iterator<NodeVariable> iteratorv = this.getVariables().iterator();
                 NodeVariable variable; // = null;
                 NodeFunction function = null;
-                
+
 
                 while (iteratorv.hasNext()) {
                     variable = iteratorv.next();
@@ -621,7 +621,7 @@ public class AgentMS_Sync {
                         }
                         if(!ismyFunction(function)){
                             atLeastOneUpdated |= this.op.updateQ(variable, function, this.postservice); //Se la funzione non è mia eseguo questo e uso vecchio operator
-                            
+
                         }
                         else{
                             MessageQ mex = this.op.updateQ_com(variable, function);
@@ -641,7 +641,7 @@ public class AgentMS_Sync {
                     }
 
                 }
-                
+
                 break;
             //end of case 0
 
@@ -655,7 +655,7 @@ public class AgentMS_Sync {
      * @throws PostServiceNotSetException if ps not set.
      * @return true if at least one message has been updated
      */
-    
+
     public Collection<Message> sendRMessages() throws PostServiceNotSetException {
 
         if (this.postservice == null) {
@@ -712,7 +712,7 @@ public class AgentMS_Sync {
                             System.out.println("[class: " + dclass + " method: " + dmethod + "] " + "AgentMS_Sync " + this + "  preparing R from " + function + " to " + variable);
                             System.out.println("---------------------------------------");
                         }
-                        if(!ismyVariable(variable)){    
+                        if(!ismyVariable(variable)){
                             atLeastOneUpdated |= this.op.updateR(function, variable, this.postservice);
                         }
                         else{

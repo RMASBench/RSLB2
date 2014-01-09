@@ -46,9 +46,9 @@ public class ProblemDefinition {
     private Config config;
 
     // Indexes entities to indices
-    Map<EntityID, Integer> id2idx = new HashMap<>();
-    double[][] fireUtilityMatrix;
-    double[][] policeUtilityMatrix;
+    private Map<EntityID, Integer> id2idx = new HashMap<>();
+    private double[][] fireUtilityMatrix;
+    private double[][] policeUtilityMatrix;
 
     // Utilities to perform searches
     private SearchAlgorithm search;

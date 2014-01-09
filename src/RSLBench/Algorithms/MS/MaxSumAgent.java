@@ -8,15 +8,24 @@ import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
-
 import RSLBench.Helpers.Utility.ProblemDefinition;
 import RSLBench.Constants;
-import java.util.Collection;
-import java.util.HashSet;
+
+import rescuecore2.config.Config;
 import rescuecore2.worldmodel.EntityID;
 
-import messages.MessageQ;
-import messages.MessageR;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.Collection;
+import java.util.HashSet;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import exception.PostServiceNotSetException;
 import messages.MailMan;
@@ -25,13 +34,10 @@ import messages.MessageFactoryArrayDouble;
 import factorgraph.NodeVariable;
 import factorgraph.NodeFunction;
 import factorgraph.NodeArgument;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.*;
-import operation.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import rescuecore2.config.Config;
+import operation.OPlus;
+import operation.OPlus_MaxSum;
+import operation.OTimes;
+import operation.OTimes_MaxSum;
 
 /**
  * This class implements the MaxSum algorithm according to RMASBench specification.
@@ -39,191 +45,128 @@ import rescuecore2.config.Config;
 public class MaxSumAgent implements DCOPAgent {
     private static final Logger Logger = LogManager.getLogger(MaxSumAgent.class);
 
-    private static ProblemDefinition _utilityM = null;
-    private EntityID _agentID;
-    private EntityID _targetID = Assignment.UNKNOWN_TARGET_ID;
-    private static MailMan _com = new MailMan();
-    private AgentMS_Sync _maxSumAgent;
-    //private Agent _maxSumAgent;
-    private static MessageFactory _mfactory = new MessageFactoryArrayDouble();
-    private static OTimes _otimes = new OTimes_MaxSum(_mfactory);
-    private static OPlus _oplus = new OPlus_MaxSum(_mfactory);
-    private static double _latestValue_start = Double.NEGATIVE_INFINITY;
-    private static MSumOperator_Sync _op = new MSumOperator_Sync(_otimes, _oplus);
-//private static MSumOperator _op = new MSumOperator(_otimes, _oplus);
-    private static HashSet<NodeVariable> _variables = new HashSet<NodeVariable>();
-    private static HashSet<NodeFunction> _functions = new HashSet<NodeFunction>();
-    private static final int _targetPerAgent = 4;//numero di funzioni per agente
-    private int _dependencies;
-    public static boolean toReset = false;
+    /* Variables to setup the jMaxSum library */
+    private static final MessageFactory JMS_MSG_FACTORY = new MessageFactoryArrayDouble();
+    private static final OTimes JMS_OTIMES = new OTimes_MaxSum(JMS_MSG_FACTORY);
+    private static final OPlus JMS_OPLUS = new OPlus_MaxSum(JMS_MSG_FACTORY);
+    private static final MSumOperator_Sync JMS_OPERATOR = new MSumOperator_Sync(JMS_OTIMES, JMS_OPLUS);
+
+    /* Class-wide variables (seriously...) */
+    private static MailMan JMSMailMan = new MailMan();
+    private static HashSet<NodeVariable> AllJMSVariables = new HashSet<>();
+    private static HashSet<NodeFunction> AllJMSFunctions = new HashSet<>();
+    private static ArrayList<MaxSumAgent> AllMaxSumAgents = new ArrayList<>();
+
     private static int _initializedAgents = 0;
     private static int _localNumberOfTargets = 70;
-    private static HashMap<EntityID, ArrayList<EntityID>> _consideredVariables = new HashMap<EntityID, ArrayList<EntityID>>();
-    private int _sizeMex, _nMex, _nMexForFG;
+    private static final int _targetPerAgent = 4;//numero di funzioni per agente
+
+    private static ProblemDefinition problemDefinition = null;
+
+    private EntityID agentID;
+    private EntityID targetID = Assignment.UNKNOWN_TARGET_ID;
+    private AgentMS_Sync JMSAgent;
+    private int _dependencies;
+    private int _nMexForFG;
     private long _FGMexBytes;
-    private static double BIGNUMBER = 1e15;
-    
-    /*PROVVISORIO*
-     * aggiungo una lista in memoria condivisa che contiene tutti gli agenti
-     */
-    private static ArrayList<MaxSumAgent> _allAgents = new ArrayList<MaxSumAgent>();
-    
+
+    private static boolean toReset = false;
+    private static HashMap<EntityID, ArrayList<EntityID>> _consideredVariables = new HashMap<>();
+
     @Override
-    public void initialize(Config config, EntityID agentID, ProblemDefinition utilityM) {
+    public void initialize(Config config, EntityID agentID, ProblemDefinition definition) {
         this.resetStructures();
-        
+
         _nMexForFG = 0;
         _FGMexBytes = 0;
         _initializedAgents++;
-        _agentID = agentID;
-        _utilityM = utilityM;
+        AllMaxSumAgents.add(this);
+        problemDefinition = definition;
         _dependencies = config.getIntValue(Constants.KEY_MAXSUM_NEIGHBORS);
 
-        _maxSumAgent = AgentMS_Sync.getAgent(_agentID.getValue());//Agent.getAgent(_agentID.getValue());
-        _maxSumAgent.setPostservice(_com);
-        _maxSumAgent.setOp(_op);
-        //variable
-        //each agent controls only one variable, so we can associate it with the agentid
-        NodeVariable nodevariable = NodeVariable.getNodeVariable(_agentID.getValue());
+        JMSAgent = AgentMS_Sync.getAgent(agentID.getValue());//Agent.getAgent(_agentID.getValue());
+        JMSAgent.setPostservice(JMSMailMan);
+        JMSAgent.setOp(JMS_OPERATOR);
 
-        _variables.add(nodevariable);
-        _maxSumAgent.addNodeVariable(nodevariable);
+        // Each agent controls only one variable, so we can associate it with the agentid
+        NodeVariable nodevariable = NodeVariable.getNodeVariable(agentID.getValue());
+        AllJMSVariables.add(nodevariable);
+        JMSAgent.addNodeVariable(nodevariable);
 
         // Assegnamento delle funzioni agli agenti
-        List<EntityID> targets = _utilityM.getNBestFires(_localNumberOfTargets, _agentID);
-        /*FileWriter fw = null;
-        try {
-        fw = new FileWriter("history.txt", true);
-        } catch (IOException i) {
-        }*/
-        Iterator targetIterator = targets.iterator();
-        for (int i = 0; i < _targetPerAgent; i++) {
-            if (targetIterator.hasNext()) {
-                //_nMexForFG +=2;
-                EntityID nextTargetID = (EntityID) targetIterator.next();
-                boolean alreadyAssigned = false;
-                for (NodeFunction function : _functions) {
-                    if (function.getId() == nextTargetID.getValue()) {
-                        alreadyAssigned = true;
-                        break;
-                    }
+        List<EntityID> targets = problemDefinition.getNBestFires(_localNumberOfTargets, agentID);
+        Iterator<EntityID> targetIterator = targets.iterator();
+        int nAssignedFunctions = 0;
+        while (nAssignedFunctions < _targetPerAgent && targetIterator.hasNext()) {
+            EntityID nextTargetID = targetIterator.next();
+
+            boolean alreadyAssigned = false;
+            for (NodeFunction function : AllJMSFunctions) {
+                if (function.getId() == nextTargetID.getValue()) {
+                    alreadyAssigned = true;
+                    break;
                 }
-                if (!alreadyAssigned) {
-                    /*try {
-                    fw.write("Sono l'agente "+_agentID+" e controllo temporaneamente la funzione "+nextTargetID+".\n");               
-                    fw.flush();
-                    } catch (IOException ii) {}*/
-                    NodeFunction target = NodeFunction.putNodeFunction(nextTargetID.getValue(), new RMASTabularFunction());
-                    _functions.add(target);
-                    _maxSumAgent.addNodeFunction(target);
-                    _consideredVariables.put(nextTargetID, new ArrayList<EntityID>());
-                } else {
-                    i--;
-                }
-            } else {
-                break;
+            }
+
+            if (!alreadyAssigned) {
+                nAssignedFunctions++;
+                NodeFunction target = NodeFunction.putNodeFunction(nextTargetID.getValue(), new RMASTabularFunction());
+                AllJMSFunctions.add(target);
+                JMSAgent.addNodeFunction(target);
+                _consideredVariables.put(nextTargetID, new ArrayList<EntityID>());
             }
         }
-        for (NodeFunction nodeTarget : _maxSumAgent.getFunctions()) {
+
+        for (NodeFunction nodeTarget : JMSAgent.getFunctions()) {
             int count = 0;
             EntityID target = new EntityID(nodeTarget.getId());
-            List<EntityID> bestAgents = _utilityM.getNBestFireAgents(_utilityM.getNumFireAgents(), target);
-            //System.out.println("");
+            List<EntityID> bestAgents = problemDefinition.getNBestFireAgents(problemDefinition.getNumFireAgents(), target);
             this.buildNeighborhood(target, bestAgents, count);
         }
 
-        if (_initializedAgents == _utilityM.getNumFireAgents()) {
-            //System.out.println("Sono nel tuplebuilder");
+        if (_initializedAgents == problemDefinition.getNumFireAgents()) {
             tupleBuilder();
             reassignFunctions();
-            /*for(NodeFunction function: _functions) {
-            function.getFunction().toString();
-            }*/
         }
-
-        /*boolean noFileWriter = false;
-        FileWriter fw = null;
-        try {
-        fw = new FileWriter("tables.stats", true);
-        } catch (IOException i) {
-        noFileWriter = true;
-        }
-        for(NodeFunction function: _functions) {
-        if (!noFileWriter) {
-        try {
-        fw.write("Table dimension for function "+function.getId()+": "+Math.pow(2,function.getNeighbour().size())+"\n");
-        
-        fw.flush();
-        fw.close();
-        } catch (IOException i) {}
-        }
-        
-        /*System.out.println("L'agente "+_agentID.getValue()+" ha "+_maxSumAgent.getFunctions().size()+" vicini.");
-        System.out.println("La variabile "+nodevariable.getId()+" ha "+nodevariable.getNeighbour().size()+" vicini.");*/
-        //}
-        _allAgents.add(this); // PROVVISORIO!
     }
 
     public void reassignFunctions() {
-        /*FileWriter fw = null;
-        try {
-        fw = new FileWriter("history.txt", true);
-        } catch (IOException i) {
-        }*/
-        ArrayList<EntityID> agents = (ArrayList<EntityID>) _utilityM.getFireAgents();
+        ArrayList<EntityID> agents = problemDefinition.getFireAgents();
         for (EntityID agent : agents) {
             AgentMS_Sync maxSumAgent = AgentMS_Sync.getAgent(agent.getValue());
-//Agent maxSumAgent = Agent.getAgent(agent.getValue());
             maxSumAgent.resetNodeFunction();
-            /*HashSet<NodeVariable> var = (HashSet<NodeVariable>)maxSumAgent.getVariables();
-            for (NodeVariable v: var) {
-            HashSet<NodeFunction> fun = (HashSet<NodeFunction>)v.getNeighbour();
-            for (NodeFunction f: fun) {
-            try {
-            fw.write("Sono la variabile "+_agentID+" e un mio vicino è la funzione "+f.getId()+".\n");               
-            fw.flush();
-            } catch (IOException ii) {}  
-            }
-            }
-            HashSet<NodeFunction> funcs = (HashSet<NodeFunction>)maxSumAgent.getFunctions();
-            for (NodeFunction func: funcs) {
-            HashSet<NodeVariable> vars = (HashSet<NodeVariable>)func.getNeighbour();
-            for (NodeVariable variab: vars) {
-            try {
-            fw.write("Sono la funzione "+func.getId()+" e un mio vicino è la variabile "+variab.getId()+".\n");               
-            fw.flush();
-            fw.close();
-            } catch (IOException ii) {}  
-            }
-            }*/
         }
-        for (NodeFunction function : _functions) {
-            HashSet<NodeVariable> neighbour = function.getNeighbour();
-            Iterator it = neighbour.iterator();
-            if (it.hasNext()) {
-                NodeVariable controller = (NodeVariable) it.next();
-                AgentMS_Sync agent = AgentMS_Sync.getAgent(controller.getId());
-//Agent agent = Agent.getAgent(controller.getId());
-                agent.addNodeFunction(function);
 
+        for (NodeFunction function : AllJMSFunctions) {
+            HashSet<NodeVariable> neighbour = function.getNeighbour();
+            Iterator<NodeVariable> it = neighbour.iterator();
+            if (it.hasNext()) {
+                NodeVariable controller = it.next();
+                AgentMS_Sync agent = AgentMS_Sync.getAgent(controller.getId());
+                agent.addNodeFunction(function);
             } else {
-                _maxSumAgent.addNodeFunction(function);
+                JMSAgent.addNodeFunction(function);
             }
         }
     }
 
-    public void buildNeighborhood(EntityID target, List<EntityID> bestAgents, int count) {
-        NodeFunction nodeTarget = null;
+    private NodeFunction fetchFunctionNode(Integer id) {
         try {
-            nodeTarget = NodeFunction.getNodeFunction(target.getValue());
+            return NodeFunction.getNodeFunction(id);
         } catch (exception.FunctionNotPresentException e) {
-            e.printStackTrace();
+            Logger.fatal("Unable to fetch function node.", e);
             System.exit(0);
         }
+        return null;
+    }
+
+    public void buildNeighborhood(EntityID target, List<EntityID> bestAgents, int count) {
+        NodeFunction nodeTarget = fetchFunctionNode(target.getValue());
+
         int tarID = target.getValue();
-        Iterator agentIterator = bestAgents.iterator();
+        Iterator<EntityID> agentIterator = bestAgents.iterator();
         while (agentIterator.hasNext() && count < _dependencies) {
-            EntityID agent = (EntityID) agentIterator.next();
+            EntityID agent = agentIterator.next();
             ArrayList<EntityID> consideredVariables = _consideredVariables.get(target);
             consideredVariables.add(agent);
             _consideredVariables.put(target, consideredVariables);
@@ -232,7 +175,7 @@ public class MaxSumAgent implements DCOPAgent {
                 _nMexForFG += 2;
                 _FGMexBytes += 2*4;
                 count++;
-                //System.out.println("Sto costruendo il factorgraph");
+
                 nodeTarget.addNeighbour(NodeVariable.getNodeVariable(agent.getValue()));
                 NodeVariable.getNodeVariable(agent.getValue()).addNeighbour(nodeTarget);
                 NodeVariable.getNodeVariable(agent.getValue()).addValue(NodeArgument.getNodeArgument(nodeTarget.getId()));
@@ -242,10 +185,10 @@ public class MaxSumAgent implements DCOPAgent {
                 _nMexForFG += 2;
                 HashSet<NodeFunction> assignedToMe = tempVar.getNeighbour();
                 EntityID worstTarget = new EntityID(tarID);
-                double targetUtility = _utilityM.getFireUtility(agent, worstTarget);
+                double targetUtility = problemDefinition.getFireUtility(agent, worstTarget);
                 double worstUtility = targetUtility;
                 for (NodeFunction assigned : assignedToMe) {
-                    double oldUtility = _utilityM.getFireUtility(agent, new EntityID(assigned.getId()));
+                    double oldUtility = problemDefinition.getFireUtility(agent, new EntityID(assigned.getId()));
                     if (oldUtility < worstUtility) {
                         worstUtility = oldUtility;
                         worstTarget = new EntityID(assigned.getId());
@@ -257,281 +200,149 @@ public class MaxSumAgent implements DCOPAgent {
                     _nMexForFG++;
                     count++;
                     nodeTarget.addNeighbour(tempVar);
-                    try {
-                        RMASNodeFunctionUtility.removeNeighbourBeforeTuples(NodeFunction.getNodeFunction(worstTarget.getValue()), tempVar);//NodeFunction.getNodeFunction(worstTarget.getValue()).removeNeighbourBeforeTuples(tempVar);
-                        tempVar.changeNeighbour(NodeFunction.getNodeFunction(worstTarget.getValue()), nodeTarget);
-                        this.newNeighbour(worstTarget, agent);
-                    } catch (exception.FunctionNotPresentException e) {
-                        e.printStackTrace();
-                        System.exit(0);
-                    }
+
+                    NodeFunction oldTarget = fetchFunctionNode(worstTarget.getValue());
+                    RMASNodeFunctionUtility.removeNeighbourBeforeTuples(oldTarget, tempVar);
+                    tempVar.changeNeighbour(oldTarget, nodeTarget);
+                    this.newNeighbour(worstTarget);
                     tempVar.changeValue(NodeArgument.getNodeArgument(worstTarget.getValue()), NodeArgument.getNodeArgument(nodeTarget.getId()));
 
                 }
             }
 
         }
-        //System.out.println("--------------------");
     }
 
     private void tupleBuilder() {
-        //System.out.println("Costruisco le tuple.");
-        for (NodeFunction function : _functions) {
+        for (NodeFunction function : AllJMSFunctions) {
             double cost = 0;
             int countAgent = 0;
-            int targetID = function.getId();
-            int[] possibleValues = {0, targetID};
+            int target = function.getId();
+            int[] possibleValues = {0, target};
             int[][] combinations = createCombinations(possibleValues);
             for (int[] arguments : combinations) {
                 NodeArgument[] arg = new NodeArgument[function.size()];
-                //System.out.print("I vicini sono: ");
+
                 for (int i = 0; i < function.size(); i++) {
                     arg[i] = NodeArgument.getNodeArgument(arguments[i]);
-                    Iterator prova = function.getNeighbour().iterator();
-                    if (((Integer) arg[i].getValue()).intValue() == targetID) {
+                    Iterator<NodeVariable> prova = function.getNeighbour().iterator();
+                    if (((Integer) arg[i].getValue()).intValue() == target) {
                         countAgent++;
-                        NodeVariable var = (NodeVariable) prova.next();
-                        //System.out.print(var.getId());
-                        cost = cost + _utilityM.getFireUtility(new EntityID(var.getId()), new EntityID(targetID));
+                        NodeVariable var = prova.next();
+                        cost = cost + problemDefinition.getFireUtility(new EntityID(var.getId()), new EntityID(target));
                     }
                 }
-                cost -= _utilityM.getUtilityPenalty(new EntityID(targetID), countAgent);
-                //System.out.println("");
+                cost -= problemDefinition.getUtilityPenalty(new EntityID(target), countAgent);
 
                 function.getFunction().addParametersCost(arg, cost);
-
             }
         }
-
-        /*printFG();
-        printDimTuples();
-        FileWriter fw = null;
-        try {
-
-            fw = new FileWriter("factor_graph.txt", true);
-            fw.write("------------------------------------------------------------------------------------------\n");
-            fw.write("------------------------------------------------------------------------------------------\n");
-            fw.flush();
-            fw.close();
-            
-            fw = new FileWriter("tuples_dim.txt", true);
-            fw.write("------------------------------------------------------------------------------------------\n");
-            fw.write("------------------------------------------------------------------------------------------\n");
-            fw.flush();
-            fw.close();
-        } catch (IOException i) {
-        }*/
-
     }
+
     @Override
     public boolean improveAssignment() {
         //this.printNMex();
-        HashSet<NodeVariable> vars = new HashSet<NodeVariable>();
-        vars = (HashSet<NodeVariable>) _maxSumAgent.getVariables();
-        Iterator it = vars.iterator();
-        NodeVariable var = (NodeVariable) it.next();
-        HashSet<NodeFunction> func = new HashSet<NodeFunction>();
-        func = var.getNeighbour();
+        Set<NodeVariable> vars = JMSAgent.getVariables();
+        Iterator<NodeVariable> it = vars.iterator();
+        NodeVariable var = it.next();
+        HashSet<NodeFunction> func = var.getNeighbour();
         if (!func.isEmpty()) {
-            _maxSumAgent.updateVariableValue();
-
+            JMSAgent.updateVariableValue();
         }
 
         toReset = true;
-        /*boolean toWrite = true;
-        FileWriter fw = null;
-        try {
-            fw = new FileWriter("assignment.txt", true);
-        } catch (IOException i) {
-        }*/
-        for (NodeVariable variable : _maxSumAgent.getVariables()) {
+        for (NodeVariable variable : JMSAgent.getVariables()) {
             try {
                 String target = variable.getStateArgument().getValue().toString();
-
-                _targetID = new EntityID(Integer.parseInt(target));
-                //System.out.println("Agente "+variable.getId()+" valore "+_targetID.getValue());
+                targetID = new EntityID(Integer.parseInt(target));
             } catch (exception.VariableNotSetException e) {
-                _targetID = _utilityM.getHighestTargetForAgent(_agentID);
-                //System.out.println("Agent " + _agentID + " doesn't have an assigned variable. This can mean that there are so few targets that some agents aren't assigned one.");
-                //toWrite = false;
-            }
-        }
-        /*if (toWrite) {
-            try {
-                fw.write(_targetID + " ");
-
-                fw.flush();
-
-            } catch (IOException ii) {
+                targetID = problemDefinition.getHighestTargetForAgent(agentID);
             }
         }
 
-        try {
-            fw.close();
-        } catch (IOException iii) {
-        }*/
         return true;
     }
 
+    @Override
     public EntityID getAgentID() {
-        return _agentID;
+        return agentID;
     }
 
+    @Override
     public EntityID getTargetID() {
-        return _targetID;
+        return targetID;
     }
 
+    @Override
     public Collection<Message> sendMessages(CommunicationLayer com) {
-        _sizeMex = 0; //dimensione mex inviati
-        _nMex = 0;
-        Collection<Message> mexQ = new ArrayList<Message>();
-        Collection<Message> mexR = new ArrayList<Message>();
-        Collection<Message> allmex = new ArrayList<Message>();
+        Collection<Message> mexQ = new ArrayList<>();
+        Collection<Message> mexR = new ArrayList<>();
+        Collection<Message> allmex = new ArrayList<>();
         try {
             //System.out.println("Stampa messaggi 1");
-            mexQ = _maxSumAgent.sendQMessages();
-            /* Send dei Q */
-            MS_MessageQ messageQ = null;
+            mexQ = JMSAgent.sendQMessages();
+
             Iterator<Message> iteratorm = mexQ.iterator();
             while(iteratorm.hasNext()){
                 //usare com per i Q per ogni mex devo recuperare destinatario
-                messageQ = (MS_MessageQ)iteratorm.next();
-                
+                MS_MessageQ messageQ = (MS_MessageQ)iteratorm.next();
+
                 /* PRovvisorio..ricavo funzioni ciclando INEFFICIENTE*/
-                Iterator<MaxSumAgent> agentiter = _allAgents.iterator();
-                MaxSumAgent agent = null;
+                Iterator<MaxSumAgent> agentiter = AllMaxSumAgents.iterator();
+                MaxSumAgent agent;
                 while(agentiter.hasNext()){
                     agent = agentiter.next();
-                    if(agent.ismyFunction(messageQ.getFunction())){ // se la funzione è di proprietà dell'agente X il destinatario è LUI
+                    if(agent.isLocalFunction(messageQ.getFunction())){ // se la funzione è di proprietà dell'agente X il destinatario è LUI
                         com.send(agent.getAgentID(), messageQ); // Se trovo il destinatario invio
                         break;
                     }
-                    
                 }
-                
             }
 
             //System.out.println("Stampa messaggi 2");
-            mexR = _maxSumAgent.sendRMessages();
+            mexR = JMSAgent.sendRMessages();
             iteratorm = mexR.iterator();
-            MS_MessageR messageR = null;
+            MS_MessageR messageR;
             while(iteratorm.hasNext()){
                 //usare com per i R per ogni mex devo recuperare destinatario
                 messageR = (MS_MessageR)iteratorm.next();
                 com.send(new EntityID(messageR.getVariable().getId()), messageR); //Ricavo destinatario dall'id della variabile
             }
-                        
-          
 
-            _maxSumAgent.sendZMessages(); // controllare sendZ
+            JMSAgent.sendZMessages(); // controllare sendZ
         } catch (PostServiceNotSetException p) {
-            p.printStackTrace();
+            Logger.fatal("Unconfigured max-sum library", p);
             System.exit(0);
         }
+
         allmex.addAll(mexQ);
         allmex.addAll(mexR);
         return allmex;
     }
 
-    public boolean ismyFunction(NodeFunction f) {
-        Set<NodeFunction> functions = _maxSumAgent.getFunctions();
-        NodeFunction function = null;
-        Iterator<NodeFunction> iteratorf = functions.iterator();
-
-        while (iteratorf.hasNext()) {
-            function = iteratorf.next();
-            if (f.equals(function)) { //se possiedo f ritorno true altrimenti false
-                return true;
-            }
-        }
-        return false;
+    private boolean isLocalFunction(NodeFunction f) {
+        return JMSAgent.getFunctions().contains(f);
     }
 
-    public boolean ismyVariable(NodeVariable v) {
-        Set<NodeVariable> variables = _maxSumAgent.getVariables(); //mie variabili
-        NodeVariable variable = null;
-        Iterator<NodeVariable> iteratorv = variables.iterator();
-
-        while (iteratorv.hasNext()) {
-            variable = iteratorv.next();
-            if (v.getId() == variable.getId()) { //se la variabile è la mia
-                return true;
-            }
-        }
-        return false;
-    }
-
+    @Override
     public void receiveMessages(Collection<Message> messages) {
-        Collection<Message> mexQ = new ArrayList<Message>();
-        Collection<Message> mexR = new ArrayList<Message>();
-        Iterator<Message> itermex = messages.iterator();
-        MS_Message mex = null;
-        while(itermex.hasNext()){ //leggo la lista dei mex
-            mex = (MS_Message)itermex.next();
-            if(mex.getMessageType().compareTo("Q") == 0) //se il mex è di tipo Q lo metto nella lista dei Q
+        Collection<Message> mexQ = new ArrayList<>();
+        Collection<Message> mexR = new ArrayList<>();
+
+        for (Message msg : messages) {
+            MS_Message mex = (MS_Message)msg;
+            if (mex.getMessageType().compareTo("Q") == 0) {
                 mexQ.add(mex);
-            else if(mex.getMessageType().compareTo("R")==0) //altrimenti negli R
+            } else if (mex.getMessageType().compareTo("R") == 0) {
                 mexR.add(mex);
+            }
         }
 
         try {
-            _maxSumAgent.readQMessages(mexQ);
-            
-            /*for (AbstractMessage am : mexQ) {
-                MS_MessageQ msm = (MS_MessageQ)am;
-                MessageQ msq = msm.getMessage();
-                System.out.println(msq.toString());
-            }*/
-            _maxSumAgent.readRMessages(mexR);
-            
-            /*for (AbstractMessage am : mexR) {
-                MS_MessageR msm = (MS_MessageR)am;
-                MessageR msr = msm.getMessage();
-                System.out.println(msr.toString());
-            }*/
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-/* Questa parte sarà da rimuovere */
-        Set<NodeFunction> functions = _maxSumAgent.getFunctions();
-        Set<NodeVariable> variables = _maxSumAgent.getVariables();
-        // Read Q messages 
-        Iterator<NodeVariable> iteratorv = variables.iterator();
-        // Ne ha una in teoria 
-        NodeVariable variable = null;
-        NodeFunction function = null;
-        while (iteratorv.hasNext()) {
-            variable = iteratorv.next();
-            Iterator<NodeFunction> iteratorf = variable.getNeighbour().iterator();
-            // Funzioni legate alla variabile 
-            while (iteratorf.hasNext()) {
-                function = iteratorf.next();
-                if (!ismyFunction(function)) { //se function non è mia allora calcolo i mex tra var e function
-                    MessageQ mq = _com.readQMessage(variable, function);
-                    int dim = mq.size() * 8;
-                    _sizeMex += dim;
-                    _nMex++;
-                }
-            }
-        }
-        // Read R messages
-        variable = null;
-        function = null;
-        Iterator<NodeFunction> iteratorf = functions.iterator();
-        while (iteratorf.hasNext()) {    //Per ogni funzione che possiedo
-            function = iteratorf.next();
-            Iterator<NodeVariable> iteratorv_ = function.getNeighbour().iterator();
-            while (iteratorv_.hasNext()) { //per ogni variabile controllo prima che non sia la mia
-                variable = iteratorv_.next();
-                if (!ismyVariable(variable)) {
-                    MessageR mr = _com.readRMessage(function, variable);
-                    int dim = mr.size() * 8;
-                    _sizeMex += dim;
-                    _nMex++;
-                }
-            }
+            JMSAgent.readQMessages(mexQ);
+            JMSAgent.readRMessages(mexR);
+        } catch (PostServiceNotSetException ex) {
+            Logger.fatal("Uninitialized max-sum library", ex);
         }
 
     }
@@ -565,130 +376,107 @@ public class MaxSumAgent implements DCOPAgent {
         if (toReset) {
             toReset = false;
             AgentMS_Sync.resetIds();
-//Agent.resetIds();
             NodeVariable.resetIds();
             NodeFunction.resetIds();
             NodeArgument.resetIds();
-            _mfactory = new MessageFactoryArrayDouble();
-            _otimes = new OTimes_MaxSum(_mfactory);
-            _oplus = new OPlus_MaxSum(_mfactory);
-            _op = new MSumOperator_Sync(_otimes, _oplus);
+
             //_op = new MSumOperator(_otimes, _oplus);
-            _com = new MailMan();
-            _variables = new HashSet<NodeVariable>();
-            _functions = new HashSet<NodeFunction>();
+            JMSMailMan = new MailMan();
+            AllJMSVariables = new HashSet<>();
+            AllJMSFunctions = new HashSet<>();
             _initializedAgents = 0;
-            _consideredVariables = new HashMap<EntityID, ArrayList<EntityID>>();
+            _consideredVariables = new HashMap<>();
         }
 
     }
 
+    @Override
     public long getConstraintChecks() {
         int totalnccc = 0;
-        for (NodeFunction function : _functions) {
+        for (NodeFunction function : AllJMSFunctions) {
             totalnccc += ((RMASTabularFunction) function.getFunction()).getNCCC();
         }
         return totalnccc;
     }
 
     public void printFG() {
-        FileWriter fw = null;
-        for (NodeVariable var : _variables) {
-            int agent_id = var.getId();
-            AgentMS_Sync agent = AgentMS_Sync.getAgent(agent_id);
-            Set<NodeFunction> agent_fun = agent.getFunctions();
+        try (FileWriter fw = new FileWriter("factor_graph.txt", true)) {
+            for (NodeVariable var : AllJMSVariables) {
+                int agent_id = var.getId();
+                AgentMS_Sync agent = AgentMS_Sync.getAgent(agent_id);
+                Set<NodeFunction> agent_fun = agent.getFunctions();
 
-            try {
-                fw = new FileWriter("factor_graph.txt", true);
                 fw.write("Agent: " + agent_id + "\n");
                 fw.write("\t functions: " + agent_fun.toString() + "\n");
                 fw.write("\t var connected to: " + NodeVariable.getNodeVariable(agent_id).getNeighbour().toString() + "\n\n");
-
                 fw.flush();
-                fw.close();
-            } catch (IOException i) {
             }
+        } catch (IOException ex) {
+            Logger.error(ex);
         }
     }
 
     public void printDimTuples() {
-        FileWriter fw = null;
-        for (NodeVariable var : _variables) {
+        for (NodeVariable var : AllJMSVariables) {
             int agent_id = var.getId();
             AgentMS_Sync agent = AgentMS_Sync.getAgent(agent_id);
             Set<NodeFunction> agent_fun = agent.getFunctions();
-            
-            try {
-                fw = new FileWriter("tuples_dim.txt", true);
+
+            try (FileWriter fw = new FileWriter("tuples_dim.txt", true)) {
                 fw.write("Agent: " + agent_id + "\n");
-                
-                for(NodeFunction f: agent_fun){
+
+                for (NodeFunction f : agent_fun) {
                     int num_tup = 1;
                     int num_real = 1;
-                    for(NodeVariable v: f.getNeighbour()){
-                        num_tup *= v.getNeighbour().size(); 
+                    for (NodeVariable v : f.getNeighbour()) {
+                        num_tup *= v.getNeighbour().size();
                         num_real *= 2;
                     }
-                    if(num_tup == 1) num_tup = 0;
-                    if(num_real == 1) num_real = 0;
-                    fw.write("\t Funtion: "+f.id()+" dim: "+num_tup+"\n");
-                    fw.write("\t Funtion: "+f.id()+" dim_real: "+num_real+"\n");
+                    num_tup = (num_tup == 1) ? 0 : num_tup;
+                    num_real = (num_real == 1) ? 0 : num_real;
+                    fw.write("\t Funtion: " + f.id() + " dim: " + num_tup + "\n");
+                    fw.write("\t Funtion: " + f.id() + " dim_real: " + num_real + "\n");
                 }
-                 fw.write("----------------------------------------------------------------\n");
-                  
+
+                fw.write("----------------------------------------------------------------\n");
                 fw.flush();
-                fw.close();
-            } catch (IOException i) {
+            } catch (IOException ex) {
+                Logger.error(ex);
             }
         }
     }
 
     public void printNMex() {
-        boolean noFileWriter = false;
-        FileWriter fw = null;
-        try {
-            fw = new FileWriter("tables.stats", true);
-        } catch (IOException i) {
-            noFileWriter = true;
-        }
-        for (NodeFunction function : (HashSet<NodeFunction>) _maxSumAgent.getFunctions()) {
-            if (!noFileWriter) {
-                try {
-                    fw.write("Number of tuples tried for function " + function.getId() + ": " + ((RMASTabularFunction) function.getFunction()).getNCCC() + "\n");
-
-                    fw.flush();
-                    fw.close();
-                } catch (IOException i) {
-                }
+        try (FileWriter fw = new FileWriter("tables.stats", true)) {
+            for (NodeFunction function : (HashSet<NodeFunction>) JMSAgent.getFunctions()) {
+                fw.write("Number of tuples tried for function " + function.getId() + ": " + ((RMASTabularFunction) function.getFunction()).getNCCC() + "\n");
+                fw.flush();
             }
+        } catch (IOException ex) {
+            Logger.error(ex);
         }
     }
 
+    @Override
     public int getNumberOfOtherMessages() {
         return _nMexForFG;
     }
+    @Override
     public long getDimensionOfOtherMessages() {
         return _FGMexBytes;
     }
-    public void newNeighbour(EntityID function, EntityID removedVariable) {
-        //System.out.println("newneighbour");
-        ArrayList<EntityID> possibleNewNeighbours = new ArrayList<EntityID>();
-        NodeFunction nodefunction = null;
-        try {
-            nodefunction = NodeFunction.getNodeFunction(function.getValue());
-        } catch (exception.FunctionNotPresentException e) {
-            e.printStackTrace();
-            System.exit(0);
-        }
-        HashSet<NodeVariable> neighbours = nodefunction.getNeighbour();
-        List<EntityID> best = _utilityM.getNBestFireAgents(_utilityM.getNumFireAgents(), function);
-        ArrayList alreadyConsidered = _consideredVariables.get(function);
+
+    private void newNeighbour(EntityID function) {
+        ArrayList<EntityID> possibleNewNeighbours = new ArrayList<>();
+
+        List<EntityID> best = problemDefinition.getNBestFireAgents(problemDefinition.getNumFireAgents(), function);
+        ArrayList<EntityID> alreadyConsidered = _consideredVariables.get(function);
         for (EntityID possibleNewNeighbour : best) {
             if (!alreadyConsidered.contains(possibleNewNeighbour)) {
                 possibleNewNeighbours.add(possibleNewNeighbour);
             }
         }
-        //System.out.println("Vicinato: "+nodefunction.getNeighbour().size());
+
         if (!possibleNewNeighbours.isEmpty()) {
             this.buildNeighborhood(function, possibleNewNeighbours, _dependencies - 1);
         }

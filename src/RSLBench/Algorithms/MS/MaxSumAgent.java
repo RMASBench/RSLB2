@@ -49,9 +49,9 @@ public class MaxSumAgent implements DCOPAgent {
     private static final MessageFactory JMS_MSG_FACTORY = new MessageFactoryArrayDouble();
     private static final OTimes JMS_OTIMES = new OTimes_MaxSum(JMS_MSG_FACTORY);
     private static final OPlus JMS_OPLUS = new OPlus_MaxSum(JMS_MSG_FACTORY);
-    private static final MSumOperator_Sync JMS_OPERATOR = new MSumOperator_Sync(JMS_OTIMES, JMS_OPLUS);
 
     /* Class-wide variables (seriously...) */
+    private static MSumOperator_Sync JMSOperator = new MSumOperator_Sync(JMS_OTIMES, JMS_OPLUS);
     private static MailMan JMSMailMan = new MailMan();
     private static HashSet<NodeVariable> AllJMSVariables = new HashSet<>();
     private static HashSet<NodeFunction> AllJMSFunctions = new HashSet<>();
@@ -70,13 +70,10 @@ public class MaxSumAgent implements DCOPAgent {
     private int _nMexForFG;
     private long _FGMexBytes;
 
-    private static boolean toReset = false;
     private static HashMap<EntityID, ArrayList<EntityID>> _consideredVariables = new HashMap<>();
 
     @Override
     public void initialize(Config config, EntityID agentID, ProblemDefinition definition) {
-        this.resetStructures();
-
         _nMexForFG = 0;
         _FGMexBytes = 0;
         _initializedAgents++;
@@ -84,9 +81,10 @@ public class MaxSumAgent implements DCOPAgent {
         problemDefinition = definition;
         _dependencies = config.getIntValue(Constants.KEY_MAXSUM_NEIGHBORS);
 
-        JMSAgent = AgentMS_Sync.getAgent(agentID.getValue());//Agent.getAgent(_agentID.getValue());
+        this.agentID = agentID;
+        JMSAgent = AgentMS_Sync.getAgent(agentID.getValue());
         JMSAgent.setPostservice(JMSMailMan);
-        JMSAgent.setOp(JMS_OPERATOR);
+        JMSAgent.setOp(JMSOperator);
 
         // Each agent controls only one variable, so we can associate it with the agentid
         NodeVariable nodevariable = NodeVariable.getNodeVariable(agentID.getValue());
@@ -250,7 +248,6 @@ public class MaxSumAgent implements DCOPAgent {
             JMSAgent.updateVariableValue();
         }
 
-        toReset = true;
         for (NodeVariable variable : JMSAgent.getVariables()) {
             try {
                 String target = variable.getStateArgument().getValue().toString();
@@ -372,22 +369,25 @@ public class MaxSumAgent implements DCOPAgent {
         return combinationsMatrix;
     }
 
-    private void resetStructures() {
-        if (toReset) {
-            toReset = false;
-            AgentMS_Sync.resetIds();
-            NodeVariable.resetIds();
-            NodeFunction.resetIds();
-            NodeArgument.resetIds();
+    /**
+     * Resets the static members of this class so that it gets ready for a new step of the
+     * simulator.
+     */
+    public static void reset() {
+        Logger.debug("Resetting!");
 
-            //_op = new MSumOperator(_otimes, _oplus);
-            JMSMailMan = new MailMan();
-            AllJMSVariables = new HashSet<>();
-            AllJMSFunctions = new HashSet<>();
-            _initializedAgents = 0;
-            _consideredVariables = new HashMap<>();
-        }
+        AgentMS_Sync.resetIds();
+        NodeVariable.resetIds();
+        NodeFunction.resetIds();
+        NodeArgument.resetIds();
+        JMSOperator = new MSumOperator_Sync(JMS_OTIMES, JMS_OPLUS);
+        JMSMailMan = new MailMan();
 
+        AllJMSVariables.clear();
+        AllJMSFunctions.clear();
+        _initializedAgents = 0;
+        _consideredVariables.clear();
+        AllMaxSumAgents.clear();
     }
 
     @Override
@@ -399,18 +399,31 @@ public class MaxSumAgent implements DCOPAgent {
         return totalnccc;
     }
 
-    public void printFG() {
-        try (FileWriter fw = new FileWriter("factor_graph.txt", true)) {
+    private static int n_graph = 0;
+    /**
+     * Prints the FactorGraph in .dot format (to be visualized with graphviz or similar)
+     */
+    private void printFG() {
+        n_graph++;
+        try (FileWriter fw = new FileWriter("factor_graph" + n_graph + ".dot", false)) {
+            fw.write("graph Factor {\n");
             for (NodeVariable var : AllJMSVariables) {
                 int agent_id = var.getId();
                 AgentMS_Sync agent = AgentMS_Sync.getAgent(agent_id);
                 Set<NodeFunction> agent_fun = agent.getFunctions();
 
-                fw.write("Agent: " + agent_id + "\n");
-                fw.write("\t functions: " + agent_fun.toString() + "\n");
-                fw.write("\t var connected to: " + NodeVariable.getNodeVariable(agent_id).getNeighbour().toString() + "\n\n");
+                fw.write(agent_id + " [shape=box]\n");
+                for (NodeFunction f : agent_fun) {
+                    fw.write(agent_id + " -- " + f.getId() + " [color=blue]\n");
+                }
+                for (NodeFunction f : NodeVariable.getNodeVariable(agent_id).getNeighbour()) {
+                    if (!agent_fun.contains(f)) {
+                        fw.write(agent_id + " -- " + f.getId() + "\n");
+                    }
+                }
                 fw.flush();
             }
+            fw.write("}\n\n");
         } catch (IOException ex) {
             Logger.error(ex);
         }

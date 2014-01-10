@@ -27,7 +27,6 @@ import java.util.HashSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import exception.PostServiceNotSetException;
 import messages.MailMan;
 import messages.MessageFactory;
 import messages.MessageFactoryArrayDouble;
@@ -51,11 +50,11 @@ public class MaxSumAgent implements DCOPAgent {
     private static final OPlus JMS_OPLUS = new OPlus_MaxSum(JMS_MSG_FACTORY);
 
     /* Class-wide variables (seriously...) */
-    private static MSumOperator_Sync JMSOperator = new MSumOperator_Sync(JMS_OTIMES, JMS_OPLUS);
-    private static MailMan JMSMailMan = new MailMan();
-    private static HashSet<NodeVariable> AllJMSVariables = new HashSet<>();
-    private static HashSet<NodeFunction> AllJMSFunctions = new HashSet<>();
-    private static ArrayList<MaxSumAgent> AllMaxSumAgents = new ArrayList<>();
+    private static MSumOperator_Sync jMSOperator = new MSumOperator_Sync(JMS_OTIMES, JMS_OPLUS);
+    private static MailMan jMSMailMan = new MailMan();
+    private static HashSet<NodeVariable> allJMSVariables = new HashSet<>();
+    private static HashSet<NodeFunction> allJMSFunctions = new HashSet<>();
+    private static ArrayList<MaxSumAgent> allMaxSumAgents = new ArrayList<>();
 
     private static int _initializedAgents = 0;
     private static int _localNumberOfTargets = 70;
@@ -65,7 +64,7 @@ public class MaxSumAgent implements DCOPAgent {
 
     private EntityID agentID;
     private EntityID targetID = Assignment.UNKNOWN_TARGET_ID;
-    private AgentMS_Sync JMSAgent;
+    private JMSAgent jMSAgent;
     private int _dependencies;
     private int _nMexForFG;
     private long _FGMexBytes;
@@ -77,19 +76,19 @@ public class MaxSumAgent implements DCOPAgent {
         _nMexForFG = 0;
         _FGMexBytes = 0;
         _initializedAgents++;
-        AllMaxSumAgents.add(this);
+        allMaxSumAgents.add(this);
         problemDefinition = definition;
         _dependencies = config.getIntValue(Constants.KEY_MAXSUM_NEIGHBORS);
 
         this.agentID = agentID;
-        JMSAgent = AgentMS_Sync.getAgent(agentID.getValue());
-        JMSAgent.setPostservice(JMSMailMan);
-        JMSAgent.setOp(JMSOperator);
+        jMSAgent = JMSAgent.getAgent(agentID.getValue());
+        jMSAgent.setPostservice(jMSMailMan);
+        jMSAgent.setOp(jMSOperator);
 
         // Each agent controls only one variable, so we can associate it with the agentid
         NodeVariable nodevariable = NodeVariable.getNodeVariable(agentID.getValue());
-        AllJMSVariables.add(nodevariable);
-        JMSAgent.addNodeVariable(nodevariable);
+        allJMSVariables.add(nodevariable);
+        jMSAgent.addVariable(nodevariable);
 
         // Assegnamento delle funzioni agli agenti
         List<EntityID> targets = problemDefinition.getNBestFires(_localNumberOfTargets, agentID);
@@ -99,7 +98,7 @@ public class MaxSumAgent implements DCOPAgent {
             EntityID nextTargetID = targetIterator.next();
 
             boolean alreadyAssigned = false;
-            for (NodeFunction function : AllJMSFunctions) {
+            for (NodeFunction function : allJMSFunctions) {
                 if (function.getId() == nextTargetID.getValue()) {
                     alreadyAssigned = true;
                     break;
@@ -109,13 +108,13 @@ public class MaxSumAgent implements DCOPAgent {
             if (!alreadyAssigned) {
                 nAssignedFunctions++;
                 NodeFunction target = NodeFunction.putNodeFunction(nextTargetID.getValue(), new RMASTabularFunction());
-                AllJMSFunctions.add(target);
-                JMSAgent.addNodeFunction(target);
+                allJMSFunctions.add(target);
+                jMSAgent.addFunction(target);
                 _consideredVariables.put(nextTargetID, new ArrayList<EntityID>());
             }
         }
 
-        for (NodeFunction nodeTarget : JMSAgent.getFunctions()) {
+        for (NodeFunction nodeTarget : jMSAgent.getFunctions()) {
             int count = 0;
             EntityID target = new EntityID(nodeTarget.getId());
             List<EntityID> bestAgents = problemDefinition.getNBestFireAgents(problemDefinition.getNumFireAgents(), target);
@@ -131,19 +130,19 @@ public class MaxSumAgent implements DCOPAgent {
     public void reassignFunctions() {
         ArrayList<EntityID> agents = problemDefinition.getFireAgents();
         for (EntityID agent : agents) {
-            AgentMS_Sync maxSumAgent = AgentMS_Sync.getAgent(agent.getValue());
-            maxSumAgent.resetNodeFunction();
+            JMSAgent maxSumAgent = JMSAgent.getAgent(agent.getValue());
+            maxSumAgent.clearFunctions();
         }
 
-        for (NodeFunction function : AllJMSFunctions) {
+        for (NodeFunction function : allJMSFunctions) {
             HashSet<NodeVariable> neighbour = function.getNeighbour();
             Iterator<NodeVariable> it = neighbour.iterator();
             if (it.hasNext()) {
                 NodeVariable controller = it.next();
-                AgentMS_Sync agent = AgentMS_Sync.getAgent(controller.getId());
-                agent.addNodeFunction(function);
+                JMSAgent agent = JMSAgent.getAgent(controller.getId());
+                agent.addFunction(function);
             } else {
-                JMSAgent.addNodeFunction(function);
+                jMSAgent.addFunction(function);
             }
         }
     }
@@ -212,7 +211,7 @@ public class MaxSumAgent implements DCOPAgent {
     }
 
     private void tupleBuilder() {
-        for (NodeFunction function : AllJMSFunctions) {
+        for (NodeFunction function : allJMSFunctions) {
             double cost = 0;
             int countAgent = 0;
             int target = function.getId();
@@ -239,16 +238,16 @@ public class MaxSumAgent implements DCOPAgent {
 
     @Override
     public boolean improveAssignment() {
-        //this.printNMex();
-        Set<NodeVariable> vars = JMSAgent.getVariables();
+
+        Set<NodeVariable> vars = jMSAgent.getVariables();
         Iterator<NodeVariable> it = vars.iterator();
         NodeVariable var = it.next();
         HashSet<NodeFunction> func = var.getNeighbour();
         if (!func.isEmpty()) {
-            JMSAgent.updateVariableValue();
+            jMSAgent.updateVariablesValues();
         }
 
-        for (NodeVariable variable : JMSAgent.getVariables()) {
+        for (NodeVariable variable : jMSAgent.getVariables()) {
             try {
                 String target = variable.getStateArgument().getValue().toString();
                 targetID = new EntityID(Integer.parseInt(target));
@@ -272,76 +271,53 @@ public class MaxSumAgent implements DCOPAgent {
 
     @Override
     public Collection<Message> sendMessages(CommunicationLayer com) {
-        Collection<Message> mexQ = new ArrayList<>();
-        Collection<Message> mexR = new ArrayList<>();
-        Collection<Message> allmex = new ArrayList<>();
-        try {
-            //System.out.println("Stampa messaggi 1");
-            mexQ = JMSAgent.sendQMessages();
-
-            Iterator<Message> iteratorm = mexQ.iterator();
-            while(iteratorm.hasNext()){
-                //usare com per i Q per ogni mex devo recuperare destinatario
-                MS_MessageQ messageQ = (MS_MessageQ)iteratorm.next();
-
-                /* PRovvisorio..ricavo funzioni ciclando INEFFICIENTE*/
-                Iterator<MaxSumAgent> agentiter = AllMaxSumAgents.iterator();
-                MaxSumAgent agent;
-                while(agentiter.hasNext()){
-                    agent = agentiter.next();
-                    if(agent.isLocalFunction(messageQ.getFunction())){ // se la funzione è di proprietà dell'agente X il destinatario è LUI
-                        com.send(agent.getAgentID(), messageQ); // Se trovo il destinatario invio
-                        break;
-                    }
+        Collection<MS_MessageQ> qMessages = jMSAgent.sendQMessages();
+        for (MS_MessageQ messageQ : qMessages) {
+            // Locate the agent that controls this function, and send the message to that ID
+            for (MaxSumAgent agent : allMaxSumAgents) {
+                if (agent.isLocalFunction(messageQ.getFunction())) {
+                    com.send(agent.getAgentID(), messageQ);
+                    break;
                 }
             }
-
-            //System.out.println("Stampa messaggi 2");
-            mexR = JMSAgent.sendRMessages();
-            iteratorm = mexR.iterator();
-            MS_MessageR messageR;
-            while(iteratorm.hasNext()){
-                //usare com per i R per ogni mex devo recuperare destinatario
-                messageR = (MS_MessageR)iteratorm.next();
-                com.send(new EntityID(messageR.getVariable().getId()), messageR); //Ricavo destinatario dall'id della variabile
-            }
-
-            JMSAgent.sendZMessages(); // controllare sendZ
-        } catch (PostServiceNotSetException p) {
-            Logger.fatal("Unconfigured max-sum library", p);
-            System.exit(0);
         }
 
-        allmex.addAll(mexQ);
-        allmex.addAll(mexR);
+
+        Collection<MS_MessageR> rMessages = jMSAgent.sendRMessages();
+        for (MS_MessageR messageR : rMessages) {
+            // The recipient variable id matches the EntityID of the recipient agent
+            com.send(new EntityID(messageR.getVariable().getId()), messageR);
+        }
+
+        jMSAgent.sendZMessages();
+
+        // Combine the lists of both message types and return all of them
+        Collection<Message> allmex = new ArrayList<>();
+        allmex.addAll(qMessages);
+        allmex.addAll(rMessages);
         return allmex;
     }
 
     private boolean isLocalFunction(NodeFunction f) {
-        return JMSAgent.getFunctions().contains(f);
+        return jMSAgent.getFunctions().contains(f);
     }
 
     @Override
     public void receiveMessages(Collection<Message> messages) {
-        Collection<Message> mexQ = new ArrayList<>();
-        Collection<Message> mexR = new ArrayList<>();
+        Collection<MS_MessageQ> mexQ = new ArrayList<>();
+        Collection<MS_MessageR> mexR = new ArrayList<>();
 
         for (Message msg : messages) {
             MS_Message mex = (MS_Message)msg;
-            if (mex.getMessageType().compareTo("Q") == 0) {
-                mexQ.add(mex);
-            } else if (mex.getMessageType().compareTo("R") == 0) {
-                mexR.add(mex);
+            if (mex instanceof MS_MessageQ) {
+                mexQ.add((MS_MessageQ)mex);
+            } else if (mex instanceof MS_MessageR) {
+                mexR.add((MS_MessageR)mex);
             }
         }
 
-        try {
-            JMSAgent.readQMessages(mexQ);
-            JMSAgent.readRMessages(mexR);
-        } catch (PostServiceNotSetException ex) {
-            Logger.fatal("Uninitialized max-sum library", ex);
-        }
-
+        jMSAgent.readQMessages(mexQ);
+        jMSAgent.readRMessages(mexR);
     }
 
     private int[][] createCombinations(int[] possibleValues) {
@@ -376,24 +352,24 @@ public class MaxSumAgent implements DCOPAgent {
     public static void reset() {
         Logger.debug("Resetting!");
 
-        AgentMS_Sync.resetIds();
+        JMSAgent.resetIds();
         NodeVariable.resetIds();
         NodeFunction.resetIds();
         NodeArgument.resetIds();
-        JMSOperator = new MSumOperator_Sync(JMS_OTIMES, JMS_OPLUS);
-        JMSMailMan = new MailMan();
+        jMSOperator = new MSumOperator_Sync(JMS_OTIMES, JMS_OPLUS);
+        jMSMailMan = new MailMan();
 
-        AllJMSVariables.clear();
-        AllJMSFunctions.clear();
+        allJMSVariables.clear();
+        allJMSFunctions.clear();
         _initializedAgents = 0;
         _consideredVariables.clear();
-        AllMaxSumAgents.clear();
+        allMaxSumAgents.clear();
     }
 
     @Override
     public long getConstraintChecks() {
         int totalnccc = 0;
-        for (NodeFunction function : AllJMSFunctions) {
+        for (NodeFunction function : allJMSFunctions) {
             totalnccc += ((RMASTabularFunction) function.getFunction()).getNCCC();
         }
         return totalnccc;
@@ -407,9 +383,9 @@ public class MaxSumAgent implements DCOPAgent {
         n_graph++;
         try (FileWriter fw = new FileWriter("factor_graph" + n_graph + ".dot", false)) {
             fw.write("graph Factor {\n");
-            for (NodeVariable var : AllJMSVariables) {
+            for (NodeVariable var : allJMSVariables) {
                 int agent_id = var.getId();
-                AgentMS_Sync agent = AgentMS_Sync.getAgent(agent_id);
+                JMSAgent agent = JMSAgent.getAgent(agent_id);
                 Set<NodeFunction> agent_fun = agent.getFunctions();
 
                 fw.write(agent_id + " [shape=box]\n");
@@ -430,9 +406,9 @@ public class MaxSumAgent implements DCOPAgent {
     }
 
     public void printDimTuples() {
-        for (NodeVariable var : AllJMSVariables) {
+        for (NodeVariable var : allJMSVariables) {
             int agent_id = var.getId();
-            AgentMS_Sync agent = AgentMS_Sync.getAgent(agent_id);
+            JMSAgent agent = JMSAgent.getAgent(agent_id);
             Set<NodeFunction> agent_fun = agent.getFunctions();
 
             try (FileWriter fw = new FileWriter("tuples_dim.txt", true)) {
@@ -461,7 +437,7 @@ public class MaxSumAgent implements DCOPAgent {
 
     public void printNMex() {
         try (FileWriter fw = new FileWriter("tables.stats", true)) {
-            for (NodeFunction function : (HashSet<NodeFunction>) JMSAgent.getFunctions()) {
+            for (NodeFunction function : (HashSet<NodeFunction>) jMSAgent.getFunctions()) {
                 fw.write("Number of tuples tried for function " + function.getId() + ": " + ((RMASTabularFunction) function.getFunction()).getNCCC() + "\n");
                 fw.flush();
             }

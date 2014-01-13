@@ -200,7 +200,7 @@ public abstract class DCOPSolver extends AbstractSolver {
      *
      * @param problem the problem definition.
      */
-    private void initializeAgents(ProblemDefinition problem) {
+    protected void initializeAgents(ProblemDefinition problem) {
         agents = new ArrayList<>();
         initializeAgentType(problem, problem.getFireAgents());
         initializeAgentType(problem, problem.getPoliceAgents());

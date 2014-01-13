@@ -41,9 +41,10 @@ public class MaxSum extends DCOPSolver {
     }
 
     @Override
-    public Assignment compute(ProblemDefinition problem) {
+    protected void initializeAgents(ProblemDefinition problem) {
         MaxSumAgent.reset();
-        return super.compute(problem);
+        super.initializeAgents(problem);
+        MaxSumAgent.finishInitialization();
     }
 
 }

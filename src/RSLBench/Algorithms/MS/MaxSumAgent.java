@@ -56,29 +56,33 @@ public class MaxSumAgent implements DCOPAgent {
     private static HashSet<NodeFunction> allJMSFunctions = new HashSet<>();
     private static ArrayList<MaxSumAgent> allMaxSumAgents = new ArrayList<>();
 
-    private static int _initializedAgents = 0;
-    private static int _localNumberOfTargets = 70;
-    private static final int _targetPerAgent = 4;//numero di funzioni per agente
+    private static int maxLinksPerNode;
+    private static int nPrioritizedFiresToFetch = 70;
 
     private static ProblemDefinition problemDefinition = null;
 
     private EntityID agentID;
     private EntityID targetID = Assignment.UNKNOWN_TARGET_ID;
     private JMSAgent jMSAgent;
-    private int _dependencies;
-    private int _nMexForFG;
-    private long _FGMexBytes;
+    private int nFGMessages = 0;
+    private long nFGSentBytes = 0;
 
     private static HashMap<EntityID, ArrayList<EntityID>> _consideredVariables = new HashMap<>();
 
+    /**
+     * Get the jMaxSum agent for this MaxSum agent.
+     *
+     * @return the jMaxSum agent
+     */
+    public JMSAgent getJMSAgent() {
+        return jMSAgent;
+    }
+
     @Override
     public void initialize(Config config, EntityID agentID, ProblemDefinition definition) {
-        _nMexForFG = 0;
-        _FGMexBytes = 0;
-        _initializedAgents++;
         allMaxSumAgents.add(this);
         problemDefinition = definition;
-        _dependencies = config.getIntValue(Constants.KEY_MAXSUM_NEIGHBORS);
+        maxLinksPerNode = config.getIntValue(Constants.KEY_MAXSUM_NEIGHBORS);
 
         this.agentID = agentID;
         jMSAgent = JMSAgent.getAgent(agentID.getValue());
@@ -90,11 +94,11 @@ public class MaxSumAgent implements DCOPAgent {
         allJMSVariables.add(nodevariable);
         jMSAgent.addVariable(nodevariable);
 
-        // Assegnamento delle funzioni agli agenti
-        List<EntityID> targets = problemDefinition.getNBestFires(_localNumberOfTargets, agentID);
+        // Assign functions to agents (in order of preference)
+        List<EntityID> targets = problemDefinition.getNBestFires(nPrioritizedFiresToFetch, agentID);
         Iterator<EntityID> targetIterator = targets.iterator();
         int nAssignedFunctions = 0;
-        while (nAssignedFunctions < _targetPerAgent && targetIterator.hasNext()) {
+        while (nAssignedFunctions < maxLinksPerNode && targetIterator.hasNext()) {
             EntityID nextTargetID = targetIterator.next();
 
             boolean alreadyAssigned = false;
@@ -120,14 +124,9 @@ public class MaxSumAgent implements DCOPAgent {
             List<EntityID> bestAgents = problemDefinition.getNBestFireAgents(problemDefinition.getNumFireAgents(), target);
             this.buildNeighborhood(target, bestAgents, count);
         }
-
-        if (_initializedAgents == problemDefinition.getNumFireAgents()) {
-            tupleBuilder();
-            reassignFunctions();
-        }
     }
 
-    public void reassignFunctions() {
+    private static void reassignFunctions() {
         ArrayList<EntityID> agents = problemDefinition.getFireAgents();
         for (EntityID agent : agents) {
             JMSAgent maxSumAgent = JMSAgent.getAgent(agent.getValue());
@@ -135,14 +134,15 @@ public class MaxSumAgent implements DCOPAgent {
         }
 
         for (NodeFunction function : allJMSFunctions) {
-            HashSet<NodeVariable> neighbour = function.getNeighbour();
-            Iterator<NodeVariable> it = neighbour.iterator();
-            if (it.hasNext()) {
-                NodeVariable controller = it.next();
+            if (function.getNeighbour().isEmpty()) {
+                // Assign this function to some random node
+                Logger.warn("Fire " + function.getId() + " has no candidates due to pruning!");
+                MaxSumAgent a = allMaxSumAgents.get(allMaxSumAgents.size()-1);
+                a.getJMSAgent().addFunction(function);
+            } else {
+                NodeVariable controller = function.getNeighbour().iterator().next();
                 JMSAgent agent = JMSAgent.getAgent(controller.getId());
                 agent.addFunction(function);
-            } else {
-                jMSAgent.addFunction(function);
             }
         }
     }
@@ -162,15 +162,15 @@ public class MaxSumAgent implements DCOPAgent {
 
         int tarID = target.getValue();
         Iterator<EntityID> agentIterator = bestAgents.iterator();
-        while (agentIterator.hasNext() && count < _dependencies) {
+        while (agentIterator.hasNext() && count < maxLinksPerNode) {
             EntityID agent = agentIterator.next();
             ArrayList<EntityID> consideredVariables = _consideredVariables.get(target);
             consideredVariables.add(agent);
             _consideredVariables.put(target, consideredVariables);
             NodeVariable tempVar = NodeVariable.getNodeVariable(agent.getValue());
-            if (tempVar.getNeighbour().size() < _dependencies) {
-                _nMexForFG += 2;
-                _FGMexBytes += 2*4;
+            if (tempVar.getNeighbour().size() < maxLinksPerNode) {
+                nFGMessages += 2;
+                nFGSentBytes += 2*4;
                 count++;
 
                 nodeTarget.addNeighbour(NodeVariable.getNodeVariable(agent.getValue()));
@@ -178,8 +178,8 @@ public class MaxSumAgent implements DCOPAgent {
                 NodeVariable.getNodeVariable(agent.getValue()).addValue(NodeArgument.getNodeArgument(nodeTarget.getId()));
 
             } else {
-                _FGMexBytes += 2*4;
-                _nMexForFG += 2;
+                nFGSentBytes += 2*4;
+                nFGMessages += 2;
                 HashSet<NodeFunction> assignedToMe = tempVar.getNeighbour();
                 EntityID worstTarget = new EntityID(tarID);
                 double targetUtility = problemDefinition.getFireUtility(agent, worstTarget);
@@ -193,8 +193,8 @@ public class MaxSumAgent implements DCOPAgent {
                 }
 
                 if (worstUtility != targetUtility) {
-                    _FGMexBytes += 4;
-                    _nMexForFG++;
+                    nFGSentBytes += 4;
+                    nFGMessages++;
                     count++;
                     nodeTarget.addNeighbour(tempVar);
 
@@ -210,7 +210,7 @@ public class MaxSumAgent implements DCOPAgent {
         }
     }
 
-    private void tupleBuilder() {
+    private static void tupleBuilder() {
         for (NodeFunction function : allJMSFunctions) {
             double cost = 0;
             int countAgent = 0;
@@ -238,7 +238,6 @@ public class MaxSumAgent implements DCOPAgent {
 
     @Override
     public boolean improveAssignment() {
-
         Set<NodeVariable> vars = jMSAgent.getVariables();
         Iterator<NodeVariable> it = vars.iterator();
         NodeVariable var = it.next();
@@ -252,6 +251,7 @@ public class MaxSumAgent implements DCOPAgent {
                 String target = variable.getStateArgument().getValue().toString();
                 targetID = new EntityID(Integer.parseInt(target));
             } catch (exception.VariableNotSetException e) {
+                Logger.warn("Agent " + getAgentID() + " unassigned!");
                 targetID = problemDefinition.getHighestTargetForAgent(agentID);
             }
         }
@@ -320,13 +320,13 @@ public class MaxSumAgent implements DCOPAgent {
         jMSAgent.readRMessages(mexR);
     }
 
-    private int[][] createCombinations(int[] possibleValues) {
-        int totalCombinations = (int) Math.pow(2, _dependencies);
+    private static int[][] createCombinations(int[] possibleValues) {
+        int totalCombinations = (int) Math.pow(2, maxLinksPerNode);
 
-        int[][] combinationsMatrix = new int[totalCombinations][_dependencies];
+        int[][] combinationsMatrix = new int[totalCombinations][maxLinksPerNode];
         int changeIndex = 1;
 
-        for (int i = 0; i < _dependencies; i++) {
+        for (int i = 0; i < maxLinksPerNode; i++) {
             int index = 0;
             int count = 1;
 
@@ -361,9 +361,16 @@ public class MaxSumAgent implements DCOPAgent {
 
         allJMSVariables.clear();
         allJMSFunctions.clear();
-        _initializedAgents = 0;
         _consideredVariables.clear();
         allMaxSumAgents.clear();
+    }
+
+    /**
+     * Finishes the initialization phase (after constructing all agents)
+     */
+    public static void finishInitialization() {
+        tupleBuilder();
+        reassignFunctions();
     }
 
     @Override
@@ -448,11 +455,11 @@ public class MaxSumAgent implements DCOPAgent {
 
     @Override
     public int getNumberOfOtherMessages() {
-        return _nMexForFG;
+        return nFGMessages;
     }
     @Override
     public long getDimensionOfOtherMessages() {
-        return _FGMexBytes;
+        return nFGSentBytes;
     }
 
     private void newNeighbour(EntityID function) {
@@ -467,7 +474,7 @@ public class MaxSumAgent implements DCOPAgent {
         }
 
         if (!possibleNewNeighbours.isEmpty()) {
-            this.buildNeighborhood(function, possibleNewNeighbours, _dependencies - 1);
+            this.buildNeighborhood(function, possibleNewNeighbours, maxLinksPerNode - 1);
         }
     }
 }

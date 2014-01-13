@@ -9,7 +9,6 @@ import java.util.Map;
 import rescuecore2.config.Config;
 import rescuecore2.log.Logger;
 
-import rescuecore2.standard.score.BuildingDamageScoreFunction;
 /**
  * This class collects and writes the stats in the fileName file (default logs/basePackage_groupName_className.dat).
  */
@@ -17,7 +16,6 @@ public class Stats
 {
     private Config config;
     private Solver solver;
-    private BuildingDamageScoreFunction scoreFunction;
     private Map<String, Object> stats = new LinkedHashMap<>();
     private String fileName;
     private boolean headerWritten;
@@ -29,14 +27,11 @@ public class Stats
         this.fileName = fileName;
         this.solver = solver;
         this.headerWritten = false;
-
-        this.scoreFunction = new BuildingDamageScoreFunction();
-        this.scoreFunction.initialise(null, config);
     }
 
     /**
      * Stores a reported value for this step.
-     * 
+     *
      * @param statKey Name of the statistic being reported
      * @param statValue Value of that statistic for the current step
      */
@@ -65,10 +60,10 @@ public class Stats
             Logger.error(e.getLocalizedMessage(), e);
         }
     }
-    
+
     /**
      * Writes the header of the file and the names of the metrics
-     * @param fileName:name of the file 
+     * @param fileName:name of the file
      */
     public void writeHeader() {
         headerWritten = true;
@@ -91,7 +86,7 @@ public class Stats
             Logger.error(e.getLocalizedMessage(), e);
         }
     }
-    
+
     private void writeLine(BufferedWriter out, String line) throws IOException {
         out.write(line);
         out.newLine();

@@ -202,9 +202,9 @@ public class ProblemDefinition {
 
     private void computeBlockedFireAgents() {
         for (EntityID agent : getFireAgents()) {
+            Human hagent = (Human)world.getEntity(agent);
+            EntityID position = hagent.getPosition();
             for (EntityID target: getFires()) {
-                Human hagent = (Human)world.getEntity(agent);
-                EntityID position = hagent.getPosition();
                 SearchResults results = search.search(position, target, connectivityGraph, distanceMatrix);
                 List<Blockade> pathBlockades = results.getPathBlocks();
                 if (!pathBlockades.isEmpty()) {

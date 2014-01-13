@@ -33,6 +33,9 @@ import messages.MessageFactoryArrayDouble;
 import factorgraph.NodeVariable;
 import factorgraph.NodeFunction;
 import factorgraph.NodeArgument;
+import java.io.BufferedOutputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import operation.OPlus;
 import operation.OPlus_MaxSum;
 import operation.OTimes;
@@ -127,6 +130,10 @@ public class MaxSumAgent implements DCOPAgent {
     }
 
     private static void reassignFunctions() {
+        if (problemDefinition == null) {
+            throw new RuntimeException("No fire agents have been initialized yet.");
+        }
+
         ArrayList<EntityID> agents = problemDefinition.getFireAgents();
         for (EntityID agent : agents) {
             JMSAgent maxSumAgent = JMSAgent.getAgent(agent.getValue());
@@ -134,13 +141,11 @@ public class MaxSumAgent implements DCOPAgent {
         }
 
         for (NodeFunction function : allJMSFunctions) {
-            if (function.getNeighbour().isEmpty()) {
-                // Assign this function to some random node
+            Set<NodeVariable> variables = function.getNeighbour();
+            if (variables.isEmpty()) {
                 Logger.warn("Fire " + function.getId() + " has no candidates due to pruning!");
-                MaxSumAgent a = allMaxSumAgents.get(allMaxSumAgents.size()-1);
-                a.getJMSAgent().addFunction(function);
             } else {
-                NodeVariable controller = function.getNeighbour().iterator().next();
+                NodeVariable controller = variables.iterator().next();
                 JMSAgent agent = JMSAgent.getAgent(controller.getId());
                 agent.addFunction(function);
             }
@@ -200,8 +205,8 @@ public class MaxSumAgent implements DCOPAgent {
 
                     NodeFunction oldTarget = fetchFunctionNode(worstTarget.getValue());
                     RMASNodeFunctionUtility.removeNeighbourBeforeTuples(oldTarget, tempVar);
-                    tempVar.changeNeighbour(oldTarget, nodeTarget);
                     this.newNeighbour(worstTarget);
+                    tempVar.changeNeighbour(oldTarget, nodeTarget);
                     tempVar.changeValue(NodeArgument.getNodeArgument(worstTarget.getValue()), NodeArgument.getNodeArgument(nodeTarget.getId()));
 
                 }
@@ -382,37 +387,32 @@ public class MaxSumAgent implements DCOPAgent {
         return totalnccc;
     }
 
-    private static int n_graph = 0;
     /**
      * Prints the FactorGraph in .dot format (to be visualized with graphviz or similar)
      */
-    private void printFG() {
-        n_graph++;
-        try (FileWriter fw = new FileWriter("factor_graph" + n_graph + ".dot", false)) {
-            fw.write("graph Factor {\n");
-            for (NodeVariable var : allJMSVariables) {
-                int agent_id = var.getId();
-                JMSAgent agent = JMSAgent.getAgent(agent_id);
-                Set<NodeFunction> agent_fun = agent.getFunctions();
+    public static void printFG(OutputStream os) {
+        PrintStream fw = new PrintStream(os);
+        fw.println("graph Factor {");
+        for (NodeVariable var : allJMSVariables) {
+            int agent_id = var.getId();
+            JMSAgent agent = JMSAgent.getAgent(agent_id);
+            Set<NodeFunction> agent_fun = agent.getFunctions();
 
-                fw.write(agent_id + " [shape=box]\n");
-                for (NodeFunction f : agent_fun) {
-                    fw.write(agent_id + " -- " + f.getId() + " [color=blue]\n");
-                }
-                for (NodeFunction f : NodeVariable.getNodeVariable(agent_id).getNeighbour()) {
-                    if (!agent_fun.contains(f)) {
-                        fw.write(agent_id + " -- " + f.getId() + "\n");
-                    }
-                }
-                fw.flush();
+            fw.println(agent_id + " [shape=box]");
+            for (NodeFunction f : agent_fun) {
+                fw.println(agent_id + " -- " + f.getId() + " [color=blue]");
             }
-            fw.write("}\n\n");
-        } catch (IOException ex) {
-            Logger.error(ex);
+            for (NodeFunction f : NodeVariable.getNodeVariable(agent_id).getNeighbour()) {
+                if (!agent_fun.contains(f)) {
+                    fw.println(agent_id + " -- " + f.getId());
+                }
+            }
+            fw.flush();
         }
+        fw.println("}");
     }
 
-    public void printDimTuples() {
+    public static void printDimTuples() {
         for (NodeVariable var : allJMSVariables) {
             int agent_id = var.getId();
             JMSAgent agent = JMSAgent.getAgent(agent_id);

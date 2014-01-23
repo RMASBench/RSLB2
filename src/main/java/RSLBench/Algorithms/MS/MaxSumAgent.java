@@ -9,6 +9,7 @@ import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Helpers.Utility.ProblemDefinition;
+import exception.FunctionNotPresentException;
 
 import rescuecore2.config.Config;
 import rescuecore2.worldmodel.EntityID;
@@ -92,39 +93,46 @@ public class MaxSumAgent implements DCOPAgent {
 
         // Assign agents to functions
         for (EntityID fire : problemDefinition.getFireAgentNeighbors(agentID)) {
-            NodeFunction functionNode = NodeFunction.putNodeFunction(fire.getValue(), new RMASTabularFunction());
-            // If this is the first agent seen for this function, it becomes the function runner
-            if (!allJMSFunctions.contains(functionNode)) {
+            NodeFunction functionNode;
+            try {
+                functionNode = NodeFunction.getNodeFunction(fire.getValue());
+            } catch (FunctionNotPresentException ex) {
+                functionNode = NodeFunction.putNodeFunction(fire.getValue(), new RMASTabularFunction());
                 allJMSFunctions.add(functionNode);
                 jMSAgent.addFunction(functionNode);
             }
             functionNode.addNeighbour(variableNode);
+            Logger.warn("Added neighbor {} to function {}. Current neighbors: {}",variableNode,functionNode,functionNode.getNeighbour());
             variableNode.addNeighbour(functionNode);
-            variableNode.addValue(NodeArgument.getNodeArgument(fire.getValue()));
+            variableNode.addValue(NodeArgument.getNodeArgument(functionNode.getId()));
         }
     }
 
     private static void tupleBuilder() {
         for (NodeFunction function : allJMSFunctions) {
-            double cost = 0;
-            int countAgent = 0;
             int target = function.getId();
             int[] possibleValues = {0, target};
+            Logger.warn("Creating combinations for function {} (size {})", function, function.size());
             int[][] combinations = createCombinations(function.size(), possibleValues);
             for (int[] arguments : combinations) {
                 NodeArgument[] arg = new NodeArgument[function.size()];
+                double cost = 0;
+                int countAgent = 0;
 
                 for (int i = 0; i < function.size(); i++) {
                     arg[i] = NodeArgument.getNodeArgument(arguments[i]);
-                    Iterator<NodeVariable> prova = function.getNeighbour().iterator();
-                    if (arg[i].getValue() == target) {
+                    NodeVariable var = function.getFunction().getParameter(i);
+                    if ((int)arg[i].getValue() == target) {
                         countAgent++;
-                        NodeVariable var = prova.next();
-                        cost = cost + problemDefinition.getFireUtility(new EntityID(var.getId()), new EntityID(target));
+                        Logger.error("Adding utility of agent {}", var.getId());
+                        cost += problemDefinition.getFireUtility(new EntityID(var.getId()), new EntityID(target));
                     }
                 }
                 cost -= problemDefinition.getUtilityPenalty(new EntityID(target), countAgent);
+                Logger.error("Adding penalty of having {} agents (-{})", countAgent,
+                        problemDefinition.getUtilityPenalty(new EntityID(target), countAgent));
 
+                Logger.warn("Added cost {} for parameters {}.", cost, arg);
                 function.getFunction().addParametersCost(arg, cost);
             }
         }
@@ -236,6 +244,7 @@ public class MaxSumAgent implements DCOPAgent {
 
             }
         }
+        Logger.warn("Combinations: {}", combinationsMatrix);
         return combinationsMatrix;
     }
 

@@ -35,7 +35,7 @@ public class Constants {
     public static final String KEY_UTIL_K = "util.k";
 
     /** Alpha value to use in the workload model */
-    public static String KEY_UTIL_ALPHA = "util.alpha";
+    public static final String KEY_UTIL_ALPHA = "util.alpha";
 
     /** Key to the penalty applied when a target fire is blocked */
     public static final String KEY_BLOCKED_PENALTY = "util.blockade.penalty";
@@ -56,10 +56,14 @@ public class Constants {
     public static final String KEY_MAP_SCENARIO = "map.scenario";
 
     /**
-     * The number of neighbours of an agent in the factograph (the number of
-     * considered targets).
+     * Whether to prune the problem or not
      */
-    public static final String KEY_MAXSUM_NEIGHBORS = "maxsum.neighbors";
+    public static final String KEY_PROBLEM_PRUNE = "problem.prune";
+
+    /**
+     * The maximum number of neighbours of an agent or fire in the pruned problem.
+     */
+    public static final String KEY_PROBLEM_MAXNEIGHBORS = "problem.max_neighbors";
 
     /** Config key to the results path */
     public static final String CONF_KEY_RESULTS_PATH = "results.path";

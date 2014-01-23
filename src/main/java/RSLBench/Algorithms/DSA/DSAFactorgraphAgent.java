@@ -29,23 +29,23 @@ public class DSAFactorgraphAgent extends DSAAgent {
         private ProblemDefinition _oldUtilityMatrix = null;
         private static boolean toReset= false;
         //private static int _number = 1;
-        
+
         @Override
         public void initialize(Config config, EntityID agentID, ProblemDefinition utilityM) {
             //_number++;
             this.resetStructures();
-            
+
             _agentID = agentID;
             _utilityM = utilityM;
             _oldUtilityMatrix = utilityM;
             _targetScores = new TargetScores(agentID, utilityM);
             _targetID = Assignment.UNKNOWN_TARGET_ID;
             this.config = config;
-            _dependencies = config.getIntValue(Constants.KEY_MAXSUM_NEIGHBORS);
-            
+            _dependencies = config.getIntValue(Constants.KEY_PROBLEM_MAXNEIGHBORS);
+
             agents.add(this);
             List<EntityID> targets = utilityM.getNBestFires(_utilityM.getNumFires(), _agentID);
-            
+
             //assegno le funzioni agli agenti
             int i = 0;
             for (EntityID target: targets) {
@@ -55,22 +55,22 @@ public class DSAFactorgraphAgent extends DSAAgent {
                 _consideredVariables.put(target, new ArrayList<EntityID>());
                 _targetController.put(target, _agentID);
                 i++;
-            }           
+            }
         }
-            
-            
+
+
         for (EntityID function: _assignedFunctions) {
                 if (!_targetNeighbours.containsKey(function)) {
                     _targetNeighbours.put(function, new ArrayList<EntityID>());
                 }
             }
-        
+
         for(EntityID function: myFunctions) {
             int count = 0;
             List<EntityID> bestAgents = _utilityM.getNBestFireAgents(_utilityM.getNumFires(), function);
             this.buildNeighborhood(function, bestAgents, count);
         }
-        
+
         if (agents.size() == _utilityM.getNumFireAgents()) {
             ArrayList<EntityID> agentsIDs = new ArrayList<EntityID>();
             for (DSAFactorgraphAgent agent: agents) {
@@ -82,13 +82,13 @@ public class DSAFactorgraphAgent extends DSAAgent {
                 } catch (NullPointerException n) {
                     agent._utilityM = null;
                 }*/
-                
+
                 /*System.out.println("Sono l'agente "+agent.getAgentID().getValue()+" e i miei vicini sono");
                 for (EntityID target: agent._utilityM.getTargets()) {
                     System.out.print(" "+target.getValue());
                 }
                 System.out.println();*/
-        // Find the target with the highest utility and initialize required agents for each target 
+        // Find the target with the highest utility and initialize required agents for each target
                 if (agent._utilityM != null) {
                     double bestTargetUtility = 0;
                     for (EntityID t : agent._utilityM.getFires()) {
@@ -99,9 +99,9 @@ public class DSAFactorgraphAgent extends DSAAgent {
                         }
                     }
                 }
-           
+
             }
-                    
+
             if (DSAAgent._random == null) {
              _random = new Random();
             }
@@ -134,13 +134,13 @@ public class DSAFactorgraphAgent extends DSAAgent {
             }
         }*/
         public void buildNeighborhood(EntityID function, List<EntityID> bestAgents, int count) {
-            
+
             for (EntityID bestAgent: bestAgents) {
                 if (!_agentNeighbours.containsKey(bestAgent)) {
                     _agentNeighbours.put(bestAgent, new ArrayList<EntityID>());
                 }
             }
-            
+
             ArrayList<EntityID> tempVars = new ArrayList<EntityID>();
             ArrayList<EntityID> tempFunc;
             ArrayList<EntityID> tempAgents;
@@ -157,7 +157,7 @@ public class DSAFactorgraphAgent extends DSAAgent {
                         tempFunc.add(function);
                         tempAgents = _targetNeighbours.get(function);
                         tempAgents.add(agent);
-                        
+
                         //System.out.println(agent.getValue()+" "+function.getValue());
                         _agentNeighbours.put(agent, tempFunc);
                         _targetNeighbours.put(function, tempAgents);
@@ -174,7 +174,7 @@ public class DSAFactorgraphAgent extends DSAAgent {
                             worstTarget = target;
                         }
                     }
-                    
+
                     if (worstUtility != targetUtility) {
                         count++;
                         myTargets.remove(worstTarget);
@@ -188,12 +188,12 @@ public class DSAFactorgraphAgent extends DSAAgent {
                         _agentNeighbours.put(agent, myTargets);
                         this.newNeighbour(worstTarget, agent);
                         }
-                        
+
                     }
             }
-     
+
     }
-        
+
     public void newNeighbour(EntityID function, EntityID removedVariable) {
         ArrayList<EntityID> possibleNewNeighbours = new ArrayList<EntityID>();
         List<EntityID> best = _utilityM.getNBestFireAgents(_utilityM.getNumFireAgents(), function);
@@ -207,7 +207,7 @@ public class DSAFactorgraphAgent extends DSAAgent {
         this.buildNeighborhood(function, possibleNewNeighbours, _dependencies-1);
         }
     }
-    
+
     public boolean improveAssignment() {
         toReset = true;
         //System.out.println(_utilityM.getNumTargets());
@@ -217,12 +217,12 @@ public class DSAFactorgraphAgent extends DSAAgent {
         }
         else return super.improveAssignment();
     }
-    
-    
+
+
     public static ArrayList<EntityID> getNeighbours (EntityID agentID) {
         ArrayList<EntityID> targets = _agentNeighbours.get(agentID);
         ArrayList<EntityID> neighbours = new ArrayList<EntityID>();
-                
+
         try{
         for (EntityID target: targets) {
             EntityID neighbour = _targetController.get(target);
@@ -230,7 +230,7 @@ public class DSAFactorgraphAgent extends DSAAgent {
                     neighbours.add(neighbour);
         }
         for (DSAFactorgraphAgent agent: agents) {
-            
+
         if (agent.getAgentID().getValue() == agentID.getValue()) {
         for (EntityID function: agent.myFunctions) {
             ArrayList<EntityID> neighbourhood = _targetNeighbours.get(function);
@@ -247,9 +247,9 @@ public class DSAFactorgraphAgent extends DSAAgent {
         }
         //System.out.println("-----------------");
         return neighbours;
-        
+
     }
-    
+
     private void resetStructures() {
         if (toReset) {
             toReset = false;

@@ -40,12 +40,11 @@ import java.util.Collection;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import es.csic.iiia.maxsum.factors.AtMostOneFactor;
 import es.csic.iiia.maxsum.Factor;
 import es.csic.iiia.maxsum.MaxOperator;
 import es.csic.iiia.maxsum.Maximize;
-import es.csic.iiia.maxsum.factors.CompositeIndependentFactor;
-import es.csic.iiia.maxsum.factors.IndependentFactor;
+import es.csic.iiia.maxsum.factors.AtMostOneFactor;
+import es.csic.iiia.maxsum.factors.WeightingFactor;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -135,11 +134,8 @@ public class BMSPoliceAgent implements DCOPAgent {
 
         // The agent's factor is the selector plus the independent utilities
         // of this agent for each blockade.
-        CompositeIndependentFactor<NodeID> agentFactor = new CompositeIndependentFactor<>();
-        agentFactor.setInnerFactor(variableNode);
+        WeightingFactor<NodeID> agentFactor = new WeightingFactor<>(variableNode);
 
-        IndependentFactor<NodeID> utils = new IndependentFactor<>();
-        agentFactor.setIndependentFactor(utils);
         for (EntityID blockade : problem.getBlockades()) {
             NodeID blockadeID = new NodeID(null, blockade);
             // Link the agent to each fire
@@ -150,7 +146,7 @@ public class BMSPoliceAgent implements DCOPAgent {
             if (problem.isPoliceAgentBlocked(id, blockade)) {
                 value -= POLICE_CLEAR_PATHBLOCKS ? BLOCKED_PENALTY/2 : BLOCKED_PENALTY;
             }
-            utils.setPotential(blockadeID, value);
+            agentFactor.setPotential(blockadeID, value);
 
             Logger.trace("Utility for {}: {}", new Object[]{blockade, value});
         }

@@ -34,13 +34,6 @@ public class MaxSum extends DCOPSolver {
     }
 
     @Override
-    public List<String> getUsedConfigurationKeys() {
-        List<String> keys = super.getUsedConfigurationKeys();
-        keys.add(Constants.KEY_MAXSUM_NEIGHBORS);
-        return keys;
-    }
-
-    @Override
     protected void initializeAgents(ProblemDefinition problem) {
         MaxSumAgent.reset();
         super.initializeAgents(problem);

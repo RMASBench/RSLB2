@@ -8,6 +8,7 @@ import RSLBench.Search.SearchAlgorithm;
 import RSLBench.Search.SearchFactory;
 import RSLBench.Search.SearchResults;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -15,7 +16,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.config.Config;
@@ -34,8 +34,6 @@ import rescuecore2.worldmodel.EntityID;
  */
 public class ProblemDefinition {
     private static final Logger Logger = LogManager.getLogger(ProblemDefinition.class);
-
-    private static final Random random = new Random(10L);
 
     private UtilityFunction utilityFunction;
     private ArrayList<EntityID> fireAgents;
@@ -91,6 +89,11 @@ public class ProblemDefinition {
         buildPoliceUtilityMatrix(lastAssignment);
         computeBlockedFireAgents();
         computeBlockedPoliceAgents();
+
+        // Prune the fireAgents <-> fires graph if required
+        if (config.getBooleanValue(Constants.KEY_PROBLEM_PRUNE)) {
+            pruneProblem();
+        }
 
         // Compute blocked targets... only if there actually are some blockades in the simulation!
         if (blockades.size() > 0) {
@@ -320,6 +323,66 @@ public class ProblemDefinition {
         return fires.size();
     }
 
+    private Map<EntityID, List<EntityID>> acceptedNeighbors = new HashMap<>();
+    private void pruneProblem() {
+        final int maxAllowedNeighbors = config.getIntValue(Constants.KEY_PROBLEM_MAXNEIGHBORS);
+
+        // Create and sort a list of edges
+        ArrayList<AgentFireCost> edges = new ArrayList<>();
+        for (EntityID agent : fireAgents) {
+            for (EntityID fire : fires) {
+                edges.add(new AgentFireCost(agent, fire));
+            }
+        }
+        Collections.sort(edges, Collections.reverseOrder());
+
+        // Boilerplate: initialize the map of accepted neighbors to avoid creating lists within
+        // the following loop
+        for (EntityID agent : fireAgents) {
+            acceptedNeighbors.put(agent, new ArrayList<EntityID>());
+        }
+        for (EntityID fire : fires) {
+            acceptedNeighbors.put(fire, new ArrayList<EntityID>());
+        }
+
+        // Pick them in order so long as neither the degree of the agent nor the degree of the fire
+        // would be higher than what is allowed.
+        for (AgentFireCost edge : edges) {
+            if (acceptedNeighbors.get(edge.agent).size() >= maxAllowedNeighbors) {
+                continue;
+            }
+            if (acceptedNeighbors.get(edge.fire).size() >= maxAllowedNeighbors) {
+                continue;
+            }
+            acceptedNeighbors.get(edge.agent).add(edge.fire);
+            acceptedNeighbors.get(edge.fire).add(edge.agent);
+        }
+    }
+
+    /**
+     * Get the neighboring fires of thie given firefighter agent.
+     * @param fireAgent firefigter agent whose neighbors to retrieve.
+     * @return the list of neighbors if the problem has been pruned, or the full list of fires.
+     */
+    public List<EntityID> getFireAgentNeighbors(EntityID fireAgent) {
+        if (acceptedNeighbors.isEmpty()) {
+            return Collections.unmodifiableList(fires);
+        }
+        return acceptedNeighbors.get(fireAgent);
+    }
+
+    /**
+     * Get the neighboring firefighters of the given fire.
+     * @param fire fire whose neighbors to retrieve.
+     * @return the list of neighbors if the problem has been pruned, or the full list of firefighters.
+     */
+    public List<EntityID> getFireNeighbors(EntityID fire) {
+        if (acceptedNeighbors.isEmpty()) {
+            return Collections.unmodifiableList(fireAgents);
+        }
+        return acceptedNeighbors.get(fire);
+    }
+
     /**
      * Returns the N fires with the highest utility for the given agent.
      *
@@ -333,11 +396,9 @@ public class ProblemDefinition {
             map.put(target, getFireUtility(fireAgent, target));
         }
         List<EntityID> res = sortByValue(map);
-        ArrayList<EntityID> list = new ArrayList<>();
-        for (int i=0, len=res.size(); i<N && i<len; i++) {
-            list.add(res.get(i));
-        }
-        return list;
+        System.err.println("Best targets for " + fireAgent.getValue() + ": " +
+                Arrays.deepToString(res.toArray()));
+        return res;
     }
 
     /**
@@ -350,14 +411,10 @@ public class ProblemDefinition {
     public List<EntityID> getNBestFireAgents(int N, EntityID fire) {
         Map<EntityID, Double> map = new HashMap<>();
         for (EntityID agent : fireAgents) {
-            map.put(agent, random.nextDouble());
+            map.put(agent, getFireUtility(agent, fire));
         }
         List<EntityID> res = sortByValue(map);
-        ArrayList<EntityID> list = new ArrayList<>();
-        for (int i=0, len=res.size(); i<N && i<len; i++) {
-            list.add(res.get(i));
-        }
-        return list;
+        return res;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -522,6 +579,31 @@ public class ProblemDefinition {
         }
         Logger.error("Total sum of max agents for fires: {}", count);
         return count;
+    }
+
+    /**
+     * Helper class to facilitate problem prunning by sorting the Fire-FireAgent pairs according
+     * to their unary utilities.
+     */
+    private class AgentFireCost implements Comparable<AgentFireCost> {
+        public final EntityID agent;
+        public final EntityID fire;
+        public final double cost;
+
+        public AgentFireCost(EntityID agent, EntityID fire) {
+            this.agent = agent;
+            this.fire = fire;
+            this.cost = fireUtilityMatrix[id2idx.get(agent)][id2idx.get(fire)];
+        }
+
+        @Override
+        public int compareTo(AgentFireCost o) {
+            final int result = Double.compare(cost, o.cost);
+            if (result == 0) {
+                return Integer.compare(agent.hashCode(), o.agent.hashCode());
+            }
+            return result;
+        }
     }
 
 }

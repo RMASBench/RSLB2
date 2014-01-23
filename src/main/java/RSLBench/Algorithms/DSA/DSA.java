@@ -6,6 +6,7 @@ package RSLBench.Algorithms.DSA;
 
 import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Assignment.DCOP.DCOPSolver;
+import RSLBench.Constants;
 import java.util.List;
 import rescuecore2.standard.entities.StandardEntityURN;
 
@@ -27,9 +28,10 @@ public class DSA extends DCOPSolver {
 
     @Override
     protected DCOPAgent buildAgent(StandardEntityURN type) {
+        final boolean pruned = config.getBooleanValue(Constants.KEY_PROBLEM_PRUNE);
         switch(type) {
             case FIRE_BRIGADE:
-                return new DSAAgent();
+                return pruned ? new DSAAgent() : new DSAFactorgraphAgent();
             default:
                 throw new UnsupportedOperationException("The DSA solver does not support agents of type " + type);
         }

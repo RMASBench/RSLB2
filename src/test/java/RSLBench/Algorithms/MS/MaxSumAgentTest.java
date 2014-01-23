@@ -7,8 +7,6 @@ package RSLBench.Algorithms.MS;
 import RSLBench.Assignment.AbstractSolver;
 import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.DCOP.DCOPSolver;
-import RSLBench.Comm.CommunicationLayer;
-import RSLBench.Comm.Message;
 import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
 import RSLBench.Helpers.Utility.UtilityFactory;
@@ -18,20 +16,25 @@ import RSLBench.Search.Graph;
 import RSLBench.Search.SearchAlgorithm;
 import RSLBench.Search.SearchFactory;
 import RSLBench.Search.SearchResults;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import rescuecore2.config.Config;
 import rescuecore2.standard.entities.StandardWorldModel;
@@ -44,7 +47,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import rescuecore2.standard.entities.Building;
 import rescuecore2.standard.entities.FireBrigade;
-import rescuecore2.standard.entities.Human;
 import rescuecore2.standard.entities.StandardEntity;
 import rescuecore2.standard.entities.StandardEntityURN;
 import rescuecore2.standard.score.BuildingDamageScoreFunction;
@@ -156,7 +158,6 @@ public class MaxSumAgentTest {
     @Test
     public void testBuildMaxSumAgent() throws Exception {
         Config config = new Config();
-        config.setIntValue(Constants.KEY_MAXSUM_NEIGHBORS, 4);
         config.setValue(Constants.CONF_KEY_RESULTS_PATH, "build/test");
         config.setValue(Constants.KEY_RUN_ID, "1");
         ArrayList<EntityID> fireAgents = new ArrayList<>();
@@ -200,12 +201,12 @@ public class MaxSumAgentTest {
 
     @Test
     public void testBuildMaxSumAgentAndFire() throws Exception {
-        Config config = new Config();
-        config.setIntValue(Constants.KEY_MAXSUM_NEIGHBORS, 4);
-        config.setValue(Constants.CONF_KEY_RESULTS_PATH, "build/test");
-        config.setValue(Constants.KEY_RUN_ID, "1");
-        config.setFloatValue(Constants.KEY_UTIL_K, 2);
-        config.setFloatValue(Constants.KEY_UTIL_ALPHA, 2);
+        Random random = new Random(RANDOM_SEED);
+
+        Config config = mock(Config.class);
+        when(config.getValue(Constants.CONF_KEY_RESULTS_PATH)).thenReturn("build/test");
+        when(config.getValue(Constants.KEY_RUN_ID)).thenReturn("1");
+        when(config.getRandom()).thenReturn(random);
 
         ArrayList<EntityID> fireAgents = new ArrayList<>();
         EntityID a1 = new EntityID(1);
@@ -251,24 +252,98 @@ public class MaxSumAgentTest {
         ms.initializeAgents(p);
     }
 
+    private static long RANDOM_SEED = 200L;
+
     @Test
     public void testBuildMaxSumAgentsAndFires() throws Exception {
-        Config config = new Config();
-        config.setIntValue(Constants.KEY_MAXSUM_NEIGHBORS, 4);
-        config.setValue(Constants.CONF_KEY_RESULTS_PATH, "build/test");
-        config.setValue(Constants.KEY_RUN_ID, "1");
-        config.setFloatValue(Constants.KEY_UTIL_K, 2);
-        config.setFloatValue(Constants.KEY_UTIL_ALPHA, 2);
+        Random random = new Random(RANDOM_SEED);
+
+        Config config = mock(Config.class);
+        when(config.getValue(Constants.CONF_KEY_RESULTS_PATH)).thenReturn("build/test");
+        when(config.getValue(Constants.KEY_RUN_ID)).thenReturn("1");
+        when(config.getRandom()).thenReturn(random);
 
         double[][] utilities = new double[][] {
-            new double[]{1,2,3,4,5,6,0,2},
-            new double[]{2,3,1,3,2,3,0,1},
-            new double[]{1,1,2,3,4,5,0,6},
-            new double[]{3,1,3,3,1,1,0,4},
-            new double[]{3,1,3,3,1,1,0,4},
-            new double[]{3,1,3,3,1,1,0,4},
-            new double[]{3,1,3,3,1,1,0,4},
+            new double[]{1.11, 2.12, 3.13, 4.14, 5.15, 6.16, 0.17, 2.18},
+            new double[]{2.21, 3.22, 1.23, 3.24, 2.25, 3.26, 0.27, 1.28},
+            new double[]{1.31, 1.32, 2.33, 3.34, 4.35, 5.36, 0.37, 6.38},
+            new double[]{3.41, 1.42, 3.43, 0.44, 1.45, 1.47, 0.48, 4.49},
+            //new double[]{3,1,3,3,1,1,0,4},
+            //new double[]{3,1,3,3,1,1,0,4},
+            //new double[]{3,1,3,3,1,1,0,4},
         };
+
+        HashMap<EntityID, FireBrigade> fireAgentsMap = new HashMap<>();
+        ArrayList<EntityID> fireAgents = new ArrayList<>();
+        for (int i=1; i<=utilities.length; i++) {
+            EntityID e = new EntityID(i);
+            fireAgentsMap.put(e, mock(FireBrigade.class));
+            fireAgents.add(e);
+        }
+
+        HashMap<EntityID, Building> firesMap = new HashMap<>();
+        ArrayList<EntityID> fires = new ArrayList<>();
+        for (int j=100;j<100+utilities[0].length;j++) {
+            EntityID e = new EntityID(j);
+            firesMap.put(e, mock(Building.class));
+            fires.add(e);
+        }
+
+        ArrayList<EntityID> policeAgents = new ArrayList<>();
+        ArrayList<EntityID> blockades = new ArrayList<>();
+        Assignment lastAssignment = new Assignment();
+
+        // mock search-related stuff
+        mockStatic(SearchFactory.class);
+        SearchAlgorithm sa = mock(SearchAlgorithm.class);
+        when(SearchFactory.buildSearchAlgorithm(config)).thenReturn(sa);
+        Graph g = mock(Graph.class);
+        whenNew(Graph.class).withAnyArguments().thenReturn(g);
+        // Always return unblocked paths
+        when(sa.search(any(EntityID.class), any(EntityID.class), eq(g), any(DistanceInterface.class))).thenReturn(new SearchResults());
+
+        // mock utility stuff
+        mockStatic(UtilityFactory.class);
+        UtilityFunction uf = mock(UtilityFunction.class);
+        when(UtilityFactory.buildFunction()).thenReturn(uf);
+        for (int i=0; i<fireAgents.size(); i++) {
+            for (int j=0; j<fires.size(); j++) {
+                when(uf.getFireUtility(fireAgents.get(i), fires.get(j))).thenReturn(utilities[i][j]);
+            }
+        }
+
+        // mock entity getters
+        StandardWorldModel world = mock(StandardWorldModel.class);
+        for (EntityID id : fireAgents) {
+            FireBrigade b = fireAgentsMap.get(id);
+            when(world.getEntity(id)).thenReturn(b);
+            when(b.getStandardURN()).thenReturn(StandardEntityURN.FIRE_BRIGADE);
+        }
+
+        // mock score function for solver initialization
+        BuildingDamageScoreFunction sf = mock(BuildingDamageScoreFunction.class);
+        whenNew(BuildingDamageScoreFunction.class).withNoArguments().thenReturn(sf);
+        doNothing().when(sf).initialise(world, config);
+
+        ProblemDefinition p = new ProblemDefinition(config, fireAgents, fires, policeAgents, blockades, lastAssignment, world);
+        MaxSum ms = new MaxSum();
+        ms.initialize(world, config);
+        ms.initializeAgents(p);
+
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            MaxSumAgent.printFG(os);
+            System.err.println(os);
+        }
+    }
+
+    @Ignore
+    private void testStoredTest(double[][] utilities, int nNeighbors) throws Exception {
+        Random random = new Random(RANDOM_SEED);
+
+        Config config = mock(Config.class);
+        when(config.getValue(Constants.CONF_KEY_RESULTS_PATH)).thenReturn("build/test");
+        when(config.getValue(Constants.KEY_RUN_ID)).thenReturn("1");
+        when(config.getRandom()).thenReturn(random);
 
         HashMap<EntityID, FireBrigade> fireAgentsMap = new HashMap<>();
         for (int i=1; i<=utilities.length; i++) {
@@ -306,7 +381,6 @@ public class MaxSumAgentTest {
         }
 
         // mock entity getters
-        //when(world.getEntity(org.mockito.Mockito.eq(new EntityID(1)))).thenReturn(mock(StandardEntity.class));
         StandardWorldModel world = mock(StandardWorldModel.class);
         for (EntityID id : fireAgents) {
             FireBrigade b = fireAgentsMap.get(id);
@@ -323,11 +397,99 @@ public class MaxSumAgentTest {
         MaxSum ms = new MaxSum();
         ms.initialize(world, config);
         ms.initializeAgents(p);
+    }
 
-        // get the stream
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        MaxSumAgent.printFG(os);
-        System.err.println(os);
+    private final String RESOURCE_FOLDER = "src/test/resources/RSLBench/Algorithms/MS/";
+
+    @Test
+    public void testStoredTests() throws Exception {
+        final String TEST_NAME = "4agents";
+
+        TestReader reader = new TestReader(TEST_NAME + ".test.txt");
+        for (int i=1; reader.hasNextTest(); i++) {
+            double[][] utilities = reader.nextTest();
+
+            for (int nNeighbors = 2; nNeighbors < 5; nNeighbors ++) {
+                testStoredTest(utilities, nNeighbors);
+
+                // Load expected test result
+                String resultName =  TEST_NAME + ".result." + nNeighbors + "n." + i + ".dot";
+                ByteArrayOutputStream expected = new ByteArrayOutputStream();
+                copy(this.getClass().getResourceAsStream(resultName), expected);
+
+                ByteArrayOutputStream actual = new ByteArrayOutputStream();
+                MaxSumAgent.printFG(actual);
+
+                assertEquals("Test case " + i + " with " + nNeighbors + " neighbors failed.",
+                        expected.toString(), actual.toString());
+                actual.close();
+                expected.close();
+            }
+        }
+    }
+
+    private static final int BUFFER_SIZE = 1024;
+    private static void copy(InputStream is, OutputStream os) throws IOException {
+        byte[] buffer = new byte[BUFFER_SIZE];
+        int n = 0;
+        while (-1 != (n = is.read(buffer))) {
+            os.write(buffer, 0, n);
+        }
+    }
+
+    /**
+     * Reads a graph prunning test file.
+     *
+     * The file's format is one test case per line, containing an array of arrays of doubles
+     * that is converted to the cost matrix to test (firefigthers are rows, fires are columns)
+     */
+    private class TestReader {
+        private BufferedReader reader;
+        private final Pattern pattern = Pattern.compile("\\[([^\\]\\[]+)\\]");
+        private String line;
+
+        public TestReader(String testName) {
+            reader = new BufferedReader(new InputStreamReader(
+                    this.getClass().getResourceAsStream(testName)
+            ));
+            next();
+        }
+
+        private void next() {
+            try {
+                line = reader.readLine();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        public boolean hasNextTest() {
+            return line != null;
+        }
+
+        public double[][] nextTest() {
+            int nAgent = 0;
+            Matcher matcher = pattern.matcher(line);
+            while (matcher.find()) {
+                nAgent++;
+            }
+
+            double[][] result = new double[nAgent][];
+            matcher = pattern.matcher(line);
+            nAgent = 0;
+            while (matcher.find()) {
+                String[] values = matcher.group(1).split(", ");
+                result[nAgent] = new double[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    result[nAgent][i] = Double.valueOf(values[i]);
+                }
+                nAgent++;
+            }
+
+            assertEquals("Parsed values do not match the test.", line, Arrays.deepToString(result));
+            next();
+            return result;
+        }
     }
 
 }

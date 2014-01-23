@@ -53,8 +53,7 @@ import es.csic.iiia.maxsum.MaxOperator;
 import es.csic.iiia.maxsum.Maximize;
 import es.csic.iiia.maxsum.factors.SelectorFactor;
 import es.csic.iiia.maxsum.factors.cardinality.CardinalityFunction;
-import es.csic.iiia.maxsum.factors.CompositeIndependentFactor;
-import es.csic.iiia.maxsum.factors.IndependentFactor;
+import es.csic.iiia.maxsum.factors.WeightingFactor;
 import java.util.HashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -126,12 +125,9 @@ public class BMSFireAgent implements DCOPAgent {
 
         // The agent's factor is the selector plus the independent utilities
         // of this agent for each fire.
-        CompositeIndependentFactor<NodeID> agentFactor = new CompositeIndependentFactor<>();
-        agentFactor.setInnerFactor(variableNode);
+        WeightingFactor<NodeID> agentFactor = new WeightingFactor<>(variableNode);
 
-        IndependentFactor<NodeID> utils = new IndependentFactor<>();
-        agentFactor.setIndependentFactor(utils);
-        for (EntityID fire : problem.getFires()) {
+        for (EntityID fire : problem.getFireAgentNeighbors(id)) {
             NodeID fireID = new NodeID(null, fire);
             // Link the agent to each fire
             agentFactor.addNeighbor(fireID);
@@ -142,7 +138,7 @@ public class BMSFireAgent implements DCOPAgent {
                 value -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
             }
 
-            utils.setPotential(fireID, value);
+            agentFactor.setPotential(fireID, value);
             Logger.trace("Utility for {}: {}", new Object[]{fire, value});
         }
 
@@ -163,14 +159,12 @@ public class BMSFireAgent implements DCOPAgent {
      *
      **/
     private void addUtilityNodes() {
-        ArrayList<EntityID> agents = problem.getFireAgents();
         ArrayList<EntityID> fires  = problem.getFires();
-        final int nAgents = agents.size();
+        final int nAgents = problem.getNumFireAgents();
         final int nFires  = fires.size();
-        final int nAgent  = agents.indexOf(id);
+        final int nAgent  = problem.getFireAgents().indexOf(id);
 
-        // Iterate over the fires whose utility functions must run within this
-        // agent.
+        // Iterate over the fires whose utility functions must run within this agent.
         for (int i = nAgent; i < nFires; i += nAgents) {
             final EntityID fire = fires.get(i);
             final NodeID fireID = new NodeID(null, fire);
@@ -188,8 +182,8 @@ public class BMSFireAgent implements DCOPAgent {
             };
             f.setFunction(wf);
 
-            // Link the fire with all agents
-            for (EntityID agent : agents) {
+            // Link the fire with all its neighboring agents
+            for (EntityID agent : problem.getFireNeighbors(fire)) {
                 f.addNeighbor(new NodeID(agent, null));
             }
 

@@ -33,7 +33,6 @@ import messages.MessageFactoryArrayDouble;
 import factorgraph.NodeVariable;
 import factorgraph.NodeFunction;
 import factorgraph.NodeArgument;
-import java.io.BufferedOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import operation.OPlus;
@@ -85,7 +84,7 @@ public class MaxSumAgent implements DCOPAgent {
     public void initialize(Config config, EntityID agentID, ProblemDefinition definition) {
         allMaxSumAgents.add(this);
         problemDefinition = definition;
-        maxLinksPerNode = config.getIntValue(Constants.KEY_MAXSUM_NEIGHBORS);
+        maxLinksPerNode = config.getIntValue(Constants.KEY_PROBLEM_MAXNEIGHBORS);
 
         this.agentID = agentID;
         jMSAgent = JMSAgent.getAgent(agentID.getValue());
@@ -113,6 +112,7 @@ public class MaxSumAgent implements DCOPAgent {
             }
 
             if (!alreadyAssigned) {
+                System.err.println("Node " + getAgentID().getValue() + " picks " + nextTargetID.getValue());
                 nAssignedFunctions++;
                 NodeFunction target = NodeFunction.putNodeFunction(nextTargetID.getValue(), new RMASTabularFunction());
                 allJMSFunctions.add(target);
@@ -163,6 +163,7 @@ public class MaxSumAgent implements DCOPAgent {
     }
 
     public void buildNeighborhood(EntityID target, List<EntityID> bestAgents, int count) {
+        System.err.println("Neighborhood of " + target.getValue() + " count=" + count);
         NodeFunction nodeTarget = fetchFunctionNode(target.getValue());
 
         int tarID = target.getValue();
@@ -181,6 +182,7 @@ public class MaxSumAgent implements DCOPAgent {
                 nodeTarget.addNeighbour(NodeVariable.getNodeVariable(agent.getValue()));
                 NodeVariable.getNodeVariable(agent.getValue()).addNeighbour(nodeTarget);
                 NodeVariable.getNodeVariable(agent.getValue()).addValue(NodeArgument.getNodeArgument(nodeTarget.getId()));
+                System.err.println("Function " + target.getValue() + " picks " + agent.getValue());
 
             } else {
                 nFGSentBytes += 2*4;
@@ -205,10 +207,10 @@ public class MaxSumAgent implements DCOPAgent {
 
                     NodeFunction oldTarget = fetchFunctionNode(worstTarget.getValue());
                     RMASNodeFunctionUtility.removeNeighbourBeforeTuples(oldTarget, tempVar);
-                    this.newNeighbour(worstTarget);
                     tempVar.changeNeighbour(oldTarget, nodeTarget);
+                    this.newNeighbour(worstTarget);
+                    System.err.println("Function " + target.getValue() + " steals " + agent.getValue() + " from " + worstTarget.getValue());
                     tempVar.changeValue(NodeArgument.getNodeArgument(worstTarget.getValue()), NodeArgument.getNodeArgument(nodeTarget.getId()));
-
                 }
             }
 

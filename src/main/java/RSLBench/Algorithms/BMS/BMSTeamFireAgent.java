@@ -54,10 +54,10 @@ import es.csic.iiia.maxsum.Maximize;
 import es.csic.iiia.maxsum.factors.AllActiveIncentiveFactor;
 import es.csic.iiia.maxsum.factors.SelectorFactor;
 import es.csic.iiia.maxsum.factors.cardinality.CardinalityFunction;
-import es.csic.iiia.maxsum.factors.CompositeIndependentFactor;
-import es.csic.iiia.maxsum.factors.IndependentFactor;
 import es.csic.iiia.maxsum.factors.VariableFactor;
+import es.csic.iiia.maxsum.factors.WeightingFactor;
 import java.util.HashMap;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.config.Config;
@@ -129,7 +129,7 @@ public class BMSTeamFireAgent implements DCOPAgent {
      */
     private void addFirefighterToFireNodes() {
         variableFactors = new ArrayList<>();
-        for (EntityID fire : problem.getFires()) {
+        for (EntityID fire : problem.getFireAgentNeighbors(id)) {
             VariableFactor<NodeID> variable = new VariableFactor<>();
             variable.addNeighbor(new NodeID(id, null));
             variable.addNeighbor(new NodeID(null, fire));
@@ -142,16 +142,13 @@ public class BMSTeamFireAgent implements DCOPAgent {
      * Creates a selector node for the agent's "variable".
      */
     private void addFirefighterFactor() {
-        ArrayList<EntityID> fires = problem.getFires();
+        List<EntityID> fires = problem.getFireAgentNeighbors(id);
         this.variableNode = new SelectorFactor<>();
 
         // The agent's factor is the selector plus the independent utilities
         // of this agent for each fire.
-        CompositeIndependentFactor<NodeID> agentFactor = new CompositeIndependentFactor<>();
-        agentFactor.setInnerFactor(variableNode);
+        WeightingFactor<NodeID> agentFactor = new WeightingFactor<>(variableNode);
 
-        IndependentFactor<NodeID> utils = new IndependentFactor<>();
-        agentFactor.setIndependentFactor(utils);
         for (int fireIndex=0; fireIndex<fires.size(); fireIndex++) {
             final EntityID fire = fires.get(fireIndex);
             NodeID agentToFireID = new NodeID(id, fire);
@@ -168,7 +165,7 @@ public class BMSTeamFireAgent implements DCOPAgent {
                         fireIndex);
             }
 
-            utils.setPotential(agentToFireID, value);
+            agentFactor.setPotential(agentToFireID, value);
             Logger.trace("Utility for {}: {}", new Object[]{fire, value});
         }
 
@@ -209,11 +206,10 @@ public class BMSTeamFireAgent implements DCOPAgent {
      *
      **/
     private void addFireNodes() {
-        ArrayList<EntityID> agents = problem.getFireAgents();
         ArrayList<EntityID> fires  = problem.getFires();
-        final int nAgents = agents.size();
+        final int nAgents = problem.getNumFireAgents();
         final int nFires  = fires.size();
-        final int nAgent  = agents.indexOf(id);
+        final int nAgent  = problem.getFireAgents().indexOf(id);
 
         // Iterate over the fires whose utility functions must run within this
         // agent.
@@ -235,7 +231,7 @@ public class BMSTeamFireAgent implements DCOPAgent {
             f.setFunction(wf);
 
             // Link the fire with all agents' variables
-            for (EntityID agent : agents) {
+            for (EntityID agent : problem.getFireNeighbors(fire)) {
                 f.addNeighbor(new NodeID(agent, fire));
             }
 

@@ -100,7 +100,7 @@ public class MaxSumAgent implements DCOPAgent {
             }
             functionNode.addNeighbour(variableNode);
             variableNode.addNeighbour(functionNode);
-            variableNode.addValue(NodeArgument.getNodeArgument(fire));
+            variableNode.addValue(NodeArgument.getNodeArgument(fire.getValue()));
         }
     }
 
@@ -117,7 +117,7 @@ public class MaxSumAgent implements DCOPAgent {
                 for (int i = 0; i < function.size(); i++) {
                     arg[i] = NodeArgument.getNodeArgument(arguments[i]);
                     Iterator<NodeVariable> prova = function.getNeighbour().iterator();
-                    if (((Integer) arg[i].getValue()).intValue() == target) {
+                    if (arg[i].getValue() == target) {
                         countAgent++;
                         NodeVariable var = prova.next();
                         cost = cost + problemDefinition.getFireUtility(new EntityID(var.getId()), new EntityID(target));

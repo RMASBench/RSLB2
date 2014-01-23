@@ -376,26 +376,4 @@ public class BMSTeamFireAgent implements DCOPAgent {
         return constraintChecks;
     }
 
-    /**
-     * Returns 0 because the factor network is built without any communication
-     * between agents (its based only on IDs).
-     *
-     * @return 0
-     */
-    @Override
-    public int getNumberOfOtherMessages() {
-        return 0;
-    }
-
-    /**
-     * Returns 0 because the factor network is built without any communication
-     * between agents (its based only on IDs).
-     *
-     * @return 0
-     */
-    @Override
-    public long getDimensionOfOtherMessages() {
-        return 0;
-    }
-
 }

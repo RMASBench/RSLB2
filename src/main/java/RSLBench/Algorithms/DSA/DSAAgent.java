@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.config.Config;
@@ -27,95 +26,95 @@ import rescuecore2.worldmodel.EntityID;
 public class DSAAgent implements DCOPAgent {
 
     private static final Logger Logger = LogManager.getLogger(DSAAgent.class);
-    protected ProblemDefinition _utilityM = null;
-    protected EntityID _agentID;
-    protected EntityID _targetID;
-    protected Collection<Message> _neighborAssignments = null;
-    protected TargetScores _targetScores = null;
-    protected static Random _random;
-    private int _nccc = 0;
+    private ProblemDefinition problem = null;
+    private EntityID id;
+    private EntityID targetID;
+    private Collection<Message> neighborAssignments = null;
+    private TargetScores targetScores = null;
+    private int nCCCs = 0;
     private Set<EntityID> neighbors;
-    protected Config config;
-
-    public DSAAgent() {
-        _random = new Random(0);
-    }
+    private Config config;
 
     @Override
     public void initialize(Config config, EntityID agentID, ProblemDefinition utilityM) {
-        _agentID = agentID;
-        _utilityM = utilityM;
-        _targetScores = new TargetScores(agentID, utilityM);
-        _targetID = Assignment.UNKNOWN_TARGET_ID;
+        id = agentID;
+        problem = utilityM;
+        targetScores = new TargetScores(agentID, utilityM);
+        targetID = Assignment.UNKNOWN_TARGET_ID;
         this.config = config;
 
-        Logger.debug(Markers.LIGHT_BLUE, "A [" + SimpleID.conv(agentID) + "] initializing with " + _utilityM.getNumFires() + " targets.");
+        Logger.debug(Markers.LIGHT_BLUE, "A [" + SimpleID.conv(agentID) + "] initializing with " + problem.getNumFires() + " targets.");
 
-        // Find the target with the highest utility and initialize required agents for each target 
+        // Find the target with the highest utility and initialize required agents for each target
         double bestTargetUtility = Double.NEGATIVE_INFINITY;
-        for (EntityID t : _utilityM.getFires()) {
-            double util = _utilityM.getFireUtility(agentID, t);
+        for (EntityID t : problem.getFires()) {
+            double util = problem.getFireUtility(agentID, t);
             if (bestTargetUtility < util) {
                 bestTargetUtility = util;
-                _targetID = t;
+                targetID = t;
             }
         }
 
+        // The neighbors of this agent are all candidates of all eligible fires
+        neighbors = new HashSet<>();
+        for (EntityID fire : problem.getFireAgentNeighbors(id)) {
+            neighbors.addAll(problem.getFireNeighbors(fire));
+        }
+        neighbors.remove(id);
+
         Logger.debug(Markers.LIGHT_BLUE, "A [" + SimpleID.conv(agentID) + "] init done!");
-        neighbors = new HashSet<>(_utilityM.getFireAgents());
-        neighbors.remove(_agentID);
     }
 
     @Override
     public boolean improveAssignment() {
-        _nccc = 0;
+        nCCCs = 0;
 
         if (Logger.isDebugEnabled()) {
-            Logger.trace(Markers.LIGHT_BLUE, "[" + SimpleID.conv(_agentID) + "] improveAssignment");
-            Logger.trace(Markers.LIGHT_BLUE, "[" + SimpleID.conv(_agentID) + "] received neighbor messages: "
-                    + _neighborAssignments.size());
+            Logger.trace(Markers.LIGHT_BLUE, "[" + SimpleID.conv(id) + "] improveAssignment");
+            Logger.trace(Markers.LIGHT_BLUE, "[" + SimpleID.conv(id) + "] received neighbor messages: "
+                    + neighborAssignments.size());
         }
 
-        _targetScores.resetAssignments();
-        for (Message message : _neighborAssignments) {
+        targetScores.resetAssignments();
+        for (Message message : neighborAssignments) {
             if (message.getClass() == AssignmentMessage.class) {
-                _targetScores.increaseAgentCount(((AssignmentMessage) message).getTargetID());
-                _nccc++;
+                targetScores.increaseAgentCount(((AssignmentMessage) message).getTargetID());
+                nCCCs++;
             }
         }
-        _neighborAssignments.clear();
+        neighborAssignments.clear();
 
         // Find the best target given utilities and constraints
         double bestScore;
-        if (_targetID == null || _targetID.equals(Assignment.UNKNOWN_TARGET_ID)) {
+        if (targetID == null || targetID.equals(Assignment.UNKNOWN_TARGET_ID)) {
             bestScore = Double.NEGATIVE_INFINITY;
         } else {
-            bestScore = _targetScores.computeScore(_targetID);
+            bestScore = targetScores.computeScore(targetID);
         }
-        EntityID bestTarget = _targetID;
-        
+        EntityID bestTarget = targetID;
+
         //Logger.debugColor(Markers.LIGHT_BLUE, "["+ _agentID +"]  BEFORE -> target: " + _targetID +" score: "+bestScore);
-        for (EntityID t : _utilityM.getFires()) {
-            double score = _targetScores.computeScore(t);
+        for (EntityID t : problem.getFireNeighbors(id)) {
+            double score = targetScores.computeScore(t);
             if (score > bestScore) {
                 bestScore = score;
                 bestTarget = t;
             }
-            _nccc++;
+            nCCCs++;
         }
 
         if (Logger.isTraceEnabled()) {
-            Logger.trace(Markers.LIGHT_BLUE, "[" + SimpleID.conv(_agentID) + "]  AFTER -> target: " + bestTarget.getValue()
+            Logger.trace(Markers.LIGHT_BLUE, "[" + SimpleID.conv(id) + "]  AFTER -> target: " + bestTarget.getValue()
                     + " score: " + bestScore + " " + bestScore);
         }
 
-        if (bestTarget != _targetID) {
-            Logger.trace(Markers.LIGHT_BLUE, "[" + SimpleID.conv(_agentID) + "] assignment can be improved");
+        if (bestTarget != targetID) {
+            Logger.trace(Markers.LIGHT_BLUE, "[" + SimpleID.conv(id) + "] assignment can be improved");
             // improvement possible
-            if (_random.nextDouble() <= config.getFloatValue(DSA.KEY_DSA_PROBABILITY)) {
-                Logger.debug(Markers.GREEN, "[" + SimpleID.conv(_agentID) + "] assignment improved");
+            if (config.getRandom().nextDouble() <= config.getFloatValue(DSA.KEY_DSA_PROBABILITY)) {
+                Logger.debug(Markers.GREEN, "[" + SimpleID.conv(id) + "] assignment improved");
                 // change target
-                _targetID = bestTarget;
+                targetID = bestTarget;
             }
             return true;
         }
@@ -124,48 +123,35 @@ public class DSAAgent implements DCOPAgent {
 
     @Override
     public long getConstraintChecks() {
-        return _nccc;
+        return nCCCs;
     }
 
     @Override
     public EntityID getAgentID() {
-        return _agentID;
+        return id;
     }
 
     @Override
     public EntityID getTargetID() {
-        return _targetID;
+        return targetID;
     }
 
     @Override
     public Collection<Message> sendMessages(CommunicationLayer com) {
-        Collection<Message> messages = new ArrayList<>();
-        Collection<Message> totMessages = new ArrayList<>();
-        AssignmentMessage mex = new AssignmentMessage(_agentID, _targetID);
-        messages.add(mex);
+        Collection<Message> sentMessages = new ArrayList<>();
+        AssignmentMessage mex = new AssignmentMessage(id, targetID);
 
         for (EntityID neighborID : neighbors) {
-            totMessages.add(mex);
-            com.send(neighborID, messages);
+            sentMessages.add(mex);
+            com.send(neighborID, mex);
         }
 
-
-        return totMessages;
+        return sentMessages;
     }
 
     @Override
     public void receiveMessages(Collection<Message> messages) {
-        _neighborAssignments = messages;
-    }
-
-    @Override
-    public int getNumberOfOtherMessages() {
-        return 0;
-    }
-
-    @Override
-    public long getDimensionOfOtherMessages() {
-        return 0;
+        neighborAssignments = messages;
     }
 
 }

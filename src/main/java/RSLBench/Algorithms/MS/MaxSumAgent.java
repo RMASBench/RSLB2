@@ -9,7 +9,6 @@ import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Helpers.Utility.ProblemDefinition;
-import RSLBench.Constants;
 
 import rescuecore2.config.Config;
 import rescuecore2.worldmodel.EntityID;
@@ -19,7 +18,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.Collection;
 import java.util.HashSet;
@@ -58,9 +56,6 @@ public class MaxSumAgent implements DCOPAgent {
     private static HashSet<NodeFunction> allJMSFunctions = new HashSet<>();
     private static ArrayList<MaxSumAgent> allMaxSumAgents = new ArrayList<>();
 
-    private static int maxLinksPerNode;
-    private static int nPrioritizedFiresToFetch = 70;
-
     private static ProblemDefinition problemDefinition = null;
 
     private EntityID agentID;
@@ -84,7 +79,6 @@ public class MaxSumAgent implements DCOPAgent {
     public void initialize(Config config, EntityID agentID, ProblemDefinition definition) {
         allMaxSumAgents.add(this);
         problemDefinition = definition;
-        maxLinksPerNode = config.getIntValue(Constants.KEY_PROBLEM_MAXNEIGHBORS);
 
         this.agentID = agentID;
         jMSAgent = JMSAgent.getAgent(agentID.getValue());
@@ -92,128 +86,21 @@ public class MaxSumAgent implements DCOPAgent {
         jMSAgent.setOp(jMSOperator);
 
         // Each agent controls only one variable, so we can associate it with the agentid
-        NodeVariable nodevariable = NodeVariable.getNodeVariable(agentID.getValue());
-        allJMSVariables.add(nodevariable);
-        jMSAgent.addVariable(nodevariable);
+        NodeVariable variableNode = NodeVariable.getNodeVariable(agentID.getValue());
+        allJMSVariables.add(variableNode);
+        jMSAgent.addVariable(variableNode);
 
-        // Assign functions to agents (in order of preference)
-        List<EntityID> targets = problemDefinition.getNBestFires(nPrioritizedFiresToFetch, agentID);
-        Iterator<EntityID> targetIterator = targets.iterator();
-        int nAssignedFunctions = 0;
-        while (nAssignedFunctions < maxLinksPerNode && targetIterator.hasNext()) {
-            EntityID nextTargetID = targetIterator.next();
-
-            boolean alreadyAssigned = false;
-            for (NodeFunction function : allJMSFunctions) {
-                if (function.getId() == nextTargetID.getValue()) {
-                    alreadyAssigned = true;
-                    break;
-                }
+        // Assign agents to functions
+        for (EntityID fire : problemDefinition.getFireAgentNeighbors(agentID)) {
+            NodeFunction functionNode = NodeFunction.putNodeFunction(fire.getValue(), new RMASTabularFunction());
+            // If this is the first agent seen for this function, it becomes the function runner
+            if (!allJMSFunctions.contains(functionNode)) {
+                allJMSFunctions.add(functionNode);
+                jMSAgent.addFunction(functionNode);
             }
-
-            if (!alreadyAssigned) {
-                System.err.println("Node " + getAgentID().getValue() + " picks " + nextTargetID.getValue());
-                nAssignedFunctions++;
-                NodeFunction target = NodeFunction.putNodeFunction(nextTargetID.getValue(), new RMASTabularFunction());
-                allJMSFunctions.add(target);
-                jMSAgent.addFunction(target);
-                _consideredVariables.put(nextTargetID, new ArrayList<EntityID>());
-            }
-        }
-
-        for (NodeFunction nodeTarget : jMSAgent.getFunctions()) {
-            int count = 0;
-            EntityID target = new EntityID(nodeTarget.getId());
-            List<EntityID> bestAgents = problemDefinition.getNBestFireAgents(problemDefinition.getNumFireAgents(), target);
-            this.buildNeighborhood(target, bestAgents, count);
-        }
-    }
-
-    private static void reassignFunctions() {
-        if (problemDefinition == null) {
-            throw new RuntimeException("No fire agents have been initialized yet.");
-        }
-
-        ArrayList<EntityID> agents = problemDefinition.getFireAgents();
-        for (EntityID agent : agents) {
-            JMSAgent maxSumAgent = JMSAgent.getAgent(agent.getValue());
-            maxSumAgent.clearFunctions();
-        }
-
-        for (NodeFunction function : allJMSFunctions) {
-            Set<NodeVariable> variables = function.getNeighbour();
-            if (variables.isEmpty()) {
-                Logger.warn("Fire " + function.getId() + " has no candidates due to pruning!");
-            } else {
-                NodeVariable controller = variables.iterator().next();
-                JMSAgent agent = JMSAgent.getAgent(controller.getId());
-                agent.addFunction(function);
-            }
-        }
-    }
-
-    private NodeFunction fetchFunctionNode(Integer id) {
-        try {
-            return NodeFunction.getNodeFunction(id);
-        } catch (exception.FunctionNotPresentException e) {
-            Logger.fatal("Unable to fetch function node.", e);
-            System.exit(0);
-        }
-        return null;
-    }
-
-    public void buildNeighborhood(EntityID target, List<EntityID> bestAgents, int count) {
-        System.err.println("Neighborhood of " + target.getValue() + " count=" + count);
-        NodeFunction nodeTarget = fetchFunctionNode(target.getValue());
-
-        int tarID = target.getValue();
-        Iterator<EntityID> agentIterator = bestAgents.iterator();
-        while (agentIterator.hasNext() && count < maxLinksPerNode) {
-            EntityID agent = agentIterator.next();
-            ArrayList<EntityID> consideredVariables = _consideredVariables.get(target);
-            consideredVariables.add(agent);
-            _consideredVariables.put(target, consideredVariables);
-            NodeVariable tempVar = NodeVariable.getNodeVariable(agent.getValue());
-            if (tempVar.getNeighbour().size() < maxLinksPerNode) {
-                nFGMessages += 2;
-                nFGSentBytes += 2*4;
-                count++;
-
-                nodeTarget.addNeighbour(NodeVariable.getNodeVariable(agent.getValue()));
-                NodeVariable.getNodeVariable(agent.getValue()).addNeighbour(nodeTarget);
-                NodeVariable.getNodeVariable(agent.getValue()).addValue(NodeArgument.getNodeArgument(nodeTarget.getId()));
-                System.err.println("Function " + target.getValue() + " picks " + agent.getValue());
-
-            } else {
-                nFGSentBytes += 2*4;
-                nFGMessages += 2;
-                HashSet<NodeFunction> assignedToMe = tempVar.getNeighbour();
-                EntityID worstTarget = new EntityID(tarID);
-                double targetUtility = problemDefinition.getFireUtility(agent, worstTarget);
-                double worstUtility = targetUtility;
-                for (NodeFunction assigned : assignedToMe) {
-                    double oldUtility = problemDefinition.getFireUtility(agent, new EntityID(assigned.getId()));
-                    if (oldUtility < worstUtility) {
-                        worstUtility = oldUtility;
-                        worstTarget = new EntityID(assigned.getId());
-                    }
-                }
-
-                if (worstUtility != targetUtility) {
-                    nFGSentBytes += 4;
-                    nFGMessages++;
-                    count++;
-                    nodeTarget.addNeighbour(tempVar);
-
-                    NodeFunction oldTarget = fetchFunctionNode(worstTarget.getValue());
-                    RMASNodeFunctionUtility.removeNeighbourBeforeTuples(oldTarget, tempVar);
-                    tempVar.changeNeighbour(oldTarget, nodeTarget);
-                    this.newNeighbour(worstTarget);
-                    System.err.println("Function " + target.getValue() + " steals " + agent.getValue() + " from " + worstTarget.getValue());
-                    tempVar.changeValue(NodeArgument.getNodeArgument(worstTarget.getValue()), NodeArgument.getNodeArgument(nodeTarget.getId()));
-                }
-            }
-
+            functionNode.addNeighbour(variableNode);
+            variableNode.addNeighbour(functionNode);
+            variableNode.addValue(NodeArgument.getNodeArgument(fire));
         }
     }
 
@@ -223,7 +110,7 @@ public class MaxSumAgent implements DCOPAgent {
             int countAgent = 0;
             int target = function.getId();
             int[] possibleValues = {0, target};
-            int[][] combinations = createCombinations(possibleValues);
+            int[][] combinations = createCombinations(function.size(), possibleValues);
             for (int[] arguments : combinations) {
                 NodeArgument[] arg = new NodeArgument[function.size()];
 
@@ -327,13 +214,13 @@ public class MaxSumAgent implements DCOPAgent {
         jMSAgent.readRMessages(mexR);
     }
 
-    private static int[][] createCombinations(int[] possibleValues) {
-        int totalCombinations = (int) Math.pow(2, maxLinksPerNode);
+    private static int[][] createCombinations(int functionSize, int[] possibleValues) {
+        int totalCombinations = (int) Math.pow(2, functionSize);
 
-        int[][] combinationsMatrix = new int[totalCombinations][maxLinksPerNode];
+        int[][] combinationsMatrix = new int[totalCombinations][functionSize];
         int changeIndex = 1;
 
-        for (int i = 0; i < maxLinksPerNode; i++) {
+        for (int i = 0; i < functionSize; i++) {
             int index = 0;
             int count = 1;
 
@@ -377,7 +264,6 @@ public class MaxSumAgent implements DCOPAgent {
      */
     public static void finishInitialization() {
         tupleBuilder();
-        reassignFunctions();
     }
 
     @Override
@@ -455,29 +341,5 @@ public class MaxSumAgent implements DCOPAgent {
         }
     }
 
-    @Override
-    public int getNumberOfOtherMessages() {
-        return nFGMessages;
-    }
-    @Override
-    public long getDimensionOfOtherMessages() {
-        return nFGSentBytes;
-    }
-
-    private void newNeighbour(EntityID function) {
-        ArrayList<EntityID> possibleNewNeighbours = new ArrayList<>();
-
-        List<EntityID> best = problemDefinition.getNBestFireAgents(problemDefinition.getNumFireAgents(), function);
-        ArrayList<EntityID> alreadyConsidered = _consideredVariables.get(function);
-        for (EntityID possibleNewNeighbour : best) {
-            if (!alreadyConsidered.contains(possibleNewNeighbour)) {
-                possibleNewNeighbours.add(possibleNewNeighbour);
-            }
-        }
-
-        if (!possibleNewNeighbours.isEmpty()) {
-            this.buildNeighborhood(function, possibleNewNeighbours, maxLinksPerNode - 1);
-        }
-    }
 }
 

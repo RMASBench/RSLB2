@@ -12,23 +12,13 @@ import java.util.Collection;
 /**
  * Default implementation of a DCOP agent, who doesn't send or receive any
  * messages.
- * 
+ *
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
 public abstract class DefaultDCOPAgent extends AbstractDCOPAgent {
 
     @Override
     public long getConstraintChecks() {
-        return 0;
-    }
-
-    @Override
-    public long getDimensionOfOtherMessages() {
-        return 0;
-    }
-
-    @Override
-    public int getNumberOfOtherMessages() {
         return 0;
     }
 

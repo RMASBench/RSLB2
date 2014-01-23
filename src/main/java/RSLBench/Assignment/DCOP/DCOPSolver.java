@@ -143,9 +143,10 @@ public abstract class DCOPSolver extends AbstractSolver {
 
         long algBMessages = bMessages;
         int  algNMessages = nMessages;
+        // TODO: See below
         for (DCOPAgent agent : agents) {
-            nMessages += agent.getNumberOfOtherMessages();
-            bMessages += agent.getDimensionOfOtherMessages();
+            nMessages += 0; // This should be the number of messages sent to prune the problem,
+            bMessages += 0; // provided by the ProblemDefinition class itself.
         }
 
         int  nOtherMessages = nMessages - algNMessages;

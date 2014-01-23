@@ -43,8 +43,8 @@ public class RSLBenchCommunicationAdapter implements CommunicationAdapter<NodeID
     @Override
     public void send(double message, NodeID sender, NodeID recipient) {
         Logger.trace("Message from {} to {} : {}", new Object[]{sender, recipient, message});
-        if (Double.isNaN(message) || Double.isInfinite(message)) {
-            Logger.error("Factor {} tried to send {} to factor {}!", new Object[]{sender, message, recipient});
+        if (Double.isNaN(message)) {
+            Logger.warn("Factor {} tried to send {} to factor {}!", new Object[]{sender, message, recipient});
             throw new RuntimeException("Invalid message sent!");
         }
 

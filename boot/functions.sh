@@ -34,7 +34,7 @@ function processArgs {
     TEAM=""
     CONFIGDIR="$DIR/config"
     SCENARIO="example"
-    THINK_TIME=1000
+    THINK_TIME=100000
     SEED=1
 
     while [[ ! -z "$1" ]]; do

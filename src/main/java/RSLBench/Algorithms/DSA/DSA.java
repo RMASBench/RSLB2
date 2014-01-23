@@ -28,10 +28,9 @@ public class DSA extends DCOPSolver {
 
     @Override
     protected DCOPAgent buildAgent(StandardEntityURN type) {
-        final boolean pruned = config.getBooleanValue(Constants.KEY_PROBLEM_PRUNE);
         switch(type) {
             case FIRE_BRIGADE:
-                return pruned ? new DSAAgent() : new DSAFactorgraphAgent();
+                return new DSAAgent();
             default:
                 throw new UnsupportedOperationException("The DSA solver does not support agents of type " + type);
         }

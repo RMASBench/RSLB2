@@ -326,6 +326,7 @@ public class ProblemDefinition {
     private Map<EntityID, List<EntityID>> acceptedNeighbors = new HashMap<>();
     private void pruneProblem() {
         final int maxAllowedNeighbors = config.getIntValue(Constants.KEY_PROBLEM_MAXNEIGHBORS);
+        Logger.warn("Pruning problem down to " + maxAllowedNeighbors + " max neighbors.");
 
         // Create and sort a list of edges
         ArrayList<AgentFireCost> edges = new ArrayList<>();

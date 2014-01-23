@@ -237,10 +237,16 @@ public class BMSFireAgent implements DCOPAgent {
 
         // Now extract our choice
         NodeID target = variableNode.select();
-        if (target == null || target.target == null) {
-            Logger.error("Agent {} chose no target!", id);
+        if (variableNode.getNeighbors().isEmpty()) {
+            // If the agent has no candidate fires (due to pruning) just send her to the nearest
+            // fire
+            targetId = problem.getHighestTargetForAgent(id);
+        } else if (target == null || target.target == null) {
+            // If it has candidates but chose none, this is an error
+            Logger.error("Agent {} chose no target! Candidates: {}", id, problem.getFireAgentNeighbors(id));
             System.exit(1);
         } else {
+            // Otherwise, assign it to the chosen target
             targetId = target.target;
         }
         Logger.trace("improveAssignment end.");
@@ -310,28 +316,6 @@ public class BMSFireAgent implements DCOPAgent {
     @Override
     public long getConstraintChecks() {
         return constraintChecks;
-    }
-
-    /**
-     * Returns 0 because the factor network is built without any communication
-     * between agents (its based only on IDs).
-     *
-     * @return 0
-     */
-    @Override
-    public int getNumberOfOtherMessages() {
-        return 0;
-    }
-
-    /**
-     * Returns 0 because the factor network is built without any communication
-     * between agents (its based only on IDs).
-     *
-     * @return 0
-     */
-    @Override
-    public long getDimensionOfOtherMessages() {
-        return 0;
     }
 
 }

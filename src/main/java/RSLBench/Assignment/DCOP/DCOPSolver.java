@@ -85,7 +85,7 @@ public abstract class DCOPSolver extends AbstractSolver {
 
             // receive messages
             for (DCOPAgent agent : agents) {
-                agent.receiveMessages(comLayer.retrieveMessages(agent.getAgentID()));
+                agent.receiveMessages(comLayer.retrieveMessages(agent.getID()));
             }
 
             // try to improve assignment
@@ -97,7 +97,7 @@ public abstract class DCOPSolver extends AbstractSolver {
                 done = done && !improved;
 
                 // Collect assignment
-                finalAssignment.assign(agent.getAgentID(), agent.getTargetID());
+                finalAssignment.assign(agent.getID(), agent.getTarget());
             }
 
             // Collect the best assignment visited
@@ -233,11 +233,11 @@ public abstract class DCOPSolver extends AbstractSolver {
         Logger.debug("Initiating greedy improvement. Initial value {}", getUtility(utility, initial));
         Assignment assignment = new Assignment(initial);
         for (DCOPAgent agent : agents) {
-            StandardEntity e = utility.getWorld().getEntity(agent.getAgentID());
+            StandardEntity e = utility.getWorld().getEntity(agent.getID());
             if (!(e instanceof FireBrigade)) {
                 continue;
             }
-            final EntityID agentID = agent.getAgentID();
+            final EntityID agentID = agent.getID();
 
             // Consider previous assignments
             TargetScores scores = new TargetScores(agentID, utility);

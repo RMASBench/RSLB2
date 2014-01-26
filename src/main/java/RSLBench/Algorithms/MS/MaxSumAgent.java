@@ -153,7 +153,7 @@ public class MaxSumAgent implements DCOPAgent {
                 String target = variable.getStateArgument().getValue().toString();
                 targetID = new EntityID(Integer.parseInt(target));
             } catch (exception.VariableNotSetException e) {
-                Logger.debug("Agent " + getAgentID() + " unassigned!");
+                Logger.debug("Agent " + getID() + " unassigned!");
                 targetID = problemDefinition.getHighestTargetForAgent(agentID);
             }
         }
@@ -162,12 +162,12 @@ public class MaxSumAgent implements DCOPAgent {
     }
 
     @Override
-    public EntityID getAgentID() {
+    public EntityID getID() {
         return agentID;
     }
 
     @Override
-    public EntityID getTargetID() {
+    public EntityID getTarget() {
         return targetID;
     }
 
@@ -178,7 +178,7 @@ public class MaxSumAgent implements DCOPAgent {
             // Locate the agent that controls this function, and send the message to that ID
             for (MaxSumAgent agent : allMaxSumAgents) {
                 if (agent.isLocalFunction(messageQ.getFunction())) {
-                    com.send(agent.getAgentID(), messageQ);
+                    com.send(agent.getID(), messageQ);
                     break;
                 }
             }

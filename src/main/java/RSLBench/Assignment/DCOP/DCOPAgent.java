@@ -22,7 +22,7 @@ public interface DCOPAgent
      * @param utility: a matrix that contains all the agent-target utilities
      * (for all the agents and alla the targets).
      */
-    public void initialize(Config config, EntityID agentID, ProblemDefinition utility);
+    public void initialize(Config config, EntityID agentID, ProblemDefinition problem);
 
     /**
      * Considering all the messages received from other agents, tries to find
@@ -35,13 +35,13 @@ public interface DCOPAgent
      * Returns the ID of the agent.
      * @return the ID of the agent.
      */
-    public EntityID getAgentID();
+    public EntityID getID();
 
     /**
      * Returns the ID  of the currently assigned target.
      * @return the ID of the target.
      */
-    public EntityID getTargetID();
+    public EntityID getTarget();
 
     /**
      * Sends a set of messages from an agent to all the recipients.

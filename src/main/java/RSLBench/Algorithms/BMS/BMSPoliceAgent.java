@@ -249,12 +249,12 @@ public class BMSPoliceAgent implements DCOPAgent {
     }
 
     @Override
-    public EntityID getTargetID() {
+    public EntityID getTarget() {
         return targetId;
     }
 
     @Override
-    public EntityID getAgentID() {
+    public EntityID getID() {
         return this.id;
     }
 

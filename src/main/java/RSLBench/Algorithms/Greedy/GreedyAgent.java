@@ -5,11 +5,6 @@
 package RSLBench.Algorithms.Greedy;
 
 import RSLBench.Assignment.DCOP.DefaultDCOPAgent;
-import RSLBench.Assignment.DCOP.AbstractDCOPAgent;
-import RSLBench.Comm.CommunicationLayer;
-import RSLBench.Comm.Message;
-import java.util.ArrayList;
-import java.util.Collection;
 import rescuecore2.worldmodel.EntityID;
 
 /**
@@ -25,11 +20,13 @@ public class GreedyAgent extends DefaultDCOPAgent {
     @Override
     public boolean improveAssignment() {
         double best = Double.NEGATIVE_INFINITY;
-        for (EntityID target : utilities.getFires()) {
-            double value = utilities.getFireUtility(agentID, target);
+        final EntityID id = getID();
+
+        for (EntityID target : getProblem().getFireAgentNeighbors(getID())) {
+            double value = getProblem().getFireUtility(id, target);
             if (value > best) {
-                targetID = target;
                 best = value;
+                setTarget(target);
             }
         }
 

@@ -72,6 +72,10 @@ experiment.end_time: 300
 export: no
 export.path: export/
 
+# Whether to prune the fire brigades to fires graph, and to which per-node degree
+problem.prune: no
+problem.max_neighbors: 4
+
 # Number of iterations to run the DCOP algorithm at each step of the roborescue simulation
 # For instance, DSA agents will run for 100 iterations before making a final decision
 dcop.iterations: 100
@@ -100,14 +104,11 @@ solver.3.class: RSLBench.Algorithms.Random.Random
 solver.3.time: 100
 solver.4.class: RSLBench.Algorithms.Greedy.Greedy
 solver.4.time: 100
+solver.5.class: RSLBench.Algorithms.Closest.Closest
+solver.5.time: 100
 
 # Path to the results folder
 results.path: results/
-
-# Algorithm-specific settings
-
-# MaxSum *and DSAFactorgraph* number of neighbors
-maxsum.neighbors: 4
 
 # DSA and DSAFactorgraph probability of change
 dsa.probability: 0.6

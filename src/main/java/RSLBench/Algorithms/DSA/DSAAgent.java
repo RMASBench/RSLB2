@@ -124,12 +124,12 @@ public class DSAAgent implements DCOPAgent {
     }
 
     @Override
-    public EntityID getAgentID() {
+    public EntityID getID() {
         return id;
     }
 
     @Override
-    public EntityID getTargetID() {
+    public EntityID getTarget() {
         return targetID;
     }
 

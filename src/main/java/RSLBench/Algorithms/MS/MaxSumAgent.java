@@ -102,7 +102,7 @@ public class MaxSumAgent implements DCOPAgent {
                 jMSAgent.addFunction(functionNode);
             }
             functionNode.addNeighbour(variableNode);
-            Logger.warn("Added neighbor {} to function {}. Current neighbors: {}",variableNode,functionNode,functionNode.getNeighbour());
+            Logger.debug("Added neighbor {} to function {}. Current neighbors: {}",variableNode,functionNode,functionNode.getNeighbour());
             variableNode.addNeighbour(functionNode);
             variableNode.addValue(NodeArgument.getNodeArgument(functionNode.getId()));
         }
@@ -112,7 +112,7 @@ public class MaxSumAgent implements DCOPAgent {
         for (NodeFunction function : allJMSFunctions) {
             int target = function.getId();
             int[] possibleValues = {0, target};
-            Logger.warn("Creating combinations for function {} (size {})", function, function.size());
+            Logger.debug("Creating combinations for function {} (size {})", function, function.size());
             int[][] combinations = createCombinations(function.size(), possibleValues);
             for (int[] arguments : combinations) {
                 NodeArgument[] arg = new NodeArgument[function.size()];
@@ -124,15 +124,15 @@ public class MaxSumAgent implements DCOPAgent {
                     NodeVariable var = function.getFunction().getParameter(i);
                     if ((int)arg[i].getValue() == target) {
                         countAgent++;
-                        Logger.error("Adding utility of agent {}", var.getId());
+                        Logger.trace("Adding utility of agent {}", var.getId());
                         cost += problemDefinition.getFireUtility(new EntityID(var.getId()), new EntityID(target));
                     }
                 }
                 cost -= problemDefinition.getUtilityPenalty(new EntityID(target), countAgent);
-                Logger.error("Adding penalty of having {} agents (-{})", countAgent,
+                Logger.trace("Adding penalty of having {} agents (-{})", countAgent,
                         problemDefinition.getUtilityPenalty(new EntityID(target), countAgent));
 
-                Logger.warn("Added cost {} for parameters {}.", cost, arg);
+                Logger.debug("Added cost {} for parameters {}.", cost, arg);
                 function.getFunction().addParametersCost(arg, cost);
             }
         }
@@ -153,7 +153,7 @@ public class MaxSumAgent implements DCOPAgent {
                 String target = variable.getStateArgument().getValue().toString();
                 targetID = new EntityID(Integer.parseInt(target));
             } catch (exception.VariableNotSetException e) {
-                Logger.warn("Agent " + getAgentID() + " unassigned!");
+                Logger.debug("Agent " + getAgentID() + " unassigned!");
                 targetID = problemDefinition.getHighestTargetForAgent(agentID);
             }
         }
@@ -244,7 +244,7 @@ public class MaxSumAgent implements DCOPAgent {
 
             }
         }
-        Logger.warn("Combinations: {}", combinationsMatrix);
+        Logger.trace("Combinations: {}", combinationsMatrix);
         return combinationsMatrix;
     }
 

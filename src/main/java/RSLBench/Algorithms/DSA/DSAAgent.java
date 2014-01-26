@@ -85,16 +85,10 @@ public class DSAAgent implements DCOPAgent {
         neighborAssignments.clear();
 
         // Find the best target given utilities and constraints
-        double bestScore;
-        if (targetID == null || targetID.equals(Assignment.UNKNOWN_TARGET_ID)) {
-            bestScore = Double.NEGATIVE_INFINITY;
-        } else {
-            bestScore = targetScores.computeScore(targetID);
-        }
-        EntityID bestTarget = targetID;
-
+        double bestScore = Double.NEGATIVE_INFINITY;
+        EntityID bestTarget = null;
         //Logger.debugColor(Markers.LIGHT_BLUE, "["+ _agentID +"]  BEFORE -> target: " + _targetID +" score: "+bestScore);
-        for (EntityID t : problem.getFireNeighbors(id)) {
+        for (EntityID t : problem.getFireAgentNeighbors(id)) {
             double score = targetScores.computeScore(t);
             if (score > bestScore) {
                 bestScore = score;
@@ -106,6 +100,9 @@ public class DSAAgent implements DCOPAgent {
         if (Logger.isTraceEnabled()) {
             Logger.trace(Markers.LIGHT_BLUE, "[" + SimpleID.conv(id) + "]  AFTER -> target: " + bestTarget.getValue()
                     + " score: " + bestScore + " " + bestScore);
+        }
+        if (bestTarget == null) {
+            bestTarget = problem.getHighestTargetForAgent(id);
         }
 
         if (bestTarget != targetID) {

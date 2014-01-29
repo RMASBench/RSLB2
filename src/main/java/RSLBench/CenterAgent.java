@@ -199,11 +199,12 @@ public class CenterAgent extends StandardAgent<Building>
                 return newSolver;
             }
 
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
-            Logger.catching(Level.ERROR, ex);
+        } catch (ClassNotFoundException ex) {
+            Logger.fatal("Solver class {} not found!", ex.getMessage());
+        } catch (InstantiationException | IllegalAccessException ex) {
+            Logger.fatal("Unable to instantiate solver {}", ex);
         }
 
-        Logger.error("Unable to initialize solver {}", clazz);
         System.exit(1);
         return null;
     }

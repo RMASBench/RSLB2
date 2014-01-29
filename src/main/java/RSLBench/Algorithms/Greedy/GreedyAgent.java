@@ -5,6 +5,7 @@
 package RSLBench.Algorithms.Greedy;
 
 import RSLBench.Assignment.DCOP.DefaultDCOPAgent;
+import RSLBench.Helpers.Utility.ProblemDefinition;
 import rescuecore2.worldmodel.EntityID;
 
 /**
@@ -12,22 +13,28 @@ import rescuecore2.worldmodel.EntityID;
  * <p/>
  * Keep in mind that this initial assignment can be optimized by the sequential
  * greedy deconflicting procedure.
- * 
+ *
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
 public class GreedyAgent extends DefaultDCOPAgent {
 
     @Override
     public boolean improveAssignment() {
-        double best = Double.NEGATIVE_INFINITY;
+        final ProblemDefinition problem = getProblem();
         final EntityID id = getID();
 
-        for (EntityID target : getProblem().getFireAgentNeighbors(getID())) {
-            double value = getProblem().getFireUtility(id, target);
+        double best = Double.NEGATIVE_INFINITY;
+        for (EntityID target : problem.getFireAgentNeighbors(getID())) {
+            double value = problem.getFireUtility(id, target);
             if (value > best) {
                 best = value;
                 setTarget(target);
             }
+        }
+
+        // This can happen if we have no neighbors
+        if (getTarget() == null) {
+            setTarget(problem.getHighestTargetForAgent(id));
         }
 
         return false;

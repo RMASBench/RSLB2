@@ -17,7 +17,6 @@ import rescuecore2.worldmodel.EntityID;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Collection;
@@ -62,10 +61,6 @@ public class MaxSumAgent implements DCOPAgent {
     private EntityID agentID;
     private EntityID targetID = Assignment.UNKNOWN_TARGET_ID;
     private JMSAgent jMSAgent;
-    private int nFGMessages = 0;
-    private long nFGSentBytes = 0;
-
-    private static HashMap<EntityID, ArrayList<EntityID>> _consideredVariables = new HashMap<>();
 
     /**
      * Get the jMaxSum agent for this MaxSum agent.
@@ -101,10 +96,10 @@ public class MaxSumAgent implements DCOPAgent {
                 allJMSFunctions.add(functionNode);
                 jMSAgent.addFunction(functionNode);
             }
-            functionNode.addNeighbour(variableNode);
             Logger.debug("Added neighbor {} to function {}. Current neighbors: {}",variableNode,functionNode,functionNode.getNeighbour());
             variableNode.addNeighbour(functionNode);
             variableNode.addValue(NodeArgument.getNodeArgument(functionNode.getId()));
+            functionNode.addNeighbour(variableNode);
         }
     }
 
@@ -150,10 +145,13 @@ public class MaxSumAgent implements DCOPAgent {
 
         for (NodeVariable variable : jMSAgent.getVariables()) {
             try {
-                String target = variable.getStateArgument().getValue().toString();
-                targetID = new EntityID(Integer.parseInt(target));
+                targetID = new EntityID((int)variable.getStateArgument().getValue());
             } catch (exception.VariableNotSetException e) {
-                Logger.debug("Agent " + getID() + " unassigned!");
+                if (problemDefinition.getFireAgentNeighbors(getID()).size() > 0) {
+                    Logger.error("Agent {} unassigned even though it has neighbors {}!",
+                            getID(), problemDefinition.getFireAgentNeighbors(getID()));
+                }
+                Logger.debug("Agent {} unassigned.", getID());
                 targetID = problemDefinition.getHighestTargetForAgent(agentID);
             }
         }
@@ -244,7 +242,7 @@ public class MaxSumAgent implements DCOPAgent {
 
             }
         }
-        Logger.trace("Combinations: {}", combinationsMatrix);
+        Logger.trace("Combinations: {}", (Object[])combinationsMatrix);
         return combinationsMatrix;
     }
 
@@ -264,7 +262,6 @@ public class MaxSumAgent implements DCOPAgent {
 
         allJMSVariables.clear();
         allJMSFunctions.clear();
-        _consideredVariables.clear();
         allMaxSumAgents.clear();
     }
 

@@ -358,6 +358,23 @@ public class ProblemDefinition {
             acceptedNeighbors.get(edge.agent).add(edge.fire);
             acceptedNeighbors.get(edge.fire).add(edge.agent);
         }
+
+        // Report unassigned agents/fires
+        int nEmptyFireAgents = 0, nEmptyFires = 0;
+        for (EntityID agent : fireAgents) {
+            if (acceptedNeighbors.get(agent).isEmpty()) {
+                nEmptyFireAgents++;
+            }
+        }
+        for (EntityID fire : fires) {
+            if (acceptedNeighbors.get(fire).isEmpty()) {
+                nEmptyFires++;
+            }
+        }
+        if (nEmptyFireAgents > 0 || nEmptyFires > 0) {
+            Logger.warn("There are {} unlinked fire brigades and {} unlinked fires.",
+                    nEmptyFireAgents, nEmptyFires);
+        }
     }
 
     /**

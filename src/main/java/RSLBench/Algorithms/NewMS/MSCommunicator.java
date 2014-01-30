@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import rescuecore2.misc.Pair;
 
 /**
+ * Communication channel for a Max-Sum agent.
  *
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
@@ -23,7 +24,7 @@ public class MSCommunicator implements Communicator<Identity> {
     private static final Logger Logger = LogManager.getLogger(MSCommunicator.class);
 
     /** Threshold below which messages are considered equal. */
-    public static final double EPSILON = 1e-5;
+    public static final double EPSILON = 1e-5/2.;
 
     private boolean converged;
 

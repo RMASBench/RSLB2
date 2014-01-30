@@ -8,7 +8,6 @@ import RSLBench.Assignment.DCOP.AbstractDCOPAgent;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Comm.Message;
 import RSLBench.Helpers.Utility.ProblemDefinition;
-import es.csic.iiia.ms.Communicator;
 import es.csic.iiia.ms.Variable;
 import es.csic.iiia.ms.functions.CostFunction;
 import es.csic.iiia.ms.functions.CostFunctionFactory;
@@ -17,23 +16,29 @@ import es.csic.iiia.ms.node.FunctionNode;
 import es.csic.iiia.ms.node.Node;
 import es.csic.iiia.ms.node.VariableNode;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
 import rescuecore2.config.Config;
 import rescuecore2.worldmodel.EntityID;
 
 /**
+ * Agent using the (classic) Max-Sum algorithm.
  *
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
 public class MSAgent extends AbstractDCOPAgent {
+    private static final org.apache.logging.log4j.Logger Logger = LogManager.getLogger(MSAgent.class);
 
-    private CostFunctionFactory cfFactory = new CostFunctionFactory();
+    private long nConstraintChecks;
 
-    private Communicator communicator;
+    private CostFunctionFactory cfFactory = new MSCostFunctionFactory();
+    private MSCommunicator communicator = new MSCommunicator();
+
     private VariableNode variableNode;
-    private List<FunctionNode> functionNodes;
-    private Map<Identity, EntityID> nodeLocations;
+    private Map<Identity, EntityID> nodeLocations = new HashMap<>();
+    private Map<Identity, Node> localNodes = new HashMap<>();
 
     private Variable getVariable(EntityID fireAgent) {
         final ProblemDefinition problem = getProblem();
@@ -41,14 +46,13 @@ public class MSAgent extends AbstractDCOPAgent {
         return new Variable(new Identity(fireAgent), nCandidateFires);
     }
 
-    private CostFunction buildFireAgentPotential(EntityID fireAgent) {
+    private CostFunction buildFireAgentPotential(EntityID fireAgent, Variable variable) {
         final ProblemDefinition problem = getProblem();
         final List<EntityID> candidates = problem.getFireAgentNeighbors(fireAgent);
 
         // The potential is a tabular function of just one variable (a vector), with
         // the unary costs of each candidate.
-        Variable v = getVariable(fireAgent);
-        CostFunction potential = cfFactory.buildCostFunction(new Variable[]{v}, 0);
+        CostFunction potential = cfFactory.buildCostFunction(new Variable[]{variable}, 0);
         for (int i=0; i<candidates.size(); i++) {
             final double value = problem.getFireUtility(fireAgent, candidates.get(i));
             potential.setValue(i, value);
@@ -85,7 +89,7 @@ public class MSAgent extends AbstractDCOPAgent {
                 }
             }
 
-            f.setValue(idx, problem.getUtilityPenalty(fire, nActiveCandidates));
+            f.setValue(idx, -problem.getUtilityPenalty(fire, nActiveCandidates));
         }
 
         return f;
@@ -101,8 +105,16 @@ public class MSAgent extends AbstractDCOPAgent {
 
         for (int i=nAgent; i<nFires; i+=nFireAgents) {
             final EntityID fire = fires.get(i);
-            FunctionNode function = new FunctionNode(new Identity(fire), communicator, buildFirePotential(fire));
-            functionNodes.add(function);
+
+            Logger.trace("Creating factor for fire {}, candidates: {}", fire, problem.getFireNeighbors(fire));
+            Identity functionId = new Identity(fire);
+            FunctionNode function = new FunctionNode(functionId, communicator, buildFirePotential(fire));
+            localNodes.put(functionId, function);
+
+            // Link the fire node with all its neighboring agents
+            for (EntityID fireAgent : problem.getFireNeighbors(fire)) {
+                function.addNeighbor(new Identity(fireAgent), getVariable(fireAgent));
+            }
         }
     }
 
@@ -125,13 +137,30 @@ public class MSAgent extends AbstractDCOPAgent {
         }
     }
 
+    private void buildVariableNode() {
+        final EntityID id = getID();
+        final List<EntityID> fires = getProblem().getFireAgentNeighbors(id);
+
+        communicator = new MSCommunicator();
+        Identity variableId = new Identity(id);
+        Variable variable = getVariable(id);
+        CostFunction potential = buildFireAgentPotential(id, variable);
+        Logger.info("Local variable: {}, potential: {}", variable, potential);
+        variableNode = new VariableNode(variableId, communicator, potential);
+        localNodes.put(variableId, variableNode);
+
+        // Link the variable with all its neighbors
+        for (EntityID fire : fires) {
+            variableNode.addNeighbor(new Identity(fire), getVariable(id));
+        }
+    }
+
     @Override
     public void initialize(Config config, EntityID id, ProblemDefinition problem) {
         super.initialize(config, id, problem);
 
         // Create the variable node for this agent
-        communicator = new MSCommunicator();
-        variableNode = new VariableNode(new Identity(id), communicator, buildFireAgentPotential(id));
+        buildVariableNode();
 
         // Create the factor nodes handled by this agent
         buildFactorNodes();
@@ -144,22 +173,76 @@ public class MSAgent extends AbstractDCOPAgent {
 
     @Override
     public boolean improveAssignment() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        final ProblemDefinition problem = getProblem();
+        final EntityID id = getID();
+        final List<EntityID> candidates = problem.getFireAgentNeighbors(id);
+
+        // Let all nodes run
+        nConstraintChecks = 0;
+        for (Node node : localNodes.values()) {
+            nConstraintChecks += node.getBelief().getSize();
+            node.run();
+        }
+
+        // Make a choice
+        if (candidates.isEmpty()) {
+            // If we got no candidates because of pruning, just go to the most preferred fire
+            setTarget(problem.getHighestTargetForAgent(id));
+        } else {
+            // Otherwise make the variable node choose
+            final int choice = variableNode.select();
+            setTarget(candidates.get(choice));
+        }
+
+        return !communicator.isConverged();
     }
 
     @Override
-    public Collection<? extends Message> sendMessages(CommunicationLayer com) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public Collection<MSMessage> sendMessages(CommunicationLayer com) {
+        Collection<MSMessage> messages = communicator.flushMessages();
+
+        // Send them
+        for (MSMessage message : messages) {
+            EntityID recipientAgent = nodeLocations.get(message.recipient);
+            com.send(recipientAgent, message);
+        }
+
+        return messages;
     }
 
     @Override
     public void receiveMessages(Collection<Message> messages) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (messages == null) {
+            return;
+        }
+        for (Message message : messages) {
+            if (message == null) {
+                Logger.warn("Received null message {}", message);
+                continue;
+            }
+            receiveMessage(message);
+        }
+    }
+
+    private void receiveMessage(Message message) {
+        if (!(message instanceof MSMessage)) {
+            throw new IllegalArgumentException("Max-Sum agents msut receive MSMessages only.");
+        }
+
+        MSMessage msg = (MSMessage)message;
+        Node recipientNode = localNodes.get(msg.recipient);
+        if (recipientNode == null) {
+            Logger.error("Agent {} received message {} for the non-local node {}",
+                    getID(), msg, msg.recipient);
+            System.exit(0);
+        }
+
+        recipientNode.receive(msg.message, msg.sender);
     }
 
     @Override
     public long getConstraintChecks() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return nConstraintChecks;
     }
 
 }

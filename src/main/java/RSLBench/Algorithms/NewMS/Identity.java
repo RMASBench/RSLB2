@@ -8,6 +8,7 @@ import java.util.Objects;
 import rescuecore2.worldmodel.EntityID;
 
 /**
+ * Identifies Max-Sum variables and nodes.
  *
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
@@ -52,6 +53,11 @@ public class Identity implements es.csic.iiia.ms.Identity {
             return Integer.compare(id.getValue(), i.id.getValue());
         }
         return Integer.compare(hashCode(), o.hashCode());
+    }
+
+    @Override
+    public String toString() {
+        return id.toString();
     }
 
 }

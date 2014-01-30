@@ -27,7 +27,7 @@ public class MaxSum extends DCOPSolver {
 
     @Override
     public String getIdentifier() {
-        return "MaxSum";
+        return "NewMS";
     }
 
 }

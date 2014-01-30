@@ -121,6 +121,8 @@ public abstract class DCOPSolver extends AbstractSolver {
             }
         }
         Logger.debug("Done with iterations. Needed: " + iterations);
+        Logger.info("{} {}", getIdentifier(), finalAssignment);
+        Logger.info("{} utility: {}", getIdentifier(), getUtility(problem, finalAssignment));
 
         // Run sequential value propagation to make the solution consistent
         Assignment finalGreedy = ranOutOfTime ?

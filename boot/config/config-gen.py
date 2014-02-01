@@ -2,26 +2,28 @@ from __future__ import print_function
 import shutil
 
 def main():
-    run = 'ecai3'
+    run = 'ecai4'
     algos = [
             {'name': 'RSLBench.Algorithms.BMS.BinaryMaxSum', 'time': 300000},
-            {'name': 'RSLBench.Algorithms.MS.MaxSum', 'time': 300000},
+            {'name': 'RSLBench.Algorithms.NewMS.MaxSum', 'time': 300000},
             {'name': 'RSLBench.Algorithms.DSA.DSA', 'time': 300000},
             {'name': 'RSLBench.Algorithms.Greedy.Greedy', 'time': 300000},
     ]
-    ks = ['k2','k3','k4','np']
+    ks = ['k3','k4','k5','np']
     times = [35]
-    areas = ['a150', 'a200']
+    areas = ['a200']
+    greedy = ['yes', 'no']
 
     m = 'paris'
-    for k,t,area in [(k,t,area) for k in ks for t in times for area in areas]:
+    for k,t,area,g in [(k,t,area,g) for k in ks for t in times for area in areas for g in greedy]:
         for a in algos:
             aname = a['name'].split('.')[-1]
 
             if k == 'np' and aname == 'MaxSum':
                 continue
 
-            fname = m + '-' + run + '-' + aname + '-' + k + '-t' + str(t) + '-' + area + '.cfg'
+            fname = m + '-' + run + '-' + aname + '-' + k + '-t' + str(t) + '-' + area \
+                + '-g' + g + '.cfg'
             print(fname)
             shutil.copy(m + '-base.cfg', fname)
             with open(fname, 'a') as f:
@@ -31,6 +33,10 @@ def main():
                 else:
                     kk = int(k[1])
                     prune='true'
+
+                print("# Whether to make a sequential greedy pass through all agents at the end", file=f)
+                print("dcop.greedy_correction: " + g, file=f)
+                print("", file=f)
                 print("# Amount of building area covered by a fire truck", file=f)
                 print("util.fire_brigade_area: " + str(area[1:]), file=f)
                 print("", file=f)
@@ -46,7 +52,7 @@ def main():
                 print("solver.class: " + a['name'], file=f)
                 print("solver.time: " + str(a['time']), file=f)
 
-                bs = [b for b in algos if b != a and (b['name'] != 'RSLBench.Algorithms.MS.MaxSum' or k != 'np')]
+                bs = [b for b in algos if b != a and (b['name'] != 'RSLBench.Algorithms.NewMS.MaxSum' or k != 'np')]
                 for i,b in enumerate(bs):
                     i = i+1
                     print("solver." + str(i) + ".class: " + b['name'], file=f)

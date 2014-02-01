@@ -145,7 +145,7 @@ public class MSAgent extends AbstractDCOPAgent {
         Identity variableId = new Identity(id);
         Variable variable = getVariable(id);
         CostFunction potential = buildFireAgentPotential(id, variable);
-        Logger.info("Local variable: {}, potential: {}", variable, potential);
+        Logger.trace("Local variable: {}, potential: {}", variable, potential);
         variableNode = new VariableNode(variableId, communicator, potential);
         localNodes.put(variableId, variableNode);
 

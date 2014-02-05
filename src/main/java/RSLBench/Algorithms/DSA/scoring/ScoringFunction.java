@@ -4,6 +4,7 @@
  */
 package RSLBench.Algorithms.DSA.scoring;
 
+import RSLBench.Algorithms.DSA.TargetScores;
 import RSLBench.Helpers.Utility.ProblemDefinition;
 import rescuecore2.worldmodel.EntityID;
 
@@ -15,6 +16,6 @@ import rescuecore2.worldmodel.EntityID;
  */
 public interface ScoringFunction {
 
-    public double score(EntityID agent, EntityID target, ProblemDefinition problem, int nAgents);
+    public double score(EntityID agent, EntityID target, TargetScores scores, ProblemDefinition problem, int nAgents);
 
 }

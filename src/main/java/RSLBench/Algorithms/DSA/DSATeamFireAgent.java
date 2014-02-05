@@ -1,6 +1,7 @@
 package RSLBench.Algorithms.DSA;
 
 import RSLBench.Algorithms.DSA.scoring.FireScoringFunction;
+import RSLBench.Algorithms.DSA.scoring.FireTeamScoringFunction;
 import RSLBench.Assignment.Assignment;
 import RSLBench.Helpers.Utility.ProblemDefinition;
 
@@ -15,18 +16,22 @@ import rescuecore2.worldmodel.EntityID;
 /**
  * Fire agent that coordinates using the DSA algorithm to pick a target.
  */
-public class DSAFireAgent extends DSAAbstractAgent {
-    private static final Logger Logger = LogManager.getLogger(DSAFireAgent.class);
+public class DSATeamFireAgent extends DSAAbstractAgent {
+    private static final Logger Logger = LogManager.getLogger(DSATeamFireAgent.class);
 
     @Override
     protected HashSet<EntityID> computeNeighbors() {
         final ProblemDefinition problem = getProblem();
         final EntityID id = getID();
 
-        // The neighbors of this agent are all candidates of all eligible fires
+        // The neighbors of this agent are all candidates of all eligible fires, and all candidates
+        // of all blockades preventing us from reaching some fire
         HashSet<EntityID> neighbors = new HashSet<>();
         for (EntityID fire : problem.getFireAgentNeighbors(id)) {
             neighbors.addAll(problem.getFireNeighbors(fire));
+
+            EntityID blockade = problem.getBlockadeBlockingFireAgent(id, fire);
+            neighbors.addAll(problem.getBlockadeNeighbors(blockade));
         }
         return neighbors;
     }
@@ -37,8 +42,8 @@ public class DSAFireAgent extends DSAAbstractAgent {
     }
 
     @Override
-    protected FireScoringFunction buildScoringFunction() {
-        return new FireScoringFunction();
+    protected FireTeamScoringFunction buildScoringFunction() {
+        return new FireTeamScoringFunction();
     }
 
     @Override

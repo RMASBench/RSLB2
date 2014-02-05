@@ -27,7 +27,6 @@ public abstract class DSAAbstractAgent implements DCOPAgent {
     private ProblemDefinition problem;
     private EntityID id;
     private EntityID target;
-    private Collection<AssignmentMessage> messages;
     private TargetScores targetScores;
     private Config config;
 
@@ -113,30 +112,28 @@ public abstract class DSAAbstractAgent implements DCOPAgent {
 
         // The neighbors of this agent are all candidates of all eligible fires
         neighbors = computeNeighbors();
+        neighbors.remove(id);
 
         // Obtain the list of candidate targets for this agent and choose a random one
         candidateTargets = computeCandidates();
-        target = candidateTargets.get(config.getRandom().nextInt(candidateTargets.size()));
+        if (candidateTargets.size() > 0) {
+            target = candidateTargets.get(config.getRandom().nextInt(candidateTargets.size()));
+        } else {
+            target = Assignment.UNKNOWN_TARGET_ID;
+        }
 
         Logger.debug("Agent {} initialized with {} targets and {} neighboring agents.",
-                id, problem.getFireAgentNeighbors(id).size(), neighbors.size());
+                id, candidateTargets.size(), neighbors.size());
     }
 
     @Override
     public boolean improveAssignment() {
-        targetScores.resetAssignments();
-        for (AssignmentMessage message : messages) {
-            targetScores.increaseAgentCount(message.getTarget());
-        }
-        nCCCs = messages.size();
-
         // Find the best target given utilities and constraints
         EntityID bestTarget = getBestTarget();
         nCCCs += candidateTargets.size();
 
-        Logger.trace("Agent {} had target {} before, now wants {}", id, target, bestTarget);
-
         if (!bestTarget.equals(target)) {
+            Logger.debug("Agent {} had target {} before, now wants {}", id, target, bestTarget);
             if (config.getRandom().nextDouble() <= config.getFloatValue(DSA.KEY_DSA_PROBABILITY)) {
                 Logger.trace("Agent {} passes the dice throw and changes to {}", id, bestTarget);
                 target = bestTarget;
@@ -144,6 +141,7 @@ public abstract class DSAAbstractAgent implements DCOPAgent {
             return true;
         }
 
+        Logger.debug("Agent {} is okay with its decision.", getID());
         return false;
     }
 
@@ -177,10 +175,13 @@ public abstract class DSAAbstractAgent implements DCOPAgent {
 
     @Override
     public void receiveMessages(Collection<Message> messages) {
-        this.messages = new ArrayList<>(messages.size());
+        Logger.trace("ReceiveMessages start, {} messages in queue.", messages.size());
+        targetScores.resetAssignments();
         for (Message m : messages) {
             if (m instanceof AssignmentMessage) {
-                this.messages.add((AssignmentMessage)m);
+                AssignmentMessage message = (AssignmentMessage)m;
+                targetScores.track(message.getAgent(), message.getTarget());
+                nCCCs++;
             }
         }
     }

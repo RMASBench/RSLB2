@@ -16,6 +16,7 @@ import rescuecore2.worldmodel.EntityID;
  */
 public class TargetScores {
     private HashMap<EntityID, Integer> nAssignedAgents;
+    private HashMap<EntityID, EntityID> assignments;
     private ScoringFunction scoringFunction;
     private ProblemDefinition problem;
     private EntityID agent;
@@ -29,10 +30,11 @@ public class TargetScores {
         this.agent = agent;
         this.problem = problem;
         nAssignedAgents = new HashMap<>();
+        assignments = new HashMap<>();
     }
 
     /**
-     * Set the scoring function to use when evaluating targets.
+     * Set the scoring function to use when evaluating targets
      *
      * @param function
      */
@@ -41,16 +43,41 @@ public class TargetScores {
     }
 
     /**
+     * Get the target chosen by this agent.
+     *
+     * @param agent agent whose assignment to get
+     * @return assignment of that agent
+     */
+    public EntityID getAssignment(EntityID agent) {
+        return assignments.get(agent);
+    }
+
+    /**
      * Increases the count of agents that have chosen the specified target.
      * @param target target chosen by some other agent.
      */
-    public void increaseAgentCount(EntityID target) {
+    public void track(EntityID agent, EntityID target) {
+        assignments.put(agent, target);
         Integer count = nAssignedAgents.get(target);
         if (count == null) {
             nAssignedAgents.put(target, 1);
         } else {
             nAssignedAgents.put(target, count+1);
         }
+    }
+
+    /**
+     * Get the number of agents assigned to this target.
+     *
+     * @param target target to consider
+     * @return number of agents assigned to this target
+     */
+    public int getAgentCount(EntityID target) {
+        int nAgents = 0;
+        if (nAssignedAgents.containsKey(target)) {
+            nAgents = nAssignedAgents.get(target);
+        }
+        return nAgents;
     }
 
     /**
@@ -65,13 +92,8 @@ public class TargetScores {
      * @return utility for this agent to pick the given target.
      */
     public double computeScore(EntityID target) {
-        // Get the number of *other* agents that have already chosen this target
-        int nAgents = 0;
-        if (nAssignedAgents.containsKey(target)) {
-            nAgents = nAssignedAgents.get(target);
-        }
-
-        return scoringFunction.score(agent, target, problem, nAgents);
+        int nAgents = getAgentCount(target);
+        return scoringFunction.score(agent, target, this, problem, nAgents);
     }
 
     /**
@@ -99,5 +121,7 @@ public class TargetScores {
      */
     public void resetAssignments() {
         nAssignedAgents.clear();
+        assignments.clear();
     }
+
 }

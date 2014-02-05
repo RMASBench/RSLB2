@@ -17,7 +17,7 @@ import rescuecore2.worldmodel.EntityID;
  *
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
-public class DSAPoliceAgent extends DSAAbstractAgent {
+public class DSATeamPoliceAgent extends DSAAbstractAgent {
 
     @Override
     protected HashSet<EntityID> computeNeighbors() {

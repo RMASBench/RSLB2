@@ -31,6 +31,8 @@ public class DSA extends DCOPSolver {
         switch(type) {
             case FIRE_BRIGADE:
                 return new DSAFireAgent();
+            case POLICE_FORCE:
+                return new DSAPoliceAgent();
             default:
                 throw new UnsupportedOperationException("The DSA solver does not support agents of type " + type);
         }

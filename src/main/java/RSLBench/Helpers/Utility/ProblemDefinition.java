@@ -403,6 +403,34 @@ public class ProblemDefinition {
     }
 
     /**
+     * Get the neighboring fires of thie given firefighter agent.
+     * @param fireAgent firefigter agent whose neighbors to retrieve.
+     * @return the list of neighbors if the problem has been pruned, or the full list of fires.
+     */
+    public List<EntityID> getPoliceAgentNeighbors(EntityID policeAgent) {
+        if (acceptedNeighbors.isEmpty()) {
+            return Collections.unmodifiableList(blockades);
+        }
+        // TODO: implement this
+        throw new UnsupportedOperationException("Not implemented yet.");
+        //return acceptedNeighbors.get(policeAgent);
+    }
+
+    /**
+     * Get the neighboring fires of thie given firefighter agent.
+     * @param fireAgent firefigter agent whose neighbors to retrieve.
+     * @return the list of neighbors if the problem has been pruned, or the full list of fires.
+     */
+    public List<EntityID> getBlockadeNeighbors(EntityID blockade) {
+        if (acceptedNeighbors.isEmpty()) {
+            return Collections.unmodifiableList(policeAgents);
+        }
+        // TODO: implement this
+        throw new UnsupportedOperationException("Not implemented yet.");
+        //return acceptedNeighbors.get(blockade);
+    }
+
+    /**
      * Returns the N fires with the highest utility for the given agent.
      *
      * @param N: the number of targets to be returned

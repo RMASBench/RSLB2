@@ -36,6 +36,8 @@
  */
 package RSLBench.Algorithms.BMS;
 
+import RSLBench.Algorithms.BMS.factor.BMSSelectorFactor;
+import RSLBench.Algorithms.BMS.factor.BMSCardinalityFactor;
 import java.util.Collection;
 import java.util.ArrayList;
 
@@ -46,15 +48,14 @@ import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
-import es.csic.iiia.maxsum.factors.CardinalityFactor;
 
 import es.csic.iiia.maxsum.Factor;
 import es.csic.iiia.maxsum.MaxOperator;
 import es.csic.iiia.maxsum.Maximize;
-import es.csic.iiia.maxsum.factors.SelectorFactor;
 import es.csic.iiia.maxsum.factors.cardinality.CardinalityFunction;
 import es.csic.iiia.maxsum.factors.WeightingFactor;
 import java.util.HashMap;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.config.Config;
@@ -69,7 +70,7 @@ public class BMSFireAgent implements DCOPAgent {
 
     private EntityID id;
     private ProblemDefinition problem;
-    private SelectorFactor<NodeID> variableNode;
+    private BMSSelectorFactor<NodeID> variableNode;
     private HashMap<NodeID, Factor<NodeID>> factors;
     private HashMap<NodeID, EntityID> factorLocations;
     private RSLBenchCommunicationAdapter communicationAdapter;
@@ -121,7 +122,7 @@ public class BMSFireAgent implements DCOPAgent {
      * Creates a selector node for the agent's "variable".
      */
     private void addSelectorNode() {
-        this.variableNode = new SelectorFactor<>();
+        this.variableNode = new BMSSelectorFactor<>();
 
         // The agent's factor is the selector plus the independent utilities
         // of this agent for each fire.
@@ -135,7 +136,7 @@ public class BMSFireAgent implements DCOPAgent {
             // ... and populate the utilities
             double value = problem.getFireUtility(id, fire);
             if (problem.isFireAgentBlocked(id, fire)) {
-                value -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
+                value -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_FIRE_PENALTY);
             }
 
             agentFactor.setPotential(fireID, value);
@@ -170,7 +171,7 @@ public class BMSFireAgent implements DCOPAgent {
             final NodeID fireID = new NodeID(null, fire);
 
             // Build the utility node
-            CardinalityFactor<NodeID> f = new CardinalityFactor<>();
+            BMSCardinalityFactor<NodeID> f = new BMSCardinalityFactor<>();
 
             // Set the maximum number of agents that should be attending this
             // fire
@@ -236,12 +237,15 @@ public class BMSFireAgent implements DCOPAgent {
         }
 
         // Now extract our choice
-        NodeID target = variableNode.select();
-        if (variableNode.getNeighbors().isEmpty()) {
-            // If the agent has no candidate fires (due to pruning) just send her to the nearest
-            // fire
+        final List<EntityID> candidateFires = problem.getFireAgentNeighbors(id);
+        if (candidateFires.isEmpty()) {
+            // If the agent has no candidate fires just send her to the nearest fire
             targetId = problem.getHighestTargetForAgent(id);
-        } else if (target == null || target.target == null) {
+            return false;
+        }
+
+        NodeID target = variableNode.select();
+        if (target == null || target.target == null) {
             // If it has candidates but chose none, this is an error
             Logger.error("Agent {} chose no target! Candidates: {}", id, problem.getFireAgentNeighbors(id));
             System.exit(1);

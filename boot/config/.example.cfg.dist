@@ -19,12 +19,8 @@ agent.only_assigned: true
 # agents.search.class: RSLBench.Search.AStar
 agent.search.class: RSLBench.Search.BreadthFirstSearch
 
-# Whether police forces remove blockades that prevent them from
-# reaching their actual assigned blockade.
-police.clear.pathblocks: false
-
 # Whether to perform interteam coordination or not
-agent.interteam: false
+agent.interteam: true
 
 
 #########################################
@@ -32,7 +28,7 @@ agent.interteam: false
 #########################################
 
 # Utility function to use
-util.class: RSLBench.Helpers.Utility.SecondUtilityFunction
+util.class: RSLBench.Helpers.Utility.ThirdUtilityFunction
 
 # Trade-off between building utility and distance utility
 # The bigger the value the bigger the influence of distance.
@@ -41,26 +37,31 @@ util.trade_off: 10
 # Area covered by a single fire brigade.
 # This is the major parameter when deciding the maximum number of agents
 # to assign to a single fire.
-util.fire_brigade_area: 100
+util.fire_brigade_area: 200
 
-# Penalty applied to blocked target fires (use only in conjunction 
-# with the BlockadesUtilityFunction)
-util.blockade.penalty: 100
+# Penalty applied to blocked target fires (M in the paper)
+util.blockade.fire_penalty: 100
+
+# Penalty applied to blocked target blockades (Q in the paper)
+util.blockade.police_penalty: 50
 
 # Hysteresis factor to prevent target switching due to pathing issues
 # The higher the factor, the higher the stickiness.
-util.hysteresis: 1
+util.hysteresis: 1.1
 
 # Parameters for the workload model.
 # Whenever a fire with a required number of agents M gets
 # N assigned agents and N>M, then there is a utility penalty
 # of k*(N-M)^alpha
 util.k: 2
-util.alpha: 2
+util.alpha: 1.4
 
 #########################################
 # EXPERIMENT SETTINGS
 #########################################
+
+# Path to the results folder
+results.path: results/
 
 # When should agents start acting
 experiment.start_time: 23
@@ -91,13 +92,13 @@ dcop.anytime: yes
 dcop.greedy_correction: yes
 
 # Fully qualified class of the solver
-solver.class: RSLBench.Algorithms.MS.MaxSum
-solver.time: 3000
+solver.class: RSLBench.Algorithms.BMS.BinaryMaxSum
+solver.time: 1000
 
 # Additional solvers to test
 # Warning: the numbers must be in sequence!
-solver.1.class: RSLBench.Algorithms.BMS.BinaryMaxSum
-solver.1.time: 1000
+solver.1.class: RSLBench.Algorithms.NewMS.MaxSum
+solver.1.time: 3000
 solver.2.class: RSLBench.Algorithms.DSA.DSA
 solver.2.time: 500
 solver.3.class: RSLBench.Algorithms.Random.Random
@@ -107,9 +108,11 @@ solver.4.time: 100
 solver.5.class: RSLBench.Algorithms.Closest.Closest
 solver.5.time: 100
 
-# Path to the results folder
-results.path: results/
 
-# DSA and DSAFactorgraph probability of change
+#########################################
+# ALGORITHM-SPECIFIC SETTINGS
+#########################################
+
+# DSA probability of change
 dsa.probability: 0.6
 

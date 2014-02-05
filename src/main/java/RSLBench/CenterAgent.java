@@ -21,7 +21,6 @@ import RSLBench.Helpers.Utility.UtilityFactory;
 import RSLBench.Helpers.Utility.ProblemDefinition;
 import java.util.Iterator;
 import java.util.UUID;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.worldmodel.WorldModel;
@@ -241,8 +240,8 @@ public class CenterAgent extends StandardAgent<Building>
         }
 
         // Simulation termination conditions
-        if (burning.isEmpty() && blockades.isEmpty()) {
-            Logger.info("All fires extinguished and blockades removed. Good job!");
+        if (burning.isEmpty()) {// && blockades.isEmpty()) {
+            Logger.info("All fires extinguished. Good job!");
             System.exit(0);
         }
 

@@ -36,6 +36,7 @@
  */
 package RSLBench.Algorithms.BMS;
 
+import RSLBench.Algorithms.BMS.factor.BMSAtMostOneFactor;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,7 +44,6 @@ import java.util.HashMap;
 import es.csic.iiia.maxsum.Factor;
 import es.csic.iiia.maxsum.MaxOperator;
 import es.csic.iiia.maxsum.Maximize;
-import es.csic.iiia.maxsum.factors.AtMostOneFactor;
 import es.csic.iiia.maxsum.factors.WeightingFactor;
 
 import org.apache.logging.log4j.LogManager;
@@ -58,7 +58,6 @@ import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
-import RSLBench.PlatoonPoliceAgent;
 
 /**
  * This is a binary max-sum police agent.
@@ -68,12 +67,11 @@ public class BMSPoliceAgent implements DCOPAgent {
 
     private static final MaxOperator MAX_OPERATOR = new Maximize();
 
-    private boolean POLICE_CLEAR_PATHBLOCKS;
     private double BLOCKED_PENALTY;
 
     private EntityID id;
     private ProblemDefinition problem;
-    private AtMostOneFactor<NodeID> variableNode;
+    private BMSAtMostOneFactor<NodeID> variableNode;
     private HashMap<NodeID, Factor<NodeID>> factors;
     private HashMap<NodeID, EntityID> factorLocations;
     private RSLBenchCommunicationAdapter communicationAdapter;
@@ -90,10 +88,8 @@ public class BMSPoliceAgent implements DCOPAgent {
     public void initialize(Config config, EntityID agentID, ProblemDefinition problem) {
         Logger.trace("Initializing agent {}", agentID);
 
-        POLICE_CLEAR_PATHBLOCKS = problem.getConfig().getBooleanValue(
-                PlatoonPoliceAgent.KEY_CLEAR_PATHBLOCKS);
         BLOCKED_PENALTY = problem.getConfig().getFloatValue(
-                Constants.KEY_BLOCKED_PENALTY);
+                Constants.KEY_BLOCKED_FIRE_PENALTY);
 
         this.id = agentID;
         this.targetId = null;
@@ -130,7 +126,7 @@ public class BMSPoliceAgent implements DCOPAgent {
      * Creates a selector node for the agent's "variable".
      */
     private void addPoliceFactor() {
-        this.variableNode = new AtMostOneFactor<>();
+        this.variableNode = new BMSAtMostOneFactor<>();
 
         // The agent's factor is the selector plus the independent utilities
         // of this agent for each blockade.
@@ -144,7 +140,7 @@ public class BMSPoliceAgent implements DCOPAgent {
             // ... and populate the utilities
             double value = problem.getPoliceUtility(id, blockade);
             if (problem.isPoliceAgentBlocked(id, blockade)) {
-                value -= POLICE_CLEAR_PATHBLOCKS ? BLOCKED_PENALTY/2 : BLOCKED_PENALTY;
+                value -= BLOCKED_PENALTY;
             }
             agentFactor.setPotential(blockadeID, value);
 
@@ -179,7 +175,7 @@ public class BMSPoliceAgent implements DCOPAgent {
             final EntityID blockade = blockades.get(i);
 
             // Build the factor node
-            AtMostOneFactor<NodeID> f = new AtMostOneFactor<>();
+            BMSAtMostOneFactor<NodeID> f = new BMSAtMostOneFactor<>();
 
             // Link the blockade with all agents
             for (EntityID agent : agents) {

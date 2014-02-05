@@ -336,6 +336,7 @@ public class ProblemDefinition {
             }
         }
         Collections.sort(edges, Collections.reverseOrder());
+        //Collections.shuffle(edges, config.getRandom());
 
         // Boilerplate: initialize the map of accepted neighbors to avoid creating lists within
         // the following loop

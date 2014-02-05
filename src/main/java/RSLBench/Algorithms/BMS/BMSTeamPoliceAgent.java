@@ -36,6 +36,8 @@
  */
 package RSLBench.Algorithms.BMS;
 
+import RSLBench.Algorithms.BMS.factor.BMSConditionedSelectorFactor;
+import RSLBench.Algorithms.BMS.factor.BMSVariableFactor;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,8 +46,6 @@ import es.csic.iiia.maxsum.factors.AtMostOneFactor;
 import es.csic.iiia.maxsum.Factor;
 import es.csic.iiia.maxsum.MaxOperator;
 import es.csic.iiia.maxsum.Maximize;
-import es.csic.iiia.maxsum.factors.CompositeIndependentFactor;
-import es.csic.iiia.maxsum.factors.IndependentFactor;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,9 +59,7 @@ import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
-import RSLBench.PlatoonPoliceAgent;
-import es.csic.iiia.maxsum.factors.ConditionedSelectorFactor;
-import es.csic.iiia.maxsum.factors.VariableFactor;
+import es.csic.iiia.maxsum.factors.WeightingFactor;
 import rescuecore2.misc.Pair;
 
 /**
@@ -73,7 +71,6 @@ public class BMSTeamPoliceAgent implements DCOPAgent {
     private static final MaxOperator MAX_OPERATOR = new Maximize();
 
     // Configuration settings
-    private boolean POLICE_CLEAR_PATHBLOCKS;
     private double BLOCKED_PENALTY;
 
     private EntityID id;
@@ -95,10 +92,7 @@ public class BMSTeamPoliceAgent implements DCOPAgent {
     public void initialize(Config config, EntityID agentID, ProblemDefinition problem) {
         Logger.trace("Initializing agent {}", agentID);
 
-        POLICE_CLEAR_PATHBLOCKS = problem.getConfig().getBooleanValue(
-                PlatoonPoliceAgent.KEY_CLEAR_PATHBLOCKS);
-        BLOCKED_PENALTY = problem.getConfig().getFloatValue(
-                Constants.KEY_BLOCKED_PENALTY);
+        BLOCKED_PENALTY = problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_POLICE_PENALTY);
 
         this.id = agentID;
         this.targetId = null;
@@ -139,11 +133,7 @@ public class BMSTeamPoliceAgent implements DCOPAgent {
 
         // The agent's factor is the selector plus the independent utilities
         // of this agent for each blockade.
-        CompositeIndependentFactor<NodeID> agentFactor = new CompositeIndependentFactor<>();
-        agentFactor.setInnerFactor(variableNode);
-
-        IndependentFactor<NodeID> utils = new IndependentFactor<>();
-        agentFactor.setIndependentFactor(utils);
+        WeightingFactor<NodeID> agentFactor = new WeightingFactor<>(variableNode);
         for (EntityID blockade : problem.getBlockades()) {
             NodeID blockadeID = new NodeID(blockade, null);
             // Link the agent to each fire
@@ -152,9 +142,9 @@ public class BMSTeamPoliceAgent implements DCOPAgent {
             // ... and populate the utilities
             double value = problem.getPoliceUtility(id, blockade);
             if (problem.isPoliceAgentBlocked(id, blockade)) {
-                value -= POLICE_CLEAR_PATHBLOCKS ? BLOCKED_PENALTY/2 : BLOCKED_PENALTY;
+                value -= BLOCKED_PENALTY;
             }
-            utils.setPotential(blockadeID, value);
+            agentFactor.setPotential(blockadeID, value);
 
             Logger.trace("Utility for {}: {}", new Object[]{blockade, value});
         }
@@ -176,32 +166,32 @@ public class BMSTeamPoliceAgent implements DCOPAgent {
      *
      **/
     private void addBlockadeFactors() {
-        ArrayList<EntityID> agents = problem.getPoliceAgents();
+        ArrayList<EntityID> policeAgents = problem.getPoliceAgents();
         ArrayList<EntityID> blockades  = problem.getBlockades();
-        final int nAgents = agents.size();
+        final int nAgents = policeAgents.size();
         final int nBlockades = blockades.size();
-        final int nAgent = agents.indexOf(id);
+        final int nAgent = policeAgents.indexOf(id);
 
         // Iterate over the blockades whose factors must run within this agent
         for (int i = nAgent; i < nBlockades; i += nAgents) {
             final EntityID blockade = blockades.get(i);
 
             // Build the factor node
-            ConditionedSelectorFactor<NodeID> f = new ConditionedSelectorFactor<>();
+            BMSConditionedSelectorFactor<NodeID> f = new BMSConditionedSelectorFactor<>();
             NodeID cVariableID = new NodeID(null, blockade);
             f.addNeighbor(cVariableID);
             f.setConditionNeighbor(cVariableID);
 
-            // Link the blockade with all agents
-            for (EntityID agent : agents) {
-                f.addNeighbor(new NodeID(agent, null));
+            // Link the blockade with all police agents
+            for (EntityID policeAgent : policeAgents) {
+                f.addNeighbor(new NodeID(policeAgent, null));
             }
 
             // Add the factor to this agent
             addFactor(new NodeID(blockade, null), f);
 
             // ... And now create the coordination variable for this blockade
-            VariableFactor<NodeID> cVariable = new VariableFactor<>();
+            BMSVariableFactor<NodeID> cVariable = new BMSVariableFactor<>();
             cVariable.addNeighbor(new NodeID(blockade, null));
             // Link with the firefighters nodes
             for (Pair<EntityID, EntityID> entry : problem.getFireAgentsBlockedByBlockade(blockade)) {

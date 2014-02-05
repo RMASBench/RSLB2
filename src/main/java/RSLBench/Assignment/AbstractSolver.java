@@ -157,8 +157,11 @@ public abstract class AbstractSolver implements Solver
         if (solution == null) {
             return Double.NaN;
         }
+
+        final double POLICE_PENALTY = problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_POLICE_PENALTY);
+        final double FIRE_PENALTY = problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_FIRE_PENALTY);
+
         double utility = 0;
-        boolean POLICE_CLEAR_PATHBLOCKS = problem.getConfig().getBooleanValue(PlatoonPoliceAgent.KEY_CLEAR_PATHBLOCKS);
 
         HashSet<EntityID> blockadesAttended = new HashSet<>();
         // Add individual police utilities
@@ -169,10 +172,8 @@ public abstract class AbstractSolver implements Solver
             }
 
             utility += problem.getPoliceUtility(agent, target);
-            if (problem.isPoliceAgentBlocked(agent, target)
-                    && !POLICE_CLEAR_PATHBLOCKS) {
-                double p = problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
-                utility -= POLICE_CLEAR_PATHBLOCKS ? p/2 : p;
+            if (problem.isPoliceAgentBlocked(agent, target)) {
+                utility -= POLICE_PENALTY;
             }
 
             // Track assignments and violations
@@ -188,21 +189,23 @@ public abstract class AbstractSolver implements Solver
         for (EntityID agent : problem.getFireAgents()) {
             EntityID target = solution.getAssignment(agent);
 
-            // Individual utility (possibly penalized if blocked and not attended)
+            // Individual utility
             utility += problem.getFireUtility(agent, target);
-            if (problem.isFireAgentBlocked(agent, target)) {
-                if (!(interteam && blockadesAttended.contains(problem.getBlockadeBlockingFireAgent(agent, target)))) {
-                    utility -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
+
+            // Penalized if interteam mode is enabled and the relevant blockade is not attended
+            if (interteam && problem.isFireAgentBlocked(agent, target)) {
+                EntityID blockade = problem.getBlockadeBlockingFireAgent(agent, target);
+                if (!blockadesAttended.contains(blockade)) {
+                    utility -= FIRE_PENALTY;
                 }
             }
 
             // Add 1 to the target count
-            int nAgents = nAgentsPerTarget.containsKey(target)
-                    ? nAgentsPerTarget.get(target) : 0;
-            nAgentsPerTarget.put(target, nAgents+1);
+            Integer nAgents = nAgentsPerTarget.get(target);
+            nAgentsPerTarget.put(target, nAgents == null ? 1 : nAgents+1);
         }
 
-        // Penalize overassignments of agents to fires
+        // Finally penalize overassignments of agents to fires
         for (EntityID target : nAgentsPerTarget.keySet()) {
             int assigned = nAgentsPerTarget.get(target);
             utility -= problem.getUtilityPenalty(target, assigned);

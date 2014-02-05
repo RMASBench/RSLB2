@@ -1,6 +1,5 @@
 package RSLBench.Algorithms.DSA;
 
-import RSLBench.Assignment.DCOP.TargetScores;
 import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Comm.Message;
@@ -23,9 +22,9 @@ import rescuecore2.worldmodel.EntityID;
  * Class that implements the DSA algorithm according to the RMASBench
  * specification.
  */
-public class DSAAgent implements DCOPAgent {
+public class DSAFireAgent implements DCOPAgent {
 
-    private static final Logger Logger = LogManager.getLogger(DSAAgent.class);
+    private static final Logger Logger = LogManager.getLogger(DSAFireAgent.class);
     private ProblemDefinition problem = null;
     private EntityID id;
     private EntityID targetID;

@@ -30,7 +30,7 @@ public class DSA extends DCOPSolver {
     protected DCOPAgent buildAgent(StandardEntityURN type) {
         switch(type) {
             case FIRE_BRIGADE:
-                return new DSAAgent();
+                return new DSAFireAgent();
             default:
                 throw new UnsupportedOperationException("The DSA solver does not support agents of type " + type);
         }

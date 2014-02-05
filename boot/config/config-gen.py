@@ -2,7 +2,7 @@ from __future__ import print_function
 import shutil
 
 def main():
-    run = 'ecai4'
+    run = 'ecai5'
     algos = [
             {'name': 'RSLBench.Algorithms.BMS.BinaryMaxSum', 'time': 300000},
             {'name': 'RSLBench.Algorithms.NewMS.MaxSum', 'time': 300000},

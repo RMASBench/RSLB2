@@ -1,4 +1,4 @@
-package RSLBench.Assignment.DCOP;
+package RSLBench.Algorithms.DSA;
 
 import RSLBench.Helpers.Utility.ProblemDefinition;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ import rescuecore2.worldmodel.EntityID;
  * chosen by the other agents.
  */
 public class TargetScores {
-    private HashMap<EntityID, Integer> _numAssignedAgents;
+    private HashMap<EntityID, Integer> nAssignedAgents;
     private ProblemDefinition utilities;
     private EntityID agent;
 
@@ -22,7 +22,7 @@ public class TargetScores {
      * @param utilities problem scenario in terms of utility.
      */
     public TargetScores(EntityID agent, ProblemDefinition utilities) {
-        _numAssignedAgents = new HashMap<>();
+        nAssignedAgents = new HashMap<>();
         this.utilities = utilities;
         this.agent = agent;
     }
@@ -32,11 +32,11 @@ public class TargetScores {
      * @param target target chosen by some other agent.
      */
     public void increaseAgentCount(EntityID target) {
-        Integer count = _numAssignedAgents.get(target);
+        Integer count = nAssignedAgents.get(target);
         if (count == null) {
-            _numAssignedAgents.put(target, 1);
+            nAssignedAgents.put(target, 1);
         } else {
-            _numAssignedAgents.put(target, count+1);
+            nAssignedAgents.put(target, count+1);
         }
     }
 
@@ -54,8 +54,8 @@ public class TargetScores {
     public double computeScore(EntityID target) {
         // Get the number of *other* agents that have already chosen this target
         int nAgents = 0;
-        if (_numAssignedAgents.containsKey(target)) {
-            nAgents = _numAssignedAgents.get(target);
+        if (nAssignedAgents.containsKey(target)) {
+            nAgents = nAssignedAgents.get(target);
         }
 
         // Now get the utility penalty if this agent *also* chooses that target
@@ -70,7 +70,7 @@ public class TargetScores {
      * Resets this object (clears all choices of the neighboring agents).
      */
     public void resetAssignments() {
-        Iterator<Entry<EntityID, Integer>> it = _numAssignedAgents.entrySet().iterator();
+        Iterator<Entry<EntityID, Integer>> it = nAssignedAgents.entrySet().iterator();
         while (it.hasNext()) {
             Entry<EntityID, Integer> pair = it.next();
             pair.setValue(0);

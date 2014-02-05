@@ -37,8 +37,11 @@ public class Constants {
     /** Alpha value to use in the workload model */
     public static final String KEY_UTIL_ALPHA = "util.alpha";
 
-    /** Key to the penalty applied when a target fire is blocked */
-    public static final String KEY_BLOCKED_PENALTY = "util.blockade.penalty";
+    /** Key to the penalty applied when a target fire is blocked (M) */
+    public static final String KEY_BLOCKED_FIRE_PENALTY = "util.blockade.fire_penalty";
+
+    /** Key to the penalty applied when a target blockade is blocked (Q) */
+    public static final String KEY_BLOCKED_POLICE_PENALTY = "util.blockade.police_penalty";
 
     /**
      * when true and there is no target assigned by the station, the agent

@@ -9,7 +9,6 @@ import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Assignment.DCOP.DCOPSolver;
 import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
-import RSLBench.PlatoonPoliceAgent;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,12 +26,10 @@ public class BinaryMaxSum extends DCOPSolver {
     public List<String> getUsedConfigurationKeys() {
         List<String> result = super.getUsedConfigurationKeys();
         result.add(Constants.KEY_INTERTEAM_COORDINATION);
-        result.add(Constants.KEY_BLOCKED_PENALTY);
-        result.add(PlatoonPoliceAgent.KEY_CLEAR_PATHBLOCKS);
+        result.add(Constants.KEY_BLOCKED_FIRE_PENALTY);
+        result.add(Constants.KEY_BLOCKED_POLICE_PENALTY);
         return result;
     }
-
-
 
     @Override
     protected DCOPAgent buildAgent(StandardEntityURN type) {

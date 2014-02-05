@@ -11,7 +11,6 @@ import RSLBench.Helpers.Logging.Markers;
 import RSLBench.Helpers.Utility.ProblemDefinition;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import rescuecore2.standard.entities.FireBrigade;
 import rescuecore2.standard.entities.StandardEntity;
 import rescuecore2.standard.entities.StandardEntityURN;
 
@@ -115,33 +114,44 @@ public abstract class DCOPSolver extends AbstractSolver {
                 break;
             }
 
-            if (assignmentUtility > bestAssignmentUtility) {
+            Logger.trace("Assignment util: {}, values: ", assignmentUtility, finalAssignment);
+            if (assignmentUtility > bestAssignmentUtility || Double.isInfinite(bestAssignmentUtility)) {
                 bestAssignmentUtility = assignmentUtility;
                 bestAssignment = finalAssignment;
             }
         }
         Logger.debug("Done with iterations. Needed: " + iterations);
 
-        // Run sequential value propagation to make the solution consistent
-        Assignment finalGreedy = ranOutOfTime ?
-                finalAssignment : greedyImprovement(problem, finalAssignment);
-        double finalAssignmentU = getUtility(problem, finalAssignment);
-        double finalGreedyU = getUtility(problem, finalGreedy);
-        if (finalAssignmentU > finalGreedyU) {
+        // Recompute this because its not saved from the solving loop
+        double finalAssignmentUtility = getUtility(problem, finalAssignment);
+
+        // Perform greedy improvement on the latest assignment if time permits
+        Assignment finalGreedy = finalAssignment;
+        double finalGreedyU = finalAssignmentUtility;
+        if (!ranOutOfTime) {
+                 finalGreedy = greedyImprovement(problem, finalAssignment);
+                 finalGreedyU = getUtility(problem, finalGreedy);
+        }
+        // saftey check, because this should never happen
+        if (finalAssignmentUtility > finalGreedyU) {
             Logger.error("Final assignment utility went from {} to {}",
-                    finalAssignmentU, finalGreedyU);
+                    finalAssignmentUtility, finalGreedyU);
         }
 
         Logger.trace("{} final {}", getIdentifier(), finalAssignment);
-        Logger.trace("{} utility: {}", getIdentifier(), finalAssignmentU);
+        Logger.trace("{} utility: {}", getIdentifier(), finalAssignmentUtility);
 
-        Assignment bestGreedy = ranOutOfTime ?
-                bestAssignment : greedyImprovement(problem, bestAssignment);
-        double bestAssignmentU = getUtility(problem, bestAssignment);
-        double bestGreedyU = getUtility(problem, bestGreedy);
-        if (bestAssignmentU > bestGreedyU) {
+        // Perform greedy improvement on the anytime best assignment if time permits
+        Assignment bestGreedy = bestAssignment;
+        double bestGreedyU = bestAssignmentUtility;
+        if (!ranOutOfTime) {
+            bestGreedy = greedyImprovement(problem, bestAssignment);
+            bestGreedyU = getUtility(problem, bestGreedy);
+        }
+        // saftey check, because this should never happen
+        if (bestAssignmentUtility > bestGreedyU) {
             Logger.error("Greedy improvement lowered utility from {} to {}",
-                    bestAssignmentU, bestGreedyU);
+                    bestAssignmentUtility, bestGreedyU);
         }
 
         long algBMessages = bMessages;
@@ -162,8 +172,8 @@ public abstract class DCOPSolver extends AbstractSolver {
         stats.report("MessageBytes", bMessages);
         stats.report("OtherNum", nOtherMessages);
         stats.report("OtherBytes", bOtherMessages);
-        stats.report("final", finalAssignmentU);
-        stats.report("best", bestAssignmentU);
+        stats.report("final", finalAssignmentUtility);
+        stats.report("best", bestAssignmentUtility);
         if (!ranOutOfTime) {
             stats.report("final_greedy", finalGreedyU);
             stats.report("best_greedy", bestGreedyU);
@@ -230,54 +240,41 @@ public abstract class DCOPSolver extends AbstractSolver {
      *
      * @param initial current assignment.
      */
-    public Assignment greedyImprovement(ProblemDefinition utility,
+    public Assignment greedyImprovement(ProblemDefinition problem,
             Assignment initial)
     {
-        Logger.debug("Initiating greedy improvement. Initial value {}", getUtility(utility, initial));
-        Assignment assignment = new Assignment(initial);
-        for (DCOPAgent agent : agents) {
-            StandardEntity e = utility.getWorld().getEntity(agent.getID());
-            if (!(e instanceof FireBrigade)) {
-                continue;
-            }
-            final EntityID agentID = agent.getID();
+        Assignment result = new Assignment(initial);
+        double bestUtility = getUtility(problem, initial);
+        Logger.debug("Initiating greedy improvement. Initial value {}", bestUtility);
 
-            // Consider previous assignments
-            TargetScores scores = new TargetScores(agentID, utility);
-            for (EntityID a : assignment.getAgents()) {
-                if (!a.equals(agentID)) {
-                    scores.increaseAgentCount(assignment.getAssignment(a));
+        // Allow each fire agent to try to improve
+        for (EntityID fireAgent : problem.getFireAgents()) {
+            Assignment tested = new Assignment(result);
+            for (EntityID fire : problem.getFires()) {
+                tested.assign(fireAgent, fire);
+                double utility = getUtility(problem, tested);
+                if (utility > bestUtility) {
+                    result.assign(fireAgent, fire);
+                    bestUtility = utility;
                 }
             }
-
-            // Compute the best target for ourselves
-            EntityID bestTarget = assignment.getAssignment(agentID);
-            double bestScore = scores.computeScore(bestTarget);
-            for (EntityID t : utility.getFires()) {
-                double score = scores.computeScore(t);
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestTarget = t;
-                }
-            }
-
-            EntityID initialTarget = assignment.getAssignment(agentID);
-            if (!bestTarget.equals(initialTarget)) {
-                if (Logger.isDebugEnabled()) {
-                    Assignment tmp = new Assignment(assignment);
-                    tmp.assign(agentID, bestTarget);
-                    Logger.debug("Agent {} switch: {} ({}) -> {} ({}) | Util from {} to {}", agentID,
-                        initialTarget, scores.computeScore(initialTarget),
-                        bestTarget, scores.computeScore(bestTarget),
-                        getUtility(utility, assignment),
-                        getUtility(utility, tmp));
-                }
-            }
-
-            assignment.assign(agentID, bestTarget);
         }
 
-        return assignment;
+        // Allow each police agent to try to improve
+        for (EntityID police : problem.getPoliceAgents()) {
+            Assignment tested = new Assignment(result);
+            for (EntityID blockade : problem.getBlockades()) {
+                tested.assign(police, blockade);
+                double utility = getUtility(problem, tested);
+                if (utility > bestUtility) {
+                    result.assign(police, blockade);
+                    bestUtility = utility;
+                }
+            }
+        }
+
+        Logger.debug("Finished greedy improvement. Final value {}", bestUtility);
+        return result;
     }
 
 }

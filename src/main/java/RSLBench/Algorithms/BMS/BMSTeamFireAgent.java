@@ -36,6 +36,10 @@
  */
 package RSLBench.Algorithms.BMS;
 
+import RSLBench.Algorithms.BMS.factor.BMSCardinalityFactor;
+import RSLBench.Algorithms.BMS.factor.BMSSelectorFactor;
+import RSLBench.Algorithms.BMS.factor.BMSStandardFactor;
+import RSLBench.Algorithms.BMS.factor.BMSVariableFactor;
 import java.util.Collection;
 import java.util.ArrayList;
 
@@ -46,15 +50,11 @@ import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
-import es.csic.iiia.maxsum.factors.CardinalityFactor;
 
 import es.csic.iiia.maxsum.Factor;
 import es.csic.iiia.maxsum.MaxOperator;
 import es.csic.iiia.maxsum.Maximize;
-import es.csic.iiia.maxsum.factors.AllActiveIncentiveFactor;
-import es.csic.iiia.maxsum.factors.SelectorFactor;
 import es.csic.iiia.maxsum.factors.cardinality.CardinalityFunction;
-import es.csic.iiia.maxsum.factors.VariableFactor;
 import es.csic.iiia.maxsum.factors.WeightingFactor;
 import java.util.HashMap;
 import java.util.List;
@@ -68,12 +68,14 @@ import rescuecore2.config.Config;
 public class BMSTeamFireAgent implements DCOPAgent {
     private static final Logger Logger = LogManager.getLogger(BMSTeamFireAgent.class);
 
+    private double BLOCKED_PENALTY;
+
     private static final MaxOperator MAX_OPERATOR = new Maximize();
 
     private EntityID id;
     private ProblemDefinition problem;
-    private SelectorFactor<NodeID> variableNode;
-    private ArrayList<VariableFactor<NodeID>> variableFactors;
+    private BMSSelectorFactor<NodeID> variableNode;
+    private ArrayList<BMSVariableFactor<NodeID>> variableFactors;
     private HashMap<NodeID, Factor<NodeID>> factors;
     private HashMap<NodeID, EntityID> factorLocations;
     private RSLBenchCommunicationAdapter communicationAdapter;
@@ -93,6 +95,7 @@ public class BMSTeamFireAgent implements DCOPAgent {
         this.id = agentID;
         this.targetId = null;
         this.problem = problem;
+        BLOCKED_PENALTY = config.getFloatValue(Constants.KEY_BLOCKED_FIRE_PENALTY);
 
         // Reset internal structures
         factors = new HashMap<>();
@@ -130,7 +133,7 @@ public class BMSTeamFireAgent implements DCOPAgent {
     private void addFirefighterToFireNodes() {
         variableFactors = new ArrayList<>();
         for (EntityID fire : problem.getFireAgentNeighbors(id)) {
-            VariableFactor<NodeID> variable = new VariableFactor<>();
+            BMSVariableFactor<NodeID> variable = new BMSVariableFactor<>();
             variable.addNeighbor(new NodeID(id, null));
             variable.addNeighbor(new NodeID(null, fire));
             addFactor(new NodeID(id, fire), variable);
@@ -143,7 +146,7 @@ public class BMSTeamFireAgent implements DCOPAgent {
      */
     private void addFirefighterFactor() {
         List<EntityID> fires = problem.getFireAgentNeighbors(id);
-        this.variableNode = new SelectorFactor<>();
+        this.variableNode = new BMSSelectorFactor<>();
 
         // The agent's factor is the selector plus the independent utilities
         // of this agent for each fire.
@@ -158,7 +161,7 @@ public class BMSTeamFireAgent implements DCOPAgent {
             // ... and populate the utilities
             double value = problem.getFireUtility(id, fire);
             if (problem.isFireAgentBlocked(id, fire)) {
-                value -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY);
+                value -= BLOCKED_PENALTY;
 
                 // Connect with the blockade attended flag
                 addPenaltyRemovalFactor(problem.getBlockadeBlockingFireAgent(id, fire), fire,
@@ -180,10 +183,14 @@ public class BMSTeamFireAgent implements DCOPAgent {
     private void addPenaltyRemovalFactor(EntityID blockade, EntityID fire, int fireIndex) {
         Logger.debug("Adding penalty removal for firefighter {}, blockade {}, fire {}",
                 id, blockade, fire);
-        AllActiveIncentiveFactor<NodeID> penaltyRemoval = new AllActiveIncentiveFactor<>();
-        penaltyRemoval.setIncentive(problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_PENALTY));
+
+        // Build the factor
+        BMSStandardFactor<NodeID> penaltyRemoval = new BMSStandardFactor<>();
         penaltyRemoval.addNeighbor(new NodeID(id, fire));
         penaltyRemoval.addNeighbor(new NodeID(null, blockade));
+        penaltyRemoval.setPotential(new double[]{0, 0, 0, BLOCKED_PENALTY});
+
+        // Track the location of this factor
         NodeID nodeID = new NodeID(id, fire, blockade);
         addFactor(nodeID, penaltyRemoval);
         factorLocations.put(nodeID, id);
@@ -218,7 +225,7 @@ public class BMSTeamFireAgent implements DCOPAgent {
             final NodeID fireID = new NodeID(null, fire);
 
             // Build the utility node
-            CardinalityFactor<NodeID> f = new CardinalityFactor<>();
+            BMSCardinalityFactor<NodeID> f = new BMSCardinalityFactor<>();
 
             // Set the maximum number of agents that should be attending this
             // fire

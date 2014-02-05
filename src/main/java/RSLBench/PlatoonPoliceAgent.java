@@ -31,7 +31,6 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
     private static final Logger Logger = LogManager.getLogger(PlatoonPoliceAgent.class);
 
     public static final String DISTANCE_KEY = "clear.repair.distance";
-    public static final String KEY_CLEAR_PATHBLOCKS = "police.clear.pathblocks";
 
     private int range;
 
@@ -155,14 +154,12 @@ public class PlatoonPoliceAgent extends PlatoonAbstractAgent<PoliceForce>
             return false;
         }
 
-        if (config.getBooleanValue(KEY_CLEAR_PATHBLOCKS)) {
-            List<Blockade> blocks = path.getPathBlocks();
-            if (!blocks.isEmpty() && inRange(blocks.get(0))) {
-                Blockade block = blocks.get(0);
-                Logger.debug(Markers.MAGENTA, "Police force {} clearing blockade {} to reach ASSIGNED target {} through {}", getID(), block, target, path);
-                sendClear(time, block.getID());
-                return true;
-            }
+        List<Blockade> blocks = path.getPathBlocks();
+        if (!blocks.isEmpty() && inRange(blocks.get(0))) {
+            Blockade block = blocks.get(0);
+            Logger.debug(Markers.MAGENTA, "Police force {} clearing blockade {} to reach ASSIGNED target {} through {}", getID(), block, target, path);
+            sendClear(time, block.getID());
+            return true;
         }
 
         Logger.debug(Markers.MAGENTA, "Police force {} approaching ASSIGNED target {} through {}", getID(), target, path);

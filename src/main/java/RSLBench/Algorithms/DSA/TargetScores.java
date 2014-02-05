@@ -1,9 +1,12 @@
 package RSLBench.Algorithms.DSA;
 
+import RSLBench.Algorithms.DSA.scoring.ScoringFunction;
+import RSLBench.Assignment.Assignment;
 import RSLBench.Helpers.Utility.ProblemDefinition;
+
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map.Entry;
+import java.util.List;
+import java.util.Map;
 
 import rescuecore2.worldmodel.EntityID;
 
@@ -13,7 +16,8 @@ import rescuecore2.worldmodel.EntityID;
  */
 public class TargetScores {
     private HashMap<EntityID, Integer> nAssignedAgents;
-    private ProblemDefinition utilities;
+    private ScoringFunction scoringFunction;
+    private ProblemDefinition problem;
     private EntityID agent;
 
     /**
@@ -21,10 +25,19 @@ public class TargetScores {
      * @param agent agent that is evaluating different target options.
      * @param utilities problem scenario in terms of utility.
      */
-    public TargetScores(EntityID agent, ProblemDefinition utilities) {
-        nAssignedAgents = new HashMap<>();
-        this.utilities = utilities;
+    public TargetScores(EntityID agent, ProblemDefinition problem) {
         this.agent = agent;
+        this.problem = problem;
+        nAssignedAgents = new HashMap<>();
+    }
+
+    /**
+     * Set the scoring function to use when evaluating targets.
+     *
+     * @param function
+     */
+    public void setScoringFunction(ScoringFunction function) {
+        scoringFunction = function;
     }
 
     /**
@@ -58,22 +71,33 @@ public class TargetScores {
             nAgents = nAssignedAgents.get(target);
         }
 
-        // Now get the utility penalty if this agent *also* chooses that target
-        double penalty = utilities.getUtilityPenalty(target, nAgents+1)
-                - utilities.getUtilityPenalty(target, nAgents);
+        return scoringFunction.score(agent, target, problem, nAgents);
+    }
 
-        // Finally, the score for this agent is its utility minus the penalty
-        return utilities.getFireUtility(agent, target) - penalty;
+    /**
+     * Computes the best target among the given candidates.
+     *
+     * @param candidates candidate targets
+     * @return target that maximizes the obtained utility from the point of view of this agent.
+     */
+    public EntityID getBestTarget(List<EntityID> candidates) {
+        EntityID bestTarget = Assignment.UNKNOWN_TARGET_ID;
+        double bestUtility = Double.NEGATIVE_INFINITY;
+        for (EntityID target : candidates) {
+            final double utility = computeScore(target);
+            if (utility > bestUtility) {
+                bestUtility = utility;
+                bestTarget = target;
+            }
+        }
+
+        return bestTarget;
     }
 
     /**
      * Resets this object (clears all choices of the neighboring agents).
      */
     public void resetAssignments() {
-        Iterator<Entry<EntityID, Integer>> it = nAssignedAgents.entrySet().iterator();
-        while (it.hasNext()) {
-            Entry<EntityID, Integer> pair = it.next();
-            pair.setValue(0);
-        }
+        nAssignedAgents.clear();
     }
 }

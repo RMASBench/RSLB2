@@ -1,0 +1,188 @@
+package RSLBench.Algorithms.DSA;
+
+import RSLBench.Algorithms.DSA.scoring.ScoringFunction;
+import RSLBench.Assignment.Assignment;
+import RSLBench.Assignment.DCOP.DCOPAgent;
+import RSLBench.Comm.Message;
+import RSLBench.Comm.CommunicationLayer;
+import RSLBench.Helpers.Utility.ProblemDefinition;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import rescuecore2.config.Config;
+
+import rescuecore2.worldmodel.EntityID;
+
+/**
+ * Fire agent that coordinates using the DSA algorithm to pick a target.
+ */
+public abstract class DSAAbstractAgent implements DCOPAgent {
+    private static final Logger Logger = LogManager.getLogger(DSAAbstractAgent.class);
+
+    private ProblemDefinition problem;
+    private EntityID id;
+    private EntityID target;
+    private Collection<AssignmentMessage> messages;
+    private TargetScores targetScores;
+    private Config config;
+
+    private int nCCCs = 0;
+
+    /**
+     * The set of neighboring agents with which to communicate. This must include all agents that
+     * have a common candidate target with us.
+     */
+    private Set<EntityID> neighbors;
+
+    /**
+     * The list of candidate targets for this agent.
+     */
+    private List<EntityID> candidateTargets;
+
+    /**
+     * Get the definition of the problem being solved currently.
+     *
+     * @return problem definition.
+     */
+    protected ProblemDefinition getProblem() {
+        return problem;
+    }
+
+    /**
+     * Get the {@link TargetScores} object used by this agent to evaluate targets.
+     *
+     * @return the {@link TargetScores} object
+     */
+    protected TargetScores getTargetScores() {
+        return targetScores;
+    }
+
+    /**
+     * Get the list of candidate targets for this agent.
+     *
+     * @return list of candidate targets
+     */
+    protected List<EntityID> getCandidateTargets() {
+        return candidateTargets;
+    }
+
+    /**
+     * Compute the set of neighbors of this agent. This includes all agents that share any common
+     * candidate target with this one.
+     *
+     * @return set of neighbors of this agent
+     */
+    protected abstract HashSet<EntityID> computeNeighbors();
+
+    /**
+     * Compute the list of candidate targets of this agent.
+     *
+     * @return list of candidate targets
+     */
+    protected abstract List<EntityID> computeCandidates();
+
+    /**
+     * Build the scoring function to employ to evaluate targets.
+     *
+     * @return scoring function to use for target evaluation
+     */
+    protected abstract ScoringFunction buildScoringFunction();
+
+    /**
+     * Compute the best target among the possible ones.
+     *
+     * @return best target for this agent at this moment
+     */
+    protected abstract EntityID getBestTarget();
+
+    @Override
+    public void initialize(Config config, EntityID id, ProblemDefinition problem) {
+        this.id = id;
+        this.problem = problem;
+        targetScores = new TargetScores(id, problem);
+        target = Assignment.UNKNOWN_TARGET_ID;
+        this.config = config;
+
+        // Set the scoring function used by this agent
+        targetScores.setScoringFunction(buildScoringFunction());
+
+        // The neighbors of this agent are all candidates of all eligible fires
+        neighbors = computeNeighbors();
+
+        // Obtain the list of candidate targets for this agent and choose a random one
+        candidateTargets = computeCandidates();
+        target = candidateTargets.get(config.getRandom().nextInt(candidateTargets.size()));
+
+        Logger.debug("Agent {} initialized with {} targets and {} neighboring agents.",
+                id, problem.getFireAgentNeighbors(id).size(), neighbors.size());
+    }
+
+    @Override
+    public boolean improveAssignment() {
+        targetScores.resetAssignments();
+        for (AssignmentMessage message : messages) {
+            targetScores.increaseAgentCount(message.getTarget());
+        }
+        nCCCs = messages.size();
+
+        // Find the best target given utilities and constraints
+        EntityID bestTarget = getBestTarget();
+        nCCCs += candidateTargets.size();
+
+        Logger.trace("Agent {} had target {} before, now wants {}", id, target, bestTarget);
+
+        if (!bestTarget.equals(target)) {
+            if (config.getRandom().nextDouble() <= config.getFloatValue(DSA.KEY_DSA_PROBABILITY)) {
+                Logger.trace("Agent {} passes the dice throw and changes to {}", id, bestTarget);
+                target = bestTarget;
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public long getConstraintChecks() {
+        return nCCCs;
+    }
+
+    @Override
+    public EntityID getID() {
+        return id;
+    }
+
+    @Override
+    public EntityID getTarget() {
+        return target;
+    }
+
+    @Override
+    public Collection<Message> sendMessages(CommunicationLayer com) {
+        Collection<Message> sentMessages = new ArrayList<>();
+        final AssignmentMessage msg = new AssignmentMessage(id, target);
+
+        for (EntityID neighbor : neighbors) {
+            sentMessages.add(msg);
+            com.send(neighbor, msg);
+        }
+
+        return sentMessages;
+    }
+
+    @Override
+    public void receiveMessages(Collection<Message> messages) {
+        this.messages = new ArrayList<>(messages.size());
+        for (Message m : messages) {
+            if (m instanceof AssignmentMessage) {
+                this.messages.add((AssignmentMessage)m);
+            }
+        }
+    }
+
+}

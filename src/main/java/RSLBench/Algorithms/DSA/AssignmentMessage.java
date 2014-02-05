@@ -4,40 +4,41 @@ import RSLBench.Comm.Message;
 import rescuecore2.worldmodel.EntityID;
 
 /**
- * This class represents the messages sent by some DCOP algorithms.
- * It contains two EntityID's: the agent id and the id of the target assigned to the agent. 
+ * Message to notify neighbors about the target being chosen by an agent.
  */
 public class AssignmentMessage implements Message {
-    private EntityID _agentID;
-    private EntityID _targetID;
-    
+
+    private EntityID agent;
+    private EntityID target;
+
     /**
-     * It builds the AssignmentMessage.
-     * @param agentID: the agent id
-     * @param targetID: the target id
+     * Builds a new assignment message.
+     *
+     * @param agent the agent id
+     * @param target the target id
      */
-    public AssignmentMessage(EntityID agentID, EntityID targetID)
+    public AssignmentMessage(EntityID agent, EntityID target)
     {
-        _agentID = agentID;
-        _targetID = targetID;
+        this.agent = agent;
+        this.target = target;
     }
 
     /**
-     * Returns the agent id.
-     * @return the agent id
+     * Get the agent identifier.
+     * @return agent identifier
      */
-    public EntityID getAgentID()
+    public EntityID getAgent()
     {
-        return _agentID;
+        return agent;
     }
-    
+
     /**
-     * Returns the target id.
-     * @return the target id
+     * Get the target identifier.
+     * @return target identifier
      */
-    public EntityID getTargetID()
+    public EntityID getTarget()
     {
-        return _targetID;
+        return target;
     }
 
     @Override

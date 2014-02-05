@@ -12,7 +12,7 @@ import rescuecore2.worldmodel.EntityID;
  */
 public class Assignment {
 
-    /** EntityID to use when an agent is not assigned to any fire */
+    /** EntityID to use when an agent is not assigned to any target */
     public static final EntityID UNKNOWN_TARGET_ID = new EntityID(-1);
 
     // Mapping from Agents to Targets
@@ -35,17 +35,17 @@ public class Assignment {
             map.put(agent, assignment.getAssignment(agent));
         }
     }
-    
+
     /**
      * Adds an agent to fire assignment.
-     * 
+     *
      * @param agent the agent ID
      * @param target the target ID
      */
     public void assign(EntityID agent, EntityID target) {
     	map.put(agent, target);
     }
-    
+
     /**
      * Returns the assignment of an agent
      * @param agent the agent ID
@@ -66,7 +66,7 @@ public class Assignment {
     public Set<EntityID> getAgents() {
     	return map.keySet();
     }
-    
+
     @Override
     public String toString()
     {
@@ -74,8 +74,8 @@ public class Assignment {
         buffer.append("Assignments:\n");
         Iterator<Entry<EntityID,EntityID>> it = map.entrySet().iterator();
         while (it.hasNext()) {
-        	Entry<EntityID,EntityID> pair = it.next();        	        	
-        	buffer.append("agent ").append(pair.getKey()).append(" > ").append(pair.getValue()).append("\n");        	
+        	Entry<EntityID,EntityID> pair = it.next();
+        	buffer.append("agent ").append(pair.getKey()).append(" > ").append(pair.getValue()).append("\n");
         }
         return buffer.toString();
     }

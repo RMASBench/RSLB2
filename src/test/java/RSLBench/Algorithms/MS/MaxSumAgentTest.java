@@ -158,7 +158,7 @@ public class MaxSumAgentTest {
     @Test
     public void testBuildMaxSumAgent() throws Exception {
         Config config = new Config();
-        config.setValue(Constants.CONF_KEY_RESULTS_PATH, "build/test");
+        config.setValue(Constants.KEY_RESULTS_PATH, "build/test");
         config.setValue(Constants.KEY_RUN_ID, "1");
         ArrayList<EntityID> fireAgents = new ArrayList<>();
         EntityID a1 = new EntityID(1);
@@ -204,7 +204,7 @@ public class MaxSumAgentTest {
         Random random = new Random(RANDOM_SEED);
 
         Config config = mock(Config.class);
-        when(config.getValue(Constants.CONF_KEY_RESULTS_PATH)).thenReturn("build/test");
+        when(config.getValue(Constants.KEY_RESULTS_PATH)).thenReturn("build/test");
         when(config.getValue(Constants.KEY_RUN_ID)).thenReturn("1");
         when(config.getRandom()).thenReturn(random);
 
@@ -259,7 +259,7 @@ public class MaxSumAgentTest {
         Random random = new Random(RANDOM_SEED);
 
         Config config = mock(Config.class);
-        when(config.getValue(Constants.CONF_KEY_RESULTS_PATH)).thenReturn("build/test");
+        when(config.getValue(Constants.KEY_RESULTS_PATH)).thenReturn("build/test");
         when(config.getValue(Constants.KEY_RUN_ID)).thenReturn("1");
         when(config.getRandom()).thenReturn(random);
 
@@ -341,7 +341,7 @@ public class MaxSumAgentTest {
         Random random = new Random(RANDOM_SEED);
 
         Config config = mock(Config.class);
-        when(config.getValue(Constants.CONF_KEY_RESULTS_PATH)).thenReturn("build/test");
+        when(config.getValue(Constants.KEY_RESULTS_PATH)).thenReturn("build/test");
         when(config.getValue(Constants.KEY_RUN_ID)).thenReturn("1");
         when(config.getRandom()).thenReturn(random);
 

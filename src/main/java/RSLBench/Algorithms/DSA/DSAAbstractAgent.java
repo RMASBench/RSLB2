@@ -177,6 +177,7 @@ public abstract class DSAAbstractAgent implements DCOPAgent {
     public void receiveMessages(Collection<Message> messages) {
         Logger.trace("ReceiveMessages start, {} messages in queue.", messages.size());
         targetScores.resetAssignments();
+        nCCCs = 0;
         for (Message m : messages) {
             if (m instanceof AssignmentMessage) {
                 AssignmentMessage message = (AssignmentMessage)m;

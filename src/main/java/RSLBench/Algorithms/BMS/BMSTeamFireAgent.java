@@ -100,7 +100,7 @@ public class BMSTeamFireAgent implements DCOPAgent {
         // Reset internal structures
         factors = new HashMap<>();
         factorLocations = new HashMap<>();
-        communicationAdapter = new RSLBenchCommunicationAdapter();
+        communicationAdapter = new RSLBenchCommunicationAdapter(config);
 
         // ... And the variable nodes
         addFirefighterToFireNodes();

@@ -58,21 +58,17 @@ public class Constants {
     /** Scenario name */
     public static final String KEY_MAP_SCENARIO = "map.scenario";
 
-    /**
-     * Whether to prune the problem or not
-     */
+    /** Whether to prune the problem or not */
     public static final String KEY_PROBLEM_PRUNE = "problem.prune";
 
-    /**
-     * The maximum number of neighbours of an agent or fire in the pruned problem.
-     */
+    /** The maximum number of neighbours of an agent or fire in the pruned problem */
     public static final String KEY_PROBLEM_MAXNEIGHBORS = "problem.max_neighbors";
 
     /** Config key to the results path */
-    public static final String CONF_KEY_RESULTS_PATH = "results.path";
+    public static final String KEY_RESULTS_PATH = "results.path";
 
     /** Config key to the results filename */
-    public static final String CONF_KEY_RESULTS_PREFIX = "results.prefix";
+    public static final String KEY_RESULTS_PREFIX = "results.prefix";
 
     /** Key to identify the ID of the experiment run */
     public static final String KEY_RUN_ID = "run";

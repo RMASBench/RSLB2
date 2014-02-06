@@ -4,6 +4,7 @@
  */
 package RSLBench.Algorithms.BMS;
 
+import RSLBench.Constants;
 import es.csic.iiia.maxsum.CommunicationAdapter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import rescuecore2.config.Config;
 import rescuecore2.misc.Pair;
 
 /**
@@ -23,11 +25,15 @@ public class RSLBenchCommunicationAdapter implements CommunicationAdapter<NodeID
     /** Threshold below which messages are considered equal. */
     public static final double EPSILON = 1e-5;
 
+    /** The damping factor to use when sending messages */
+    private final double DAMPING_FACTOR;
+
     private ArrayList<BinaryMaxSumMessage> outgoingMessages;
     private Map<Pair<NodeID,NodeID>, Double> oldMessages;
     private boolean converged;
 
-    public RSLBenchCommunicationAdapter() {
+    public RSLBenchCommunicationAdapter(Config config) {
+        DAMPING_FACTOR = config.getFloatValue(BinaryMaxSum.KEY_MAXSUM_DAMPING);
         outgoingMessages = new ArrayList<>();
         oldMessages = new HashMap<>();
         converged = true;
@@ -43,7 +49,7 @@ public class RSLBenchCommunicationAdapter implements CommunicationAdapter<NodeID
     @Override
     public void send(double message, NodeID sender, NodeID recipient) {
         Logger.trace("Message from {} to {} : {}", new Object[]{sender, recipient, message});
-        if (Double.isNaN(message)) {
+        if (Double.isNaN(message) || Double.isInfinite(message)) {
             Logger.warn("Factor {} tried to send {} to factor {}!", new Object[]{sender, message, recipient});
             throw new RuntimeException("Invalid message sent!");
         }
@@ -52,6 +58,10 @@ public class RSLBenchCommunicationAdapter implements CommunicationAdapter<NodeID
         // different from the previous iteration
         Pair<NodeID, NodeID> sr = new Pair<>(sender, recipient);
         Double oldMessage = oldMessages.get(sr);
+
+        if (oldMessage != null) {
+            message = oldMessage * DAMPING_FACTOR + message * (1 - DAMPING_FACTOR);
+        }
         if (oldMessage == null || isDifferent(oldMessage, message)) {
             converged = false;
         }

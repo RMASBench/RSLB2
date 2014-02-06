@@ -34,7 +34,7 @@ public class MSAgent extends AbstractDCOPAgent {
     private long nConstraintChecks;
 
     private CostFunctionFactory cfFactory = new MSCostFunctionFactory();
-    private MSCommunicator communicator = new MSCommunicator();
+    private MSCommunicator communicator;
 
     private VariableNode variableNode;
     private Map<Identity, EntityID> nodeLocations = new HashMap<>();
@@ -141,7 +141,7 @@ public class MSAgent extends AbstractDCOPAgent {
         final EntityID id = getID();
         final List<EntityID> fires = getProblem().getFireAgentNeighbors(id);
 
-        communicator = new MSCommunicator();
+        communicator = new MSCommunicator(getProblem().getConfig());
         Identity variableId = new Identity(id);
         Variable variable = getVariable(id);
         CostFunction potential = buildFireAgentPotential(id, variable);

@@ -4,6 +4,7 @@
  */
 package RSLBench.Algorithms.NewMS;
 
+import RSLBench.Algorithms.BMS.BinaryMaxSum;
 import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Assignment.DCOP.DCOPSolver;
 import rescuecore2.standard.entities.StandardEntityURN;
@@ -14,6 +15,8 @@ import static rescuecore2.standard.entities.StandardEntityURN.FIRE_BRIGADE;
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
 public class MaxSum extends DCOPSolver {
+
+    public static final String KEY_MAXSUM_DAMPING = BinaryMaxSum.KEY_MAXSUM_DAMPING;
 
     @Override
     protected DCOPAgent buildAgent(StandardEntityURN type) {

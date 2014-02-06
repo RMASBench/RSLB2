@@ -116,3 +116,5 @@ solver.5.time: 100
 # DSA probability of change
 dsa.probability: 0.6
 
+# Max-Sum damping factor, from 0 (no damping) to 1 (completely ignore messages)
+maxsum.damping: 0.1

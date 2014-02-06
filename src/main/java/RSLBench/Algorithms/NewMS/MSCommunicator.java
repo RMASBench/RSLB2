@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import rescuecore2.config.Config;
 import rescuecore2.misc.Pair;
 
 /**
@@ -26,15 +27,19 @@ public class MSCommunicator implements Communicator<Identity> {
     /** Threshold below which messages are considered equal. */
     public static final double EPSILON = 1e-5/2.;
 
+    /** The damping factor to employ */
+    private final double DAMPING_FACTOR;
+
     private boolean converged;
 
     private List<MSMessage> outgoingMessages;
     private Map<Pair<Identity, Identity>, CostFunction> oldMessages;
 
-    public MSCommunicator() {
-         outgoingMessages = new ArrayList<>();
-         oldMessages = new HashMap<>();
-         converged = true;
+    public MSCommunicator(Config config) {
+        DAMPING_FACTOR = config.getFloatValue(MaxSum.KEY_MAXSUM_DAMPING);
+        outgoingMessages = new ArrayList<>();
+        oldMessages = new HashMap<>();
+        converged = true;
     }
 
     public Collection<MSMessage> flushMessages() {
@@ -54,6 +59,17 @@ public class MSCommunicator implements Communicator<Identity> {
         // different from the previous iteration
         Pair<Identity, Identity> sr = new Pair<>(from, to);
         CostFunction oldMessage = oldMessages.get(sr);
+
+        // Apply damping
+        if (oldMessage != null) {
+            double[] oldValues = oldMessage.getValues();
+            double[] values = message.getValues();
+            for (int i=0; i<values.length; i++) {
+                values[i] = oldValues[i] * DAMPING_FACTOR + values[i] * (1 - DAMPING_FACTOR);
+            }
+            message.setValues(values);
+        }
+
         if (oldMessage == null || !oldMessage.equals(message, EPSILON)) {
             converged = false;
         }

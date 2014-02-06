@@ -7,7 +7,6 @@ import rescuecore2.standard.entities.StandardWorldModel;
 import RSLBench.Helpers.Stats;
 import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
-import RSLBench.PlatoonPoliceAgent;
 import RSLBench.Search.SearchFactory;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,7 +57,7 @@ public abstract class AbstractSolver implements Solver
         scoreFunction.initialise(worldModel, config);
 
         String file = new StringBuilder()
-                .append(config.getValue(Constants.CONF_KEY_RESULTS_PATH))
+                .append(config.getValue(Constants.KEY_RESULTS_PATH))
                 .append(config.getValue(Constants.KEY_RUN_ID))
                 .append("-").append(getIdentifier()).append(".dat")
                 .toString();
@@ -110,7 +109,6 @@ public abstract class AbstractSolver implements Solver
 
     @Override
     public Assignment solve(int time, ProblemDefinition problem) {
-        final long start = System.currentTimeMillis();
         stats.report("time", time);
         Logger.debug("Starting {} solver.", getIdentifier());
 
@@ -130,6 +128,7 @@ public abstract class AbstractSolver implements Solver
         stats.report("nOnceBurned", nOnceBurned);
         stats.report("nBurning", nBurning);
 
+        final long start = System.currentTimeMillis();
         Assignment solution = compute(problem);
         long cputime = System.currentTimeMillis() - start;
         Logger.info("{} took {} ms.", getIdentifier(), cputime);
@@ -165,14 +164,14 @@ public abstract class AbstractSolver implements Solver
 
         HashSet<EntityID> blockadesAttended = new HashSet<>();
         // Add individual police utilities
-        for (EntityID agent : problem.getPoliceAgents()) {
-            EntityID target = solution.getAssignment(agent);
+        for (EntityID policeAgent : problem.getPoliceAgents()) {
+            EntityID target = solution.getAssignment(policeAgent);
             if (target == Assignment.UNKNOWN_TARGET_ID) {
                 continue;
             }
 
-            utility += problem.getPoliceUtility(agent, target);
-            if (problem.isPoliceAgentBlocked(agent, target)) {
+            utility += problem.getPoliceUtility(policeAgent, target);
+            if (problem.isPoliceAgentBlocked(policeAgent, target)) {
                 utility -= POLICE_PENALTY;
             }
 
@@ -185,24 +184,23 @@ public abstract class AbstractSolver implements Solver
 
         // Track individual utilities and count how many firefighters have chosen each fire
         HashMap<EntityID, Integer> nAgentsPerTarget = new HashMap<>();
-        final boolean interteam = config.getBooleanValue(Constants.KEY_INTERTEAM_COORDINATION);
-        for (EntityID agent : problem.getFireAgents()) {
-            EntityID target = solution.getAssignment(agent);
+        for (EntityID fireAgent : problem.getFireAgents()) {
+            EntityID fire = solution.getAssignment(fireAgent);
 
             // Individual utility
-            utility += problem.getFireUtility(agent, target);
+            utility += problem.getFireUtility(fireAgent, fire);
 
-            // Penalized if interteam mode is enabled and the relevant blockade is not attended
-            if (interteam && problem.isFireAgentBlocked(agent, target)) {
-                EntityID blockade = problem.getBlockadeBlockingFireAgent(agent, target);
+            // Penalized if the relevant blockade is not attended
+            if (problem.isFireAgentBlocked(fireAgent, fire)) {
+                EntityID blockade = problem.getBlockadeBlockingFireAgent(fireAgent, fire);
                 if (!blockadesAttended.contains(blockade)) {
                     utility -= FIRE_PENALTY;
                 }
             }
 
             // Add 1 to the target count
-            Integer nAgents = nAgentsPerTarget.get(target);
-            nAgentsPerTarget.put(target, nAgents == null ? 1 : nAgents+1);
+            Integer nAgents = nAgentsPerTarget.get(fire);
+            nAgentsPerTarget.put(fire, nAgents == null ? 1 : nAgents+1);
         }
 
         // Finally penalize overassignments of agents to fires

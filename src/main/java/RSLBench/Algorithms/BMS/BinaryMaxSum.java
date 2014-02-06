@@ -22,12 +22,18 @@ import static rescuecore2.standard.entities.StandardEntityURN.FIRE_BRIGADE;
 public class BinaryMaxSum extends DCOPSolver {
     private static final Logger Logger = LogManager.getLogger(BinaryMaxSum.class);
 
+    /**
+     * The damping factor to employ.
+     */
+    public static final String KEY_MAXSUM_DAMPING = "maxsum.damping";
+
     @Override
     public List<String> getUsedConfigurationKeys() {
         List<String> result = super.getUsedConfigurationKeys();
         result.add(Constants.KEY_INTERTEAM_COORDINATION);
         result.add(Constants.KEY_BLOCKED_FIRE_PENALTY);
         result.add(Constants.KEY_BLOCKED_POLICE_PENALTY);
+        result.add(KEY_MAXSUM_DAMPING);
         return result;
     }
 

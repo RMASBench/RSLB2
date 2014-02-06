@@ -98,7 +98,7 @@ public class BMSPoliceAgent implements DCOPAgent {
         // Reset internal structures
         factors = new HashMap<>();
         factorLocations = new HashMap<>();
-        communicationAdapter = new RSLBenchCommunicationAdapter();
+        communicationAdapter = new RSLBenchCommunicationAdapter(config);
 
         // Build the variable node
         addPoliceFactor();

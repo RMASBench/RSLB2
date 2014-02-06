@@ -68,13 +68,15 @@ public class ThirdUtilityFunction extends AbstractUtilityFunction {
         double threshold = config.getFloatValue(PlatoonPoliceAgent.DISTANCE_KEY);
         double distance = Distance.humanToBlockade(policeAgent, blockade, world, threshold);
         Logger.debug("Distance from police {} to blockade {}: {}", policeAgent, blockade, distance);
-        double utility = distance/maxDistance;
+
+        double utility = 1-distance/maxDistance;
+        utility = Math.pow(utility, 2);
 
         // Add some noise to break ties
-        utility += config.getRandom().nextDouble()/10000;
+        utility += config.getRandom().nextDouble()/100;
 
         // Downscale police utilities to subjugate them to fire agents
-        utility = 1-Math.pow(utility, 2);
+        utility /= 1000;
 
         Logger.debug("Utility from police {} to blockade {}: {}", policeAgent, blockade, utility);
         return utility;

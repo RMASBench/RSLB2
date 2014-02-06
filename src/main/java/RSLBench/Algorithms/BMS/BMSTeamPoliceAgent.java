@@ -101,7 +101,7 @@ public class BMSTeamPoliceAgent implements DCOPAgent {
         // Reset internal structures
         factors = new HashMap<>();
         factorLocations = new HashMap<>();
-        communicationAdapter = new RSLBenchCommunicationAdapter();
+        communicationAdapter = new RSLBenchCommunicationAdapter(config);
 
         // Build the variable node
         addPoliceFactor();
@@ -252,10 +252,10 @@ public class BMSTeamPoliceAgent implements DCOPAgent {
         // Now extract our choice
         NodeID target = variableNode.select();
         if (target == null || target.agent == null) {
-            Logger.trace("Agent {} chose no target!", id);
+            Logger.debug("Agent {} chose no target!", id);
             targetId = Assignment.UNKNOWN_TARGET_ID;
         } else {
-            Logger.trace("Agent {} chooses target {}", id, targetId);
+            Logger.debug("Agent {} chooses target {}", id, target.agent);
             targetId = target.agent;
         }
         Logger.trace("improveAssignment end.");

@@ -69,12 +69,13 @@ public class SecondUtilityFunction extends AbstractUtilityFunction {
         double distance = Distance.humanToBlockade(policeAgent, blockade, world, threshold);
         Logger.debug("Distance from police {} to blockade {}: {}", policeAgent, blockade, distance);
         double utility = distance/maxDistance;
-        
+        utility = 1-Math.pow(utility, 2);
+
         // Add some noise to break ties
         utility += config.getRandom().nextDouble()/10000;
 
         // Downscale police utilities to subjugate them to fire agents
-        utility = 1-Math.pow(utility, 2);
+        utility /= 1000;
 
         Logger.debug("Utility from police {} to blockade {}: {}", policeAgent, blockade, utility);
         return utility;

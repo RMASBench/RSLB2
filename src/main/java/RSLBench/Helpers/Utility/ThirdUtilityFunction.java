@@ -73,7 +73,7 @@ public class ThirdUtilityFunction extends AbstractUtilityFunction {
         utility = Math.pow(utility, 2);
 
         // Add some noise to break ties
-        utility += config.getRandom().nextDouble()/100;
+        utility += config.getRandom().nextDouble()/1000;
 
         // Downscale police utilities to subjugate them to fire agents
         utility /= 1000;

@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package RSLBench.Algorithms.NewMS;
+package RSLBench.Algorithms.MS;
 
 import RSLBench.Assignment.DCOP.AbstractDCOPAgent;
 import RSLBench.Comm.CommunicationLayer;

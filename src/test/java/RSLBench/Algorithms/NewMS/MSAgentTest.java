@@ -4,6 +4,7 @@
  */
 package RSLBench.Algorithms.NewMS;
 
+import RSLBench.Algorithms.MS.MSAgent;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Comm.Message;
 import java.util.Collection;

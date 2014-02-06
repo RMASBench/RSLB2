@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package RSLBench.Algorithms.NewMS;
+package RSLBench.Algorithms.MS;
 
 import java.util.Objects;
 import rescuecore2.worldmodel.EntityID;

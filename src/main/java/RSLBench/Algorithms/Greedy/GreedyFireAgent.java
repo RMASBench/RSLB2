@@ -16,7 +16,7 @@ import rescuecore2.worldmodel.EntityID;
  *
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
-public class GreedyAgent extends DefaultDCOPAgent {
+public class GreedyFireAgent extends DefaultDCOPAgent {
 
     @Override
     public boolean improveAssignment() {

@@ -18,7 +18,9 @@ public class Greedy extends DCOPSolver {
     protected DCOPAgent buildAgent(StandardEntityURN type) {
         switch(type) {
             case FIRE_BRIGADE:
-                return new GreedyAgent();
+                return new GreedyFireAgent();
+            case POLICE_FORCE:
+                return new GreedyPoliceAgent();
             default:
                 throw new UnsupportedOperationException("The Greedy solver does not support agents of type " + type);
         }

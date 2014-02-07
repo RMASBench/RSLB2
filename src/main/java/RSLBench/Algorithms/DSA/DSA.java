@@ -43,9 +43,6 @@ public class DSA extends DCOPSolver {
     @Override
     public List<String> getUsedConfigurationKeys() {
         List<String> keys = super.getUsedConfigurationKeys();
-        keys.add(Constants.KEY_INTERTEAM_COORDINATION);
-        keys.add(Constants.KEY_BLOCKED_FIRE_PENALTY);
-        keys.add(Constants.KEY_BLOCKED_POLICE_PENALTY);
         keys.add(KEY_DSA_PROBABILITY);
         return keys;
     }

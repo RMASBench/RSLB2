@@ -7,6 +7,8 @@ package RSLBench.Algorithms.MS;
 import RSLBench.Algorithms.BMS.BinaryMaxSum;
 import RSLBench.Assignment.DCOP.DCOPAgent;
 import RSLBench.Assignment.DCOP.DCOPSolver;
+import RSLBench.Constants;
+import java.util.List;
 import rescuecore2.standard.entities.StandardEntityURN;
 import static rescuecore2.standard.entities.StandardEntityURN.FIRE_BRIGADE;
 
@@ -20,6 +22,11 @@ public class MaxSum extends DCOPSolver {
 
     @Override
     protected DCOPAgent buildAgent(StandardEntityURN type) {
+        final boolean team = config.getBooleanValue(Constants.KEY_INTERTEAM_COORDINATION);
+        if (team) {
+            throw new UnsupportedOperationException("The Max-Sum algorithm does not support coordinated teams yet.");
+        }
+
         switch(type) {
             case FIRE_BRIGADE:
                 return new MSAgent();
@@ -31,6 +38,13 @@ public class MaxSum extends DCOPSolver {
     @Override
     public String getIdentifier() {
         return "MaxSum";
+    }
+
+    @Override
+    public List<String> getUsedConfigurationKeys() {
+        List<String> result = super.getUsedConfigurationKeys();
+        result.add(KEY_MAXSUM_DAMPING);
+        return result;
     }
 
 }

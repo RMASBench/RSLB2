@@ -28,16 +28,6 @@ public class BinaryMaxSum extends DCOPSolver {
     public static final String KEY_MAXSUM_DAMPING = "maxsum.damping";
 
     @Override
-    public List<String> getUsedConfigurationKeys() {
-        List<String> result = super.getUsedConfigurationKeys();
-        result.add(Constants.KEY_INTERTEAM_COORDINATION);
-        result.add(Constants.KEY_BLOCKED_FIRE_PENALTY);
-        result.add(Constants.KEY_BLOCKED_POLICE_PENALTY);
-        result.add(KEY_MAXSUM_DAMPING);
-        return result;
-    }
-
-    @Override
     protected DCOPAgent buildAgent(StandardEntityURN type) {
         final boolean team = config.getBooleanValue(Constants.KEY_INTERTEAM_COORDINATION);
 
@@ -57,10 +47,10 @@ public class BinaryMaxSum extends DCOPSolver {
     }
 
     @Override
-    public double getUtility(ProblemDefinition problem, Assignment solution) {
-        return super.getUtility(problem, solution);
+    public List<String> getUsedConfigurationKeys() {
+        List<String> result = super.getUsedConfigurationKeys();
+        result.add(KEY_MAXSUM_DAMPING);
+        return result;
     }
-
-
 
 }

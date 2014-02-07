@@ -92,6 +92,9 @@ public abstract class AbstractSolver implements Solver
         keys.add(SearchFactory.KEY_SEARCH_CLASS);
         keys.add(Constants.KEY_PROBLEM_PRUNE);
         keys.add(Constants.KEY_PROBLEM_MAXNEIGHBORS);
+        keys.add(Constants.KEY_INTERTEAM_COORDINATION);
+        keys.add(Constants.KEY_BLOCKED_FIRE_PENALTY);
+        keys.add(Constants.KEY_BLOCKED_POLICE_PENALTY);
         return keys;
     }
 

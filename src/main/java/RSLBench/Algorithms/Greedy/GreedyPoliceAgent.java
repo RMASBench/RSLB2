@@ -4,6 +4,7 @@
  */
 package RSLBench.Algorithms.Greedy;
 
+import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.DCOP.DefaultDCOPAgent;
 import RSLBench.Helpers.Utility.ProblemDefinition;
 import rescuecore2.worldmodel.EntityID;
@@ -24,17 +25,13 @@ public class GreedyPoliceAgent extends DefaultDCOPAgent {
         final EntityID id = getID();
 
         double best = Double.NEGATIVE_INFINITY;
+        setTarget(Assignment.UNKNOWN_TARGET_ID);
         for (EntityID target : problem.getPoliceAgentNeighbors(getID())) {
             double value = problem.getPoliceUtility(id, target);
             if (value > best) {
                 best = value;
                 setTarget(target);
             }
-        }
-
-        // This can happen if we have no neighbors
-        if (getTarget() == null) {
-            setTarget(problem.getHighestTargetForAgent(id));
         }
 
         return false;

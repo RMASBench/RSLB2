@@ -157,6 +157,7 @@ public abstract class AbstractSolver implements Solver
             return Double.NaN;
         }
 
+        final boolean INTERTEAM = problem.getConfig().getBooleanValue(Constants.KEY_INTERTEAM_COORDINATION);
         final double POLICE_PENALTY = problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_POLICE_PENALTY);
         final double FIRE_PENALTY = problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_FIRE_PENALTY);
 
@@ -193,7 +194,7 @@ public abstract class AbstractSolver implements Solver
             // Penalized if the relevant blockade is not attended
             if (problem.isFireAgentBlocked(fireAgent, fire)) {
                 EntityID blockade = problem.getBlockadeBlockingFireAgent(fireAgent, fire);
-                if (!blockadesAttended.contains(blockade)) {
+                if (!INTERTEAM || !blockadesAttended.contains(blockade)) {
                     utility -= FIRE_PENALTY;
                 }
             }

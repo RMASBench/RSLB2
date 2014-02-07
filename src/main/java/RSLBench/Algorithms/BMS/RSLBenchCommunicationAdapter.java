@@ -59,7 +59,7 @@ public class RSLBenchCommunicationAdapter implements CommunicationAdapter<NodeID
         Pair<NodeID, NodeID> sr = new Pair<>(sender, recipient);
         Double oldMessage = oldMessages.get(sr);
 
-        if (oldMessage != null) {
+        if (oldMessage != null && !Double.isInfinite(message)) {
             message = oldMessage * DAMPING_FACTOR + message * (1 - DAMPING_FACTOR);
         }
         if (oldMessage == null || isDifferent(oldMessage, message)) {

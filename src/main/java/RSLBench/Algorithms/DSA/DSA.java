@@ -28,11 +28,13 @@ public class DSA extends DCOPSolver {
 
     @Override
     protected DCOPAgent buildAgent(StandardEntityURN type) {
+        final boolean team = config.getBooleanValue(Constants.KEY_INTERTEAM_COORDINATION);
+
         switch(type) {
             case FIRE_BRIGADE:
-                return new DSAFireAgent();
+                return team ? new DSATeamFireAgent() : new DSAFireAgent();
             case POLICE_FORCE:
-                return new DSAPoliceAgent();
+                return team ? new DSATeamPoliceAgent() : new DSAPoliceAgent();
             default:
                 throw new UnsupportedOperationException("The DSA solver does not support agents of type " + type);
         }

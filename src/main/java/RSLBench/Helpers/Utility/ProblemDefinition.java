@@ -2,6 +2,7 @@ package RSLBench.Helpers.Utility;
 
 import RSLBench.Assignment.Assignment;
 import RSLBench.Constants;
+import RSLBench.Helpers.PathCache.PathDB;
 import RSLBench.Search.DistanceInterface;
 import RSLBench.Search.Graph;
 import RSLBench.Search.SearchAlgorithm;
@@ -49,8 +50,7 @@ public class ProblemDefinition {
     private double[][] policeUtilityMatrix;
 
     // Utilities to perform searches
-    private SearchAlgorithm search;
-    private Graph connectivityGraph;
+    private PathDB pathDB;
     private DistanceInterface distanceMatrix;
 
     /**
@@ -75,9 +75,8 @@ public class ProblemDefinition {
         this.world = world;
         this.config = config;
 
-        // Utilities to check which agents are blocked from reaching wich targets
-        search = SearchFactory.buildSearchAlgorithm(config);
-        connectivityGraph = Graph.getInstance(world);
+        // Utilities to perform searches
+        pathDB = PathDB.getInstance();
         distanceMatrix = new DistanceInterface(world);
 
         long initialTime = System.currentTimeMillis();
@@ -87,8 +86,6 @@ public class ProblemDefinition {
 
         buildFirefightersUtilityMatrix(lastAssignment);
         buildPoliceUtilityMatrix(lastAssignment);
-        computeBlockedFireAgents();
-        computeBlockedPoliceAgents();
 
         // Prune the fireAgents <-> fires graph if required
         if (config.getBooleanValue(Constants.KEY_PROBLEM_PRUNE)) {
@@ -204,11 +201,13 @@ public class ProblemDefinition {
     }
 
     private void computeBlockedFireAgents() {
+        Logger.debug("[*] Computing blocked fire agents...");
         for (EntityID agent : getFireAgents()) {
             Human hagent = (Human)world.getEntity(agent);
             EntityID position = hagent.getPosition();
+            
             for (EntityID target: getFires()) {
-                SearchResults results = search.search(position, target, connectivityGraph, distanceMatrix);
+                SearchResults results = pathDB.search(position, target);
                 List<Blockade> pathBlockades = results.getPathBlocks();
                 if (!pathBlockades.isEmpty()) {
                     Logger.trace("Firefighter {} blocked from reaching fire {} by {}", agent, target, pathBlockades.get(0).getID());
@@ -216,16 +215,19 @@ public class ProblemDefinition {
                 }
             }
         }
+        Logger.debug("[*] Done");
     }
 
     private void computeBlockedPoliceAgents() {
+        Logger.debug("[*] Computing blocked police agents...");
         for (EntityID agent : getPoliceAgents()) {
+            Human hagent = (Human)world.getEntity(agent);
+            EntityID agentPosition = hagent.getPosition();
+
             for (EntityID target: getBlockades()) {
-                Human hagent = (Human)world.getEntity(agent);
-                EntityID agentPosition = hagent.getPosition();
                 Blockade blockade = (Blockade)world.getEntity(target);
                 EntityID targetPosition = blockade.getPosition();
-                SearchResults results = search.search(agentPosition, targetPosition, connectivityGraph, distanceMatrix);
+                SearchResults results = pathDB.search(agentPosition, targetPosition);
                 List<Blockade> pathBlockades = results.getPathBlocks();
                 if (!pathBlockades.isEmpty() && !pathBlockades.get(0).getID().equals(target)) {
                     Logger.trace("Police agent {} blocked from reaching blockade {} by {}", agent, target, pathBlockades.get(0).getID());
@@ -233,6 +235,7 @@ public class ProblemDefinition {
                 }
             }
         }
+        Logger.debug("[*] Done");
     }
 
     /**

@@ -4,6 +4,9 @@ public class Constants {
     public final static int STATION_CHANNEL = 1;
     public final static int PLATOON_CHANNEL = 1;
 
+    /** Path to the cache folder */
+    public static final String KEY_CACHE_PATH = "cache.path";
+
     /** The time at which the experiment starts */
     public static final String KEY_START_EXPERIMENT_TIME = "experiment.start_time";
 

@@ -1,20 +1,19 @@
 package RSLBench.Search;
 
 import rescuecore2.standard.entities.Area;
-import rescuecore2.worldmodel.EntityID;
 
 public class SearchNode implements Comparable<SearchNode>
 {
     private int pathLength;
     private int heuristicValue;
-    
+
     private Area nodeID;
     private SearchNode parent;
-    
+
     /**
      * Creates a new search node, which implements the java.lang.Comparable
      * interface. Therefore it can be sorted using a PriorityQueue as open list.
-     * 
+     *
      * @param nodeID
      *            The EntityID of the current node.
      * @param parent
@@ -40,7 +39,7 @@ public class SearchNode implements Comparable<SearchNode>
         this.pathLength += distanceToParent;
         this.heuristicValue = heuristicValue;
     }
-    
+
     public int getPathLength()
     {
         return pathLength;

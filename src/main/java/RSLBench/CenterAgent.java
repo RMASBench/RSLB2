@@ -17,6 +17,7 @@ import RSLBench.Assignment.CompositeSolver;
 import RSLBench.Assignment.Solver;
 import RSLBench.Helpers.Exporter;
 import RSLBench.Helpers.Logging.Markers;
+import RSLBench.Helpers.PathCache.PathDB;
 import RSLBench.Helpers.Utility.UtilityFactory;
 import RSLBench.Helpers.Utility.ProblemDefinition;
 import java.util.Iterator;
@@ -31,8 +32,7 @@ import rescuecore2.worldmodel.WorldModelListener;
  * for all the other agent. It is the agent that starts and updates the simulation and that
  * communicates the new target to each PlatoonFireAgent.
  */
-public class CenterAgent extends StandardAgent<Building>
-{
+public class CenterAgent extends StandardAgent<Building> {
     private static final Logger Logger = LogManager.getLogger(CenterAgent.class);
 
     /** Base config key to solver configurations */
@@ -88,7 +88,7 @@ public class CenterAgent extends StandardAgent<Building>
             public void entityAdded(WorldModel<? extends StandardEntity> model,
                     StandardEntity e) {
                 if (e instanceof Blockade) {
-                    Logger.info("New blockade introduced: " + e);
+                    Logger.debug("New blockade introduced: " + e);
                     blockades.add((Blockade)e);
                 }
             }
@@ -107,7 +107,7 @@ public class CenterAgent extends StandardAgent<Building>
                     StandardEntity e) {
                 if (e instanceof Blockade) {
                     Blockade blockade = (Blockade)e;
-                    Logger.info("Blockade removed: " + e);
+                    Logger.debug("Blockade removed: " + e);
                     for (PlatoonFireAgent fireAgent : fireAgents) {
                         fireAgent.removeBlockade(blockade);
                     }
@@ -124,6 +124,9 @@ public class CenterAgent extends StandardAgent<Building>
             exporter = new Exporter();
             exporter.initialize(model, config);
         }
+
+        // Initialize the path cache
+        PathDB.initialize(config, model);
 
         solver = buildSolver();
         solver.initialize(model, config);
@@ -209,8 +212,10 @@ public class CenterAgent extends StandardAgent<Building>
     }
 
     @Override
-    protected void think(int time, ChangeSet changed, Collection<Command> heard)
-    {
+    protected void think(int time, ChangeSet changed, Collection<Command> heard) {
+        final long startTime = System.currentTimeMillis();
+        long lastTime = System.currentTimeMillis();
+
         // Cleanup non-existant blockades
         ArrayList<EntityID> blockadeIDs = new ArrayList<>();
         Iterator<Blockade> it = blockades.iterator();
@@ -227,6 +232,9 @@ public class CenterAgent extends StandardAgent<Building>
                 }
             }
         }
+        long nextTime = System.currentTimeMillis();
+        Logger.debug("Cleanup blockades took {} millis", nextTime - lastTime);
+        lastTime = nextTime;
 
         // Report scenario status
         Collection<EntityID> burning = getBurningBuildings();
@@ -249,6 +257,9 @@ public class CenterAgent extends StandardAgent<Building>
         ArrayList<EntityID> fires = new ArrayList<>(burning);
         ProblemDefinition problem = new ProblemDefinition(config, fireAgentsIDs,
                 fires, policeAgentsIDs, blockadeIDs, lastAssignment, model);
+        nextTime = System.currentTimeMillis();
+        Logger.debug("Build problem took {} millis", nextTime - lastTime);
+        lastTime = nextTime;
 
         // Export the problem if required
         if (exporter != null) {
@@ -257,10 +268,15 @@ public class CenterAgent extends StandardAgent<Building>
 
         // Compute assignment
         lastAssignment = solver.solve(time, problem);
+        nextTime = System.currentTimeMillis();
+        Logger.debug("Solving took {} millis", nextTime - lastTime);
+        lastTime = nextTime;
 
         // Send assignment to agents
         sendAssignments(fireAgents);
         sendAssignments(policeAgents);
+
+        Logger.info("Full step took {} millis.", lastTime-startTime);
     }
 
     private void sendAssignments(List<? extends PlatoonAbstractAgent> agents) {

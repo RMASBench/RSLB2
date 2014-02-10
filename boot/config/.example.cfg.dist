@@ -63,6 +63,9 @@ util.alpha: 1.4
 # Path to the results folder
 results.path: results/
 
+# Path to the cache folder
+cache.path: cache/
+
 # When should agents start acting
 experiment.start_time: 23
 

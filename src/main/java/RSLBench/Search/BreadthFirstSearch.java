@@ -88,7 +88,6 @@ public class BreadthFirstSearch extends AbstractSearchAlgorithm
         Collections.reverse(entityPath);
         Collections.reverse(blockers);
 
-        result.setPathAreas(path);
         result.setPathIds(entityPath);
         result.setPathBlocks(blockers);
         return result;

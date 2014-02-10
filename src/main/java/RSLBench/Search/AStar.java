@@ -83,13 +83,11 @@ public class AStar extends AbstractSearchAlgorithm
         }
 
         // construct the path
-        List<Area> pathAreas = new ArrayList<>();
         List<EntityID> pathEntities = new ArrayList<>();
         List<Blockade> blockers = new ArrayList<>();
         while (currentNode.getParent() != null)
         {
             Area current = currentNode.getNodeID();
-            pathAreas.add(current);
             pathEntities.add(current.getID());
             addBlockers(graph, blockers, current);
 
@@ -97,12 +95,10 @@ public class AStar extends AbstractSearchAlgorithm
         }
 //        Logger.debugColor("path found. length: "+path.size(), Logger.BG_GREEN);
 
-        Collections.reverse(pathAreas);
         Collections.reverse(pathEntities);
         Collections.reverse(blockers);
 
         SearchResults result = new SearchResults();
-        result.setPathAreas(pathAreas);
         result.setPathIds(pathEntities);
         result.setPathBlocks(blockers);
 

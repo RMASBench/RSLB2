@@ -97,7 +97,7 @@ solver.time: 1000
 
 # Additional solvers to test
 # Warning: the numbers must be in sequence!
-solver.1.class: RSLBench.Algorithms.NewMS.MaxSum
+solver.1.class: RSLBench.Algorithms.MaxSum.MaxSum
 solver.1.time: 3000
 solver.2.class: RSLBench.Algorithms.DSA.DSA
 solver.2.time: 500

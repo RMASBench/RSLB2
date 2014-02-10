@@ -211,7 +211,7 @@ public class ProblemDefinition {
                 SearchResults results = search.search(position, target, connectivityGraph, distanceMatrix);
                 List<Blockade> pathBlockades = results.getPathBlocks();
                 if (!pathBlockades.isEmpty()) {
-                    Logger.debug("Firefighter {} blocked from reaching fire {} by {}", agent, target, pathBlockades.get(0).getID());
+                    Logger.trace("Firefighter {} blocked from reaching fire {} by {}", agent, target, pathBlockades.get(0).getID());
                     blockedFireAgents.put(new Pair<>(agent, target), pathBlockades.get(0).getID());
                 }
             }
@@ -228,7 +228,7 @@ public class ProblemDefinition {
                 SearchResults results = search.search(agentPosition, targetPosition, connectivityGraph, distanceMatrix);
                 List<Blockade> pathBlockades = results.getPathBlocks();
                 if (!pathBlockades.isEmpty() && !pathBlockades.get(0).getID().equals(target)) {
-                    Logger.debug("Police agent {} blocked from reaching blockade {} by {}", agent, target, pathBlockades.get(0).getID());
+                    Logger.trace("Police agent {} blocked from reaching blockade {} by {}", agent, target, pathBlockades.get(0).getID());
                     blockedPoliceAgents.put(new Pair<>(agent, target), pathBlockades.get(0).getID());
                 }
             }
@@ -624,7 +624,7 @@ public class ProblemDefinition {
         for (EntityID target : fires) {
             count += getRequiredAgentCount(target);
         }
-        Logger.error("Total sum of max agents for fires: {}", count);
+        Logger.debug("Total sum of max agents for fires: {}", count);
         return count;
     }
 

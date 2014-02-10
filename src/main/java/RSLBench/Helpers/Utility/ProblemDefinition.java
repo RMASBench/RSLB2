@@ -77,7 +77,7 @@ public class ProblemDefinition {
 
         // Utilities to check which agents are blocked from reaching wich targets
         search = SearchFactory.buildSearchAlgorithm(config);
-        connectivityGraph = new Graph(world);
+        connectivityGraph = Graph.getInstance(world);
         distanceMatrix = new DistanceInterface(world);
 
         long initialTime = System.currentTimeMillis();

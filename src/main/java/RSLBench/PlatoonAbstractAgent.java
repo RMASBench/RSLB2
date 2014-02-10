@@ -110,7 +110,7 @@ public abstract class PlatoonAbstractAgent<E extends StandardEntity> extends Sta
 
         // load correct search algorithm
         search = SearchFactory.buildSearchAlgorithm(config);
-        connectivityGraph = new Graph(model);
+        connectivityGraph = Graph.getInstance(model);
         distanceMatrix = new DistanceInterface(model);
 
         useSpeak = config.getValue(Constants.COMMUNICATION_MODEL_KEY).equals(SPEAK_COMMUNICATION_MODEL);

@@ -1,5 +1,6 @@
 package RSLBench.Search;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -14,18 +15,19 @@ import rescuecore2.worldmodel.EntityID;
 public final class Graph
 {
     private Map<Area, Set<Area>> graph;
-    private int accessCount;
     private StandardWorldModel world;
 
-//    public Graph(Map<EntityID, Set<EntityID>> graph)
-//    {
-//        this.graph = graph;
-//    }
+    private static final Map<StandardWorldModel, Graph> instanceMap = new HashMap<>();
 
-    public Graph(StandardWorldModel world)
-    {
+    public static Graph getInstance(StandardWorldModel world) {
+        if (!instanceMap.containsKey(world)) {
+            instanceMap.put(world, new Graph(world));
+        }
+        return instanceMap.get(world);
+    }
+
+    private Graph(StandardWorldModel world) {
         this.world = world;
-        resetAccessCount();
         graph = new LazyMap<Area, Set<Area>>()
         {
             @Override
@@ -57,7 +59,6 @@ public final class Graph
      */
     public Set<Area> getNeighbors(Area id)
     {
-        accessCount++;
         return graph.get(id);
     }
 
@@ -68,16 +69,6 @@ public final class Graph
         }
 
         return getNeighbors((Area)entity);
-    }
-
-    public int getAccessCount()
-    {
-        return accessCount;
-    }
-
-    public void resetAccessCount()
-    {
-        this.accessCount = 0;
     }
 
     public StandardWorldModel getWorld() {

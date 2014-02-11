@@ -201,11 +201,11 @@ public class ProblemDefinition {
     }
 
     private void computeBlockedFireAgents() {
-        Logger.debug("[*] Computing blocked fire agents...");
+        Logger.debug("Computing blocked fire agents...");
         for (EntityID agent : getFireAgents()) {
             Human hagent = (Human)world.getEntity(agent);
             EntityID position = hagent.getPosition();
-            
+
             for (EntityID target: getFires()) {
                 SearchResults results = pathDB.search(position, target);
                 List<Blockade> pathBlockades = results.getPathBlocks();
@@ -215,11 +215,11 @@ public class ProblemDefinition {
                 }
             }
         }
-        Logger.debug("[*] Done");
+        Logger.debug("Done computing blocked fire agents.");
     }
 
     private void computeBlockedPoliceAgents() {
-        Logger.debug("[*] Computing blocked police agents...");
+        Logger.debug("Computing blocked police agents...");
         for (EntityID agent : getPoliceAgents()) {
             Human hagent = (Human)world.getEntity(agent);
             EntityID agentPosition = hagent.getPosition();
@@ -235,7 +235,7 @@ public class ProblemDefinition {
                 }
             }
         }
-        Logger.debug("[*] Done");
+        Logger.debug("Done computing blocked police agents.");
     }
 
     /**

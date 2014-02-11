@@ -29,6 +29,7 @@ function printUsage {
 function processArgs {
     LOGDIR="logs/$UUID"
     RESULTSDIR="results/"
+    CACHEDIR="cache/"
     RAYSDIR="rays/"
     MAP="paris"
     TEAM=""
@@ -145,10 +146,7 @@ function processArgs {
     fi
     LOGDIR=$(cd $LOGDIR; pwd)
 
-    # Ensure that the results and rays folders exist
-    if [ ! -d $RESULTSDIR ]; then
-        mkdir $RESULTSDIR
-    fi
+    # Ensure that the folder exists
     if [ ! -d $RAYSDIR ]; then
         mkdir $RAYSDIR
     fi
@@ -174,6 +172,17 @@ function processArgs {
         echo "$SCONFIGDIR must contain the configuration files for the Robocup Rescue simulator."
         printUsage
         exit 1
+    fi
+
+    # Get the location of the results directory and ensure it exists
+    RESULTSDIR=$(grep "results.path" "$CONFIGDIR/$ALGORITHM.cfg" | cut -d':' -f2)
+    if [ ! -d $RESULTSDIR ]; then
+        mkdir $RESULTSDIR
+    fi
+
+    CACHEDIR=$(grep "cache.path" "$CONFIGDIR/$ALGORITHM.cfg" | cut -d':' -f2)
+    if [ ! -d $CACHEDIR ]; then
+        mkdir $CACHEDIR
     fi
 
     # Use a random port when running everything, or the default one when only running

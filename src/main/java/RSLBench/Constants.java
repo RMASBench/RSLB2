@@ -7,6 +7,9 @@ public class Constants {
     /** Path to the cache folder */
     public static final String KEY_CACHE_PATH = "cache.path";
 
+    /** Default path to the cache folder */
+    public static final String DEFAULT_CACHE_PATH = "cache/";
+
     /** The time at which the experiment starts */
     public static final String KEY_START_EXPERIMENT_TIME = "experiment.start_time";
 

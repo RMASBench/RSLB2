@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.mapdb.BTreeMap;
@@ -73,7 +72,7 @@ public class PathDB {
 
     public static void initialize(Config config, StandardWorldModel model) {
         PathDB.model = model;
-        String cachePath = config.getValue(Constants.KEY_CACHE_PATH);
+        String cachePath = config.getValue(Constants.KEY_CACHE_PATH, Constants.DEFAULT_CACHE_PATH);
         String searchClass = config.getValue(SearchFactory.KEY_SEARCH_CLASS);
         searchClass = searchClass.substring(searchClass.lastIndexOf('.')+1);
         String map = config.getValue(Constants.KEY_MAP_NAME);

@@ -69,6 +69,7 @@ public abstract class DCOPSolver extends AbstractSolver {
         int iterations = 0;
         Assignment finalAssignment = null, bestAssignment = null;
         double bestAssignmentUtility = Double.NEGATIVE_INFINITY;
+        long iterationTime = System.currentTimeMillis();
         while (!done && iterations < MAX_ITERATIONS) {
             finalAssignment = new Assignment();
 
@@ -119,8 +120,13 @@ public abstract class DCOPSolver extends AbstractSolver {
                 bestAssignmentUtility = assignmentUtility;
                 bestAssignment = finalAssignment;
             }
+
+            long time = System.currentTimeMillis();
+            Logger.trace("Iteration {} took {}ms.", iterations, time-iterationTime);
+            iterationTime = time;
         }
-        Logger.debug("Done with iterations. Needed: " + iterations);
+        Logger.debug("Done with iterations. Needed {} in {}ms.", iterations,
+                System.currentTimeMillis() - startTime);
 
         // Recompute this because its not saved from the solving loop
         double finalAssignmentUtility = getUtility(problem, finalAssignment);
@@ -216,9 +222,11 @@ public abstract class DCOPSolver extends AbstractSolver {
      */
     protected void initializeAgents(ProblemDefinition problem) {
         agents = new ArrayList<>();
+        final long startTime = System.currentTimeMillis();
         initializeAgentType(problem, problem.getFireAgents());
         initializeAgentType(problem, problem.getPoliceAgents());
-        Logger.debug(Markers.BLUE, "Initialized " + agents.size() + " agents in " + getIdentifier());
+        Logger.debug(Markers.BLUE, "Initialized {} {} agents in {}ms.",
+                agents.size(), getIdentifier(), System.currentTimeMillis() - startTime);
     }
 
     private void initializeAgentType(ProblemDefinition problem, List<EntityID> ids) {

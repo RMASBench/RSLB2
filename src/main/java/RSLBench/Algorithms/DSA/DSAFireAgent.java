@@ -48,10 +48,15 @@ public class DSAFireAgent extends DSAAbstractAgent {
         // In the case of firefighters, it is always better to do something, so we go to the
         // most preferred fire if we are left without candidates during the pruning
         if (bestTarget == Assignment.UNKNOWN_TARGET_ID) {
-            bestTarget = getProblem().getHighestTargetForAgent(getID());
+            bestTarget = getProblem().getHighestTargetForFireAgent(getID());
         }
 
         return bestTarget;
+    }
+
+    @Override
+    protected EntityID getPreferredTarget() {
+        return getProblem().getHighestTargetForFireAgent(getID(), getCandidateTargets());
     }
 
 }

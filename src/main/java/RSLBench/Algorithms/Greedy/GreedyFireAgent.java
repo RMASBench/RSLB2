@@ -34,7 +34,7 @@ public class GreedyFireAgent extends DefaultDCOPAgent {
 
         // This can happen if we have no neighbors
         if (getTarget() == null) {
-            setTarget(problem.getHighestTargetForAgent(id));
+            setTarget(problem.getHighestTargetForFireAgent(id));
         }
 
         return false;

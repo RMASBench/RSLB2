@@ -240,7 +240,7 @@ public class BMSFireAgent implements DCOPAgent {
         final List<EntityID> candidateFires = problem.getFireAgentNeighbors(id);
         if (candidateFires.isEmpty()) {
             // If the agent has no candidate fires just send her to the nearest fire
-            targetId = problem.getHighestTargetForAgent(id);
+            targetId = problem.getHighestTargetForFireAgent(id);
             return false;
         }
 

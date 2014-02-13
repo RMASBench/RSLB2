@@ -119,5 +119,10 @@ solver.5.time: 100
 # DSA probability of change
 dsa.probability: 0.6
 
+# DSA initial target selection.
+# - random : choose a random initial target
+# - best : choose the best target according to their individual utility
+dsa.initial_target: best
+
 # Max-Sum damping factor, from 0 (no damping) to 1 (completely ignore messages)
 maxsum.damping: 0.1

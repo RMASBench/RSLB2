@@ -21,6 +21,23 @@ public class DSA extends DCOPSolver {
      */
     public static final String KEY_DSA_PROBABILITY = "dsa.probability";
 
+    /**
+     * How the algorithm chooses the initial target for the algorithm.
+     */
+    public static final String KEY_DSA_INITIAL_TARGET = "dsa.initial_target";
+
+    /**
+     * Choose the best individual target as the starting one.
+     * @see #KEY_DSA_INITIAL_TARGET
+     */
+    public static final String TARGET_BEST = "best";
+
+    /**
+     * Choose the initial target randomly.
+     * @see #KEY_DSA_INITIAL_TARGET
+     */
+    public static final String TARGET_RANDOM = "random";
+
     @Override
     public String getIdentifier() {
         return "DSA";
@@ -44,6 +61,7 @@ public class DSA extends DCOPSolver {
     public List<String> getUsedConfigurationKeys() {
         List<String> keys = super.getUsedConfigurationKeys();
         keys.add(KEY_DSA_PROBABILITY);
+        keys.add(KEY_DSA_INITIAL_TARGET);
         return keys;
     }
 

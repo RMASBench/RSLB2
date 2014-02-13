@@ -187,7 +187,7 @@ public class MSAgent extends AbstractDCOPAgent {
         // Make a choice
         if (candidates.isEmpty()) {
             // If we got no candidates because of pruning, just go to the most preferred fire
-            setTarget(problem.getHighestTargetForAgent(id));
+            setTarget(problem.getHighestTargetForFireAgent(id));
         } else {
             // Otherwise make the variable node choose
             final int choice = variableNode.select();

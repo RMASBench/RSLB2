@@ -13,17 +13,21 @@ import rescuecore2.worldmodel.EntityID;
  *
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
-public class FireTeamScoringFunction implements ScoringFunction {
+public class FireTeamScoringFunction extends AbstractScoringFunction {
 
     @Override
-    public double score(EntityID agent, EntityID target, TargetScores scores, ProblemDefinition problem, int nAgents) {
+    public double score(EntityID agent, EntityID target, TargetScores scores, ProblemDefinition problem) {
+        final int nAgents = scores.getAgentCount(target);
+        CC();
 
         // Compute the difference in penalty between going to that fire and not going there
         final double penalty = problem.getUtilityPenalty(target, nAgents+1)
                 - problem.getUtilityPenalty(target, nAgents);
+        CC();CC();
 
         // Compute the individual utility of going to that fire
         double utility = problem.getFireUtility(agent, target);
+        CC();
 
         // Subtract the corresponding penalty if that fire is blocked *and* the blockade is not
         // being attended by any police agent
@@ -32,6 +36,7 @@ public class FireTeamScoringFunction implements ScoringFunction {
             if (scores.getAgentCount(blockade) == 0) {
                 utility -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_FIRE_PENALTY);
             }
+            CC();
         }
 
         // The score is the individual utility gain minus the increase in penalty

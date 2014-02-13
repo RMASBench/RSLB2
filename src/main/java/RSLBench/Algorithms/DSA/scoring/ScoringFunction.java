@@ -16,6 +16,19 @@ import rescuecore2.worldmodel.EntityID;
  */
 public interface ScoringFunction {
 
-    public double score(EntityID agent, EntityID target, TargetScores scores, ProblemDefinition problem, int nAgents);
+    /**
+     * Get the score differential between assigning the agent to the specified agent and not
+     * assigning it anywhere given the neighbor's choices as reflected in scores.
+     *
+     * @param agent agent whose target is under consideration.
+     * @param target target to evaluate.
+     * @param scores neighbor choices as collected from incoming messages.
+     * @param problem current problem definition.
+     * @return score differential between assigning the target to that agent and not assigning it
+     * anywhere.
+     */
+    public double score(EntityID agent, EntityID target, TargetScores scores, ProblemDefinition problem);
+
+    public long getCCs();
 
 }

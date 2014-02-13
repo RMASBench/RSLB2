@@ -46,4 +46,9 @@ public class DSAPoliceAgent extends DSAAbstractAgent {
         return getTargetScores().getBestTarget(getCandidateTargets());
     }
 
+    @Override
+    protected EntityID getPreferredTarget() {
+        return getProblem().getHighestTargetForPoliceAgent(getID(), getCandidateTargets());
+    }
+
 }

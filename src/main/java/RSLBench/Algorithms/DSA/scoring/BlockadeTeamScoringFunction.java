@@ -14,10 +14,13 @@ import rescuecore2.worldmodel.EntityID;
  *
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
-public class BlockadeTeamScoringFunction implements ScoringFunction {
+public class BlockadeTeamScoringFunction extends AbstractScoringFunction {
 
     @Override
-    public double score(EntityID agent, EntityID target, TargetScores scores, ProblemDefinition problem, int nAgents) {
+    public double score(EntityID agent, EntityID target, TargetScores scores, ProblemDefinition problem) {
+        final int nAgents = scores.getAgentCount(target);
+        CC();
+
         // If there is already another police agent attending that blockade, the utility of also
         // picking it is -inf
         if (nAgents > 0) {
@@ -29,6 +32,7 @@ public class BlockadeTeamScoringFunction implements ScoringFunction {
         if (problem.isPoliceAgentBlocked(agent, target)) {
             utility -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_POLICE_PENALTY);
         }
+        CC();
 
         // ... plus some possible penalty removals if fire agents are blocked by this blockade
         // TODO this is *very* awful.
@@ -39,6 +43,7 @@ public class BlockadeTeamScoringFunction implements ScoringFunction {
             if (scores.getAssignment(fireAgent).equals(fire)) {
                 utility += problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_FIRE_PENALTY);
             }
+            CC();
         }
 
         return utility;

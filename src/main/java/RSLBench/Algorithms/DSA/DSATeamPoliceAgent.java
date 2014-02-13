@@ -5,6 +5,7 @@
 package RSLBench.Algorithms.DSA;
 
 import RSLBench.Algorithms.DSA.scoring.BlockadeScoringFunction;
+import RSLBench.Algorithms.DSA.scoring.BlockadeTeamScoringFunction;
 import RSLBench.Algorithms.DSA.scoring.ScoringFunction;
 import RSLBench.Helpers.Utility.ProblemDefinition;
 
@@ -38,12 +39,17 @@ public class DSATeamPoliceAgent extends DSAAbstractAgent {
 
     @Override
     protected ScoringFunction buildScoringFunction() {
-        return new BlockadeScoringFunction();
+        return new BlockadeTeamScoringFunction();
     }
 
     @Override
     protected EntityID getBestTarget() {
         return getTargetScores().getBestTarget(getCandidateTargets());
+    }
+
+    @Override
+    protected EntityID getPreferredTarget() {
+        return getProblem().getHighestTargetForPoliceAgent(getID(), getCandidateTargets());
     }
 
 }

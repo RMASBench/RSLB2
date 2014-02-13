@@ -24,6 +24,8 @@ import rescuecore2.worldmodel.EntityID;
 public abstract class DSAAbstractAgent implements DCOPAgent {
     private static final Logger Logger = LogManager.getLogger(DSAAbstractAgent.class);
 
+    private boolean INITIALIZE_RANDOMLY;
+
     private ProblemDefinition problem;
     private EntityID id;
     private EntityID target;
@@ -99,6 +101,13 @@ public abstract class DSAAbstractAgent implements DCOPAgent {
      */
     protected abstract EntityID getBestTarget();
 
+    /**
+     * Get the preferred target in terms of individual utility.
+     *
+     * @return preferred target in terms of individual utility.
+     */
+    protected abstract EntityID getPreferredTarget();
+
     @Override
     public void initialize(Config config, EntityID id, ProblemDefinition problem) {
         this.id = id;
@@ -106,6 +115,8 @@ public abstract class DSAAbstractAgent implements DCOPAgent {
         targetScores = new TargetScores(id, problem);
         target = Assignment.UNKNOWN_TARGET_ID;
         this.config = config;
+        INITIALIZE_RANDOMLY = config.getValue(DSA.KEY_DSA_INITIAL_TARGET, DSA.TARGET_RANDOM)
+                .toLowerCase().equals(DSA.TARGET_RANDOM) ? true : false;
 
         // Set the scoring function used by this agent
         targetScores.setScoringFunction(buildScoringFunction());
@@ -117,7 +128,9 @@ public abstract class DSAAbstractAgent implements DCOPAgent {
         // Obtain the list of candidate targets for this agent and choose a random one
         candidateTargets = computeCandidates();
         if (candidateTargets.size() > 0) {
-            target = candidateTargets.get(config.getRandom().nextInt(candidateTargets.size()));
+            target = INITIALIZE_RANDOMLY
+                    ? candidateTargets.get(config.getRandom().nextInt(candidateTargets.size()))
+                    : getPreferredTarget();
         } else {
             target = Assignment.UNKNOWN_TARGET_ID;
         }
@@ -130,7 +143,7 @@ public abstract class DSAAbstractAgent implements DCOPAgent {
     public boolean improveAssignment() {
         // Find the best target given utilities and constraints
         EntityID bestTarget = getBestTarget();
-        nCCCs += candidateTargets.size();
+        nCCCs += targetScores.getScoringFunction().getCCs();
 
         if (!bestTarget.equals(target)) {
             Logger.debug("Agent {} had target {} before, now wants {}", id, target, bestTarget);

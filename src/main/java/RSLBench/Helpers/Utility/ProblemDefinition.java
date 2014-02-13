@@ -4,9 +4,6 @@ import RSLBench.Assignment.Assignment;
 import RSLBench.Constants;
 import RSLBench.Helpers.PathCache.PathDB;
 import RSLBench.Search.DistanceInterface;
-import RSLBench.Search.Graph;
-import RSLBench.Search.SearchAlgorithm;
-import RSLBench.Search.SearchFactory;
 import RSLBench.Search.SearchResults;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -495,19 +492,59 @@ public class ProblemDefinition {
     /**
      * Returns the target with the highest utility for the agent
      *
-     * @param agentID: the agentID
+     * @param fireAgent the agentID
      * @return the targetID
      */
-    public EntityID getHighestTargetForAgent(EntityID agentID) {
+    public EntityID getHighestTargetForFireAgent(EntityID fireAgent) {
+        return getHighestTargetForFireAgent(fireAgent, fires);
+    }
+
+    /**
+     * Returns the target with the highest utility for the agent
+     *
+     * @param fireAgent the agentID
+     * @return the targetID
+     */
+    public EntityID getHighestTargetForFireAgent(EntityID fireAgent, List<EntityID> candidateFires) {
         double best = -Double.MAX_VALUE;
-        EntityID targetID = fires.get(0);
-        for (EntityID t : fires) {
-            if (getFireUtility(agentID, t) > best) {
-                best = getFireUtility(agentID, t);
-                targetID = t;
+        EntityID fire = candidateFires.get(0);
+        for (EntityID t : candidateFires) {
+            final double util = getFireUtility(fireAgent, t);
+            if (util > best) {
+                best = util;
+                fire = t;
             }
         }
-        return targetID;
+        return fire;
+    }
+
+    /**
+     * Returns the target with the highest utility for the agent
+     *
+     * @param policeAgent the agentID
+     * @return the targetID
+     */
+    public EntityID getHighestTargetForPoliceAgent(EntityID policeAgent) {
+        return getHighestTargetForPoliceAgent(policeAgent, blockades);
+    }
+
+    /**
+     * Returns the target with the highest utility for the agent
+     *
+     * @param policeAgent the agentID
+     * @return the targetID
+     */
+    public EntityID getHighestTargetForPoliceAgent(EntityID policeAgent, List<EntityID> candidateBlockades) {
+        double best = -Double.MAX_VALUE;
+        EntityID fire = candidateBlockades.get(0);
+        for (EntityID t : candidateBlockades) {
+            final double util = getPoliceUtility(policeAgent, t);
+            if (util > best) {
+                best = util;
+                fire = t;
+            }
+        }
+        return fire;
     }
 
     /**

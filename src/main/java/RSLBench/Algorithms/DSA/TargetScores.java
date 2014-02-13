@@ -43,6 +43,15 @@ public class TargetScores {
     }
 
     /**
+     * Get the scoring function used when evaluating targets
+     *
+     * @return the scoring function used to evaluate targets.
+     */
+    public ScoringFunction getScoringFunction() {
+        return scoringFunction;
+    }
+
+    /**
      * Get the target chosen by this agent.
      *
      * @param agent agent whose assignment to get
@@ -92,8 +101,7 @@ public class TargetScores {
      * @return utility for this agent to pick the given target.
      */
     public double computeScore(EntityID target) {
-        int nAgents = getAgentCount(target);
-        return scoringFunction.score(agent, target, this, problem, nAgents);
+        return scoringFunction.score(agent, target, this, problem);
     }
 
     /**

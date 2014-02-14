@@ -7,6 +7,8 @@ package RSLBench.Algorithms.DSA.scoring;
 import RSLBench.Algorithms.DSA.TargetScores;
 import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import rescuecore2.worldmodel.EntityID;
 
 /**
@@ -14,6 +16,7 @@ import rescuecore2.worldmodel.EntityID;
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
 public class FireTeamScoringFunction extends AbstractScoringFunction {
+    private static final Logger Logger = LogManager.getLogger(FireTeamScoringFunction.class);
 
     @Override
     public double score(EntityID agent, EntityID target, TargetScores scores, ProblemDefinition problem) {
@@ -33,8 +36,12 @@ public class FireTeamScoringFunction extends AbstractScoringFunction {
         // being attended by any police agent
         if (problem.isFireAgentBlocked(agent, target)) {
             EntityID blockade = problem.getBlockadeBlockingFireAgent(agent, target);
-            if (scores.getAgentCount(blockade) == 0) {
+            final int nPolice = scores.getAgentCount(blockade);
+            if (nPolice == 0) {
                 utility -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_FIRE_PENALTY);
+            } else {
+                Logger.trace("Firefighter {} is now free to go to {} because there are {} police agents attending {}",
+                        agent, target, nPolice, blockade);
             }
             CC();
         }

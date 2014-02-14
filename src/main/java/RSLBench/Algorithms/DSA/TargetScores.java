@@ -132,4 +132,9 @@ public class TargetScores {
         assignments.clear();
     }
 
+    @Override
+    public String toString() {
+        return nAssignedAgents.toString();
+    }
+
 }

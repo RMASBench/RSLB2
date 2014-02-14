@@ -135,8 +135,8 @@ public abstract class DSAAbstractAgent implements DCOPAgent {
             target = Assignment.UNKNOWN_TARGET_ID;
         }
 
-        Logger.debug("Agent {} initialized with {} targets and {} neighboring agents.",
-                id, candidateTargets.size(), neighbors.size());
+        Logger.debug("{} {} initialized with {} targets and {} neighboring agents.",
+                getClass().getSimpleName(), id, candidateTargets.size(), neighbors.size());
     }
 
     @Override
@@ -154,7 +154,7 @@ public abstract class DSAAbstractAgent implements DCOPAgent {
             return true;
         }
 
-        Logger.debug("Agent {} is okay with its decision.", getID());
+        Logger.trace("Agent {} is okay with its decision.", getID());
         return false;
     }
 

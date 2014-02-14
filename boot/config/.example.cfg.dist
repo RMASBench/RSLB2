@@ -122,6 +122,7 @@ dsa.probability: 0.6
 # DSA initial target selection.
 # - random : choose a random initial target
 # - best : choose the best target according to their individual utility
+# - last : choose the target that the agent got in the last simulation step
 dsa.initial_target: best
 
 # Max-Sum damping factor, from 0 (no damping) to 1 (completely ignore messages)

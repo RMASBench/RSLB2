@@ -38,6 +38,12 @@ public class DSA extends DCOPSolver {
      */
     public static final String TARGET_RANDOM = "random";
 
+    /**
+     * Choose the target selected in the last iteration.
+     * @see #KEY_DSA_INITIAL_TARGET
+     */
+    public static final String TARGET_LAST = "last";
+
     @Override
     public String getIdentifier() {
         return "DSA";

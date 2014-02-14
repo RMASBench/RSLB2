@@ -115,8 +115,7 @@ public abstract class DSAAbstractAgent implements DCOPAgent {
         targetScores = new TargetScores(id, problem);
         target = Assignment.UNKNOWN_TARGET_ID;
         this.config = config;
-        INITIALIZE_RANDOMLY = config.getValue(DSA.KEY_DSA_INITIAL_TARGET, DSA.TARGET_RANDOM)
-                .toLowerCase().equals(DSA.TARGET_RANDOM) ? true : false;
+        String initMethod = config.getValue(DSA.KEY_DSA_INITIAL_TARGET, DSA.TARGET_RANDOM);
 
         // Set the scoring function used by this agent
         targetScores.setScoringFunction(buildScoringFunction());
@@ -128,9 +127,28 @@ public abstract class DSAAbstractAgent implements DCOPAgent {
         // Obtain the list of candidate targets for this agent and choose a random one
         candidateTargets = computeCandidates();
         if (candidateTargets.size() > 0) {
-            target = INITIALIZE_RANDOMLY
-                    ? candidateTargets.get(config.getRandom().nextInt(candidateTargets.size()))
-                    : getPreferredTarget();
+            switch(initMethod.toLowerCase()) {
+                case DSA.TARGET_RANDOM:
+                    target = candidateTargets.get(config.getRandom().nextInt(candidateTargets.size()));
+                    break;
+                case DSA.TARGET_BEST:
+                    target = getPreferredTarget();
+                    break;
+                case DSA.TARGET_LAST:
+                    target = problem.getLastAssignment().getAssignment(id);
+                    Logger.trace("{} {} initialized to the target of the last iteration {}.",
+                            getClass().getSimpleName(), id, target);
+                    if (!candidateTargets.contains(target)) {
+                        EntityID lastTarget = target;
+                        target = getPreferredTarget();
+                        Logger.info("{} {} can not reuse last target {} because it is not a candidate anymore. Using {}.",
+                                getClass().getSimpleName(), id, lastTarget, target);
+                    }
+                    break;
+                default:
+                    Logger.error("Unknown DSA initialization method \"{}\".", initMethod);
+                    throw new RuntimeException("Unknown DSA initialization method: " + initMethod);
+            }
         } else {
             target = Assignment.UNKNOWN_TARGET_ID;
         }

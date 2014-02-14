@@ -3,7 +3,6 @@ package RSLBench.Helpers.Utility;
 import RSLBench.Assignment.Assignment;
 import RSLBench.Constants;
 import RSLBench.Helpers.PathCache.PathDB;
-import RSLBench.Search.DistanceInterface;
 import RSLBench.Search.SearchResults;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,9 +45,11 @@ public class ProblemDefinition {
     private double[][] fireUtilityMatrix;
     private double[][] policeUtilityMatrix;
 
+    // Assignment chosen in the last iteration
+    private Assignment lastAssignment;
+
     // Utilities to perform searches
     private PathDB pathDB;
-    private DistanceInterface distanceMatrix;
 
     /**
      * Creates a problem definition
@@ -68,13 +69,13 @@ public class ProblemDefinition {
         this.fires = fires;
         this.policeAgents = policeAgents;
         this.blockades = blockades;
+        this.lastAssignment = lastAssignment;
 
         this.world = world;
         this.config = config;
 
         // Utilities to perform searches
         pathDB = PathDB.getInstance();
-        distanceMatrix = new DistanceInterface(world);
 
         long initialTime = System.currentTimeMillis();
         utilityFunction = UtilityFactory.buildFunction();
@@ -97,6 +98,14 @@ public class ProblemDefinition {
 
         long elapsedTime = System.currentTimeMillis() - initialTime;
         Logger.debug("Problem definition initialized in {}ms.", elapsedTime);
+    }
+
+    /**
+     * Get the assignment selected in the last iteration
+     * @return assignment selected in the last iteration
+     */
+    public Assignment getLastAssignment() {
+        return lastAssignment;
     }
 
     /**

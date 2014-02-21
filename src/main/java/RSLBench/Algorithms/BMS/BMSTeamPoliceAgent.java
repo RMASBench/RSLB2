@@ -42,10 +42,10 @@ import java.util.Collection;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import es.csic.iiia.maxsum.factors.AtMostOneFactor;
-import es.csic.iiia.maxsum.Factor;
-import es.csic.iiia.maxsum.MaxOperator;
-import es.csic.iiia.maxsum.Maximize;
+import es.csic.iiia.bms.factors.AtMostOneFactor;
+import es.csic.iiia.bms.Factor;
+import es.csic.iiia.bms.MaxOperator;
+import es.csic.iiia.bms.Maximize;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,7 +59,7 @@ import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
-import es.csic.iiia.maxsum.factors.WeightingFactor;
+import es.csic.iiia.bms.factors.WeightingFactor;
 import rescuecore2.misc.Pair;
 
 /**

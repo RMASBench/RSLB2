@@ -49,11 +49,11 @@ import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
 
-import es.csic.iiia.maxsum.Factor;
-import es.csic.iiia.maxsum.MaxOperator;
-import es.csic.iiia.maxsum.Maximize;
-import es.csic.iiia.maxsum.factors.cardinality.CardinalityFunction;
-import es.csic.iiia.maxsum.factors.WeightingFactor;
+import es.csic.iiia.bms.Factor;
+import es.csic.iiia.bms.MaxOperator;
+import es.csic.iiia.bms.Maximize;
+import es.csic.iiia.bms.factors.CardinalityFactor.CardinalityFunction;
+import es.csic.iiia.bms.factors.WeightingFactor;
 import java.util.HashMap;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;

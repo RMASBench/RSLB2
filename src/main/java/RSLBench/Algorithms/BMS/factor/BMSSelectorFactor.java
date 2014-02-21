@@ -4,8 +4,8 @@
  */
 package RSLBench.Algorithms.BMS.factor;
 
-import es.csic.iiia.maxsum.MaxOperator;
-import es.csic.iiia.maxsum.factors.SelectorFactor;
+import es.csic.iiia.bms.MaxOperator;
+import es.csic.iiia.bms.factors.SelectorFactor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

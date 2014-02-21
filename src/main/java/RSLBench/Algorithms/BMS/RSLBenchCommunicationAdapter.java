@@ -5,7 +5,7 @@
 package RSLBench.Algorithms.BMS;
 
 import RSLBench.Constants;
-import es.csic.iiia.maxsum.CommunicationAdapter;
+import es.csic.iiia.bms.CommunicationAdapter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;

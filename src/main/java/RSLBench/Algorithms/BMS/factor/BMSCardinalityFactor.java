@@ -4,8 +4,7 @@
  */
 package RSLBench.Algorithms.BMS.factor;
 
-import es.csic.iiia.maxsum.factors.CardinalityFactor;
-import es.csic.iiia.maxsum.factors.cardinality.CardinalityFunction;
+import es.csic.iiia.bms.factors.CardinalityFactor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

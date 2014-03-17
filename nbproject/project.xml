@@ -33,14 +33,6 @@
                 <clean-target>clean</clean-target>
                 <id>jars</id>
             </reference>
-            <reference>
-                <foreign-project>jMaxSum</foreign-project>
-                <artifact-type>jar</artifact-type>
-                <script>${project.jMaxSum}/build.xml</script>
-                <target>jar</target>
-                <clean-target>clean</clean-target>
-                <id>jar</id>
-            </reference>
         </references>
     </configuration>
 </project>

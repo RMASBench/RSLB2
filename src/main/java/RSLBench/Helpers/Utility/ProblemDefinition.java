@@ -653,7 +653,7 @@ public class ProblemDefinition {
             int assigned = nAgentsPerTarget.get(target);
             int max = getRequiredAgentCount(target);
             if (assigned > max) {
-                Logger.warn("Violation! Target {} needs {} agents, got {}", target, max, assigned);
+                Logger.debug("Violation! Target {} needs {} agents, got {}", target, max, assigned);
                 count += assigned - max;
             }
         }

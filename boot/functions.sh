@@ -8,9 +8,9 @@ function printUsage {
     echo "Usage: $0 [options]"
     echo "Options"
     echo "======="
-    echo "-a    --algorithm <algorithm>   Set the algorithm to run. Default is \"MaxSum\""
     echo "-b    --blockades               Run the blockades loader"
-    echo "-c    --config    <configdir>   Set the config directory. Default is \"config\""
+    echo "-c    --config <file>           Set the config file to employ. Default is \"example\""
+    echo "      --config-dir <configdir>  Set the config directory. Default is \"config\""
     echo "-m    --map       <mapdir>      Set the map directory. Default is \"paris\""
     echo '-n    --no-rslb2                Do not run RSLB2 (useful if you want to run it externaly with a debugger)'
     echo "-l    --log       <logdir>      Set the log directory. Default is \"logs/$PID\""
@@ -40,7 +40,7 @@ function processArgs {
 
     while [[ ! -z "$1" ]]; do
         case "$1" in
-            -a | --algorithm)
+            -c | --config)
                 ALGORITHM="$2"
                 shift 2
                 ;;
@@ -80,7 +80,7 @@ function processArgs {
                 THINK_TIME="$2"
                 shift 2
                 ;;
-            -c | --config)
+            --config)
                 CONFIGDIR="$2"
                 shift 2
                 ;;
@@ -152,18 +152,22 @@ function processArgs {
     fi
 
     # Check that the user has specified some algorithm to run
-    if [ -z "$ALGORITHM" ]; then
+    if [ -z "$CONFIGFILE" ]; then
         echo "You must specify which algorithm to run."
         printUsage
         exit 1
     fi
     
     # Check that there exists a configuration file for the requested algorithm
-    if [ ! -f "$CONFIGDIR/$ALGORITHM.cfg" ]; then
-        echo "Unable to read file \"$DIR/config/$ALGORITHM.cfg\"."
-        echo "No configuration file found for algorithm \"$ALGORITHM\". Please create one."
-        printUsage
-        exit 1
+    if [ ! -f "$CONFIGDIR/$CONFIGFILE.cfg" ]; then
+        if [ -f "$CONFIGDIR/$CONFIGFILE" ]; then
+            CONFIGFILE="${CONFIGFILE%.cfg}"
+        else
+            echo "Unable to read file \"$DIR/config/$CONFIGFILE.cfg\"."
+            echo "No configuration file found for algorithm \"$CONFIGFILE\". Please create one."
+            printUsage
+            exit 1
+        fi
     fi
 
     # ... and a set of configuration files for the simulator
@@ -175,12 +179,12 @@ function processArgs {
     fi
 
     # Get the location of the results directory and ensure it exists
-    RESULTSDIR=$(grep "results.path" "$CONFIGDIR/$ALGORITHM.cfg" | cut -d':' -f2)
+    RESULTSDIR=$(grep "results.path" "$CONFIGDIR/$CONFIGFILE.cfg" | cut -d':' -f2)
     if [ ! -d $RESULTSDIR ]; then
         mkdir $RESULTSDIR
     fi
 
-    CACHEDIR=$(grep "cache.path" "$CONFIGDIR/$ALGORITHM.cfg" | cut -d':' -f2)
+    CACHEDIR=$(grep "cache.path" "$CONFIGDIR/$CONFIGFILE.cfg" | cut -d':' -f2)
     if [ ! -d $CACHEDIR ]; then
         mkdir $CACHEDIR
     fi
@@ -199,7 +203,7 @@ function processArgs {
 # Start the kernel
 function startKernel {
     # Extract the number of steps from the configuration
-    STEPS=$(configFetchSetting $CONFIGDIR/$ALGORITHM.cfg "experiment.end_time")
+    STEPS=$(configFetchSetting $CONFIGDIR/$CONFIGFILE.cfg "experiment.end_time")
 
     echo "Using config $SCONFIGDIR/kernel.cfg"
     KERNEL_OPTIONS="-c $SCONFIGDIR/kernel.cfg"
@@ -281,7 +285,7 @@ function startSims {
 
 function startRslb2 {
     JVM_OPTS="-Xmx5G -Dlog4j.configurationFile=file://$BASEDIR/supplement/log4j2.xml -Djava.awt.headless=true"
-    OPTS="-c $SCONFIGDIR/kernel.cfg -c $CONFIGDIR/$ALGORITHM.cfg --results.path=results/ --run=$UUID --kernel.port=$PORT"
+    OPTS="-c $SCONFIGDIR/kernel.cfg -c $CONFIGDIR/$CONFIGFILE.cfg --results.path=results/ --run=$UUID --kernel.port=$PORT"
     OPTS="$OPTS --random.seed=$SEED"
     if [ ! -z "$START_TIME" ]; then
         OPTS="$OPTS --experiment.start_time=$START_TIME"

@@ -20,7 +20,7 @@ public class Random extends DCOPSolver {
     protected DCOPAgent buildAgent(StandardEntityURN type) {
         switch(type) {
             case FIRE_BRIGADE:
-                return new RandomAgent();
+                return new RandomFireAgent();
             default:
                 throw new UnsupportedOperationException("The Random solver does not support agents of type " + type);
         }

@@ -2,8 +2,20 @@
 # PLATFORM SETTINGS
 #########################################
 
+# Kernel connection parameters (these may be overriden by the start.sh script)
 kernel.host: localhost
 kernel.port: 7000
+
+# Path to the results folder
+results.path: results/
+
+# Path to the cache folder
+cache.path: cache/
+
+# If enabled, this should export each step's problem (in terms of utilities) as a file.
+# Warning: this is old, so it may be buggy. Check the exporter code before trying.
+export: no
+export.path: export/
 
 
 #########################################
@@ -21,6 +33,75 @@ agent.search.class: RSLBench.Search.BreadthFirstSearch
 
 # Whether to perform interteam coordination or not
 agent.interteam: true
+
+
+#########################################
+# EXPERIMENT SETTINGS
+#########################################
+
+# Fully qualified class name of the solver to employ
+solver.class: RSLBench.Algorithms.BMS.BinaryMaxSum
+# Maximum time allowed for this solver, in ms. If the solver goes overtime, it will
+# be stopped and the latest computed allocation will be used
+solver.time: 1000
+
+# Here you can setup additional solvers to test
+#
+# The allocations computed by these solvers will NOT be used for anything, but they
+# allow for fair comparisons in terms of the utilities obtained by each method
+#
+# Warning: the numbers must be in sequence!
+solver.1.class: RSLBench.Algorithms.MaxSum.MaxSum
+solver.1.time: 3000
+solver.2.class: RSLBench.Algorithms.DSA.DSA
+solver.2.time: 500
+solver.3.class: RSLBench.Algorithms.Random.Random
+solver.3.time: 100
+solver.4.class: RSLBench.Algorithms.Greedy.Greedy
+solver.4.time: 100
+solver.5.class: RSLBench.Algorithms.Closest.Closest
+solver.5.time: 100
+
+# When should agents start acting
+experiment.start_time: 23
+
+# When should the experiment finish
+experiment.end_time: 300
+
+# Whether to prune the fire brigades to fires graph, and to which per-node degree
+problem.prune: no
+problem.max_neighbors: 4
+
+# Number of iterations to run the DCOP algorithm at each step of the roborescue simulation
+# For instance, DSA agents will run for 100 iterations before making a final decision
+dcop.iterations: 100
+
+# If enabled, the DCOP solvers will employ an "anytime" check, so that their reported assignment
+# will be the best of all assignments they have gone through during the solving process.
+dcop.anytime: yes
+
+# If enabled, DCOP solvers will make a final sequential pass through all agents, using a greedy
+# procedure where each agent can change its choice depending on what others have chosen. This
+# procedure is guaranteed to never decrease the solution quality, but has the noticeable cost
+# of requiring n_agents extra iterations (because of the sequential nature of this correction)
+dcop.greedy_correction: no
+
+
+#########################################
+# ALGORITHM-SPECIFIC SETTINGS
+#########################################
+
+# DSA probability of change
+dsa.probability: 0.6
+
+# DSA initial target selection.
+# - random : choose a random initial target
+# - best : choose the best target according to their individual utility
+# - last : choose the target that the agent got in the last simulation step
+dsa.initial_target: best
+
+# Max-Sum damping factor, from 0 (no damping) to 1 (completely ignore messages)
+maxsum.damping: 0
 
 
 #########################################
@@ -55,75 +136,3 @@ util.hysteresis: 1.1
 # of k*(N-M)^alpha
 util.k: 2
 util.alpha: 1.4
-
-#########################################
-# EXPERIMENT SETTINGS
-#########################################
-
-# Path to the results folder
-results.path: results/
-
-# Path to the cache folder
-cache.path: cache/
-
-# When should agents start acting
-experiment.start_time: 23
-
-# When should the experiment finish.
-experiment.end_time: 300
-
-# Whether to export each step's problem (in terms of utilities) or not
-export: no
-export.path: export/
-
-# Whether to prune the fire brigades to fires graph, and to which per-node degree
-problem.prune: no
-problem.max_neighbors: 4
-
-# Number of iterations to run the DCOP algorithm at each step of the roborescue simulation
-# For instance, DSA agents will run for 100 iterations before making a final decision
-dcop.iterations: 100
-
-# If enabled, the DCOP solvers will employ an "anytime" check, so that their reported assignment
-# will be the best of all assignments they have gone through during the solving process.
-dcop.anytime: yes
-
-# If enabled, DCOP solvers will make a final sequential pass through all agents, using a greedy
-# procedure where each agent can change its choice depending on what others have chosen. This
-# procedure is guaranteed to never decrease the solution quality, but has the noticeable cost
-# of requiring n_agents extra iterations (because of the sequential nature of this correction)
-dcop.greedy_correction: yes
-
-# Fully qualified class of the solver
-solver.class: RSLBench.Algorithms.BMS.BinaryMaxSum
-solver.time: 1000
-
-# Additional solvers to test
-# Warning: the numbers must be in sequence!
-solver.1.class: RSLBench.Algorithms.MaxSum.MaxSum
-solver.1.time: 3000
-solver.2.class: RSLBench.Algorithms.DSA.DSA
-solver.2.time: 500
-solver.3.class: RSLBench.Algorithms.Random.Random
-solver.3.time: 100
-solver.4.class: RSLBench.Algorithms.Greedy.Greedy
-solver.4.time: 100
-solver.5.class: RSLBench.Algorithms.Closest.Closest
-solver.5.time: 100
-
-
-#########################################
-# ALGORITHM-SPECIFIC SETTINGS
-#########################################
-
-# DSA probability of change
-dsa.probability: 0.6
-
-# DSA initial target selection.
-# - random : choose a random initial target
-# - best : choose the best target according to their individual utility
-# - last : choose the target that the agent got in the last simulation step
-dsa.initial_target: best
-
-# Max-Sum damping factor, from 0 (no damping) to 1 (completely ignore messages)
-maxsum.damping: 0.1

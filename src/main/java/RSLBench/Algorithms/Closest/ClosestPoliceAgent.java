@@ -7,6 +7,7 @@ package RSLBench.Algorithms.Closest;
 import RSLBench.Assignment.Assignment;
 import RSLBench.Assignment.DCOP.DefaultDCOPAgent;
 import RSLBench.Helpers.Distance;
+import RSLBench.PlatoonPoliceAgent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import rescuecore2.standard.entities.StandardWorldModel;
@@ -17,26 +18,27 @@ import rescuecore2.worldmodel.EntityID;
  *
  * @author Marc Pujol <mpujol@iiia.csic.es>
  */
-public class ClosestFireAgent extends DefaultDCOPAgent {
+public class ClosestPoliceAgent extends DefaultDCOPAgent {
 
-    private static final Logger Logger = LogManager.getLogger(ClosestFireAgent.class);
+    private static final Logger Logger = LogManager.getLogger(ClosestPoliceAgent.class);
 
     @Override
     public boolean improveAssignment() {
         final StandardWorldModel world = getProblem().getWorld();
         final EntityID id = getID();
+        final double threshold = getProblem().getConfig().getFloatValue(PlatoonPoliceAgent.DISTANCE_KEY);
 
         // Pick the closest fire
         setTarget(Assignment.UNKNOWN_TARGET_ID);
         double minDistance = Double.POSITIVE_INFINITY;
-        for (EntityID fire : getProblem().getFireAgentNeighbors(id)) {
-            double d = Distance.humanToBuilding(id, fire, world);
+        for (EntityID blockade : getProblem().getPoliceAgentNeighbors(id)) {
+            double d = Distance.humanToBlockade(id, blockade, world, threshold);
             if (d < minDistance) {
                 minDistance = d;
-                setTarget(fire);
+                setTarget(blockade);
             }
         }
-        Logger.debug("Fire brigade {} choses fire {} (d={})", id, getTarget(), minDistance);
+        Logger.debug("Police force {} choses blockade {} (d={})", id, getTarget(), minDistance);
 
         return false;
     }

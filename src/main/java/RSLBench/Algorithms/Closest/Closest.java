@@ -20,6 +20,8 @@ public class Closest extends DCOPSolver {
         switch(type) {
             case FIRE_BRIGADE:
                 return new ClosestFireAgent();
+            case POLICE_FORCE:
+                return new ClosestPoliceAgent();
             default:
                 throw new UnsupportedOperationException("The Closest solver does not support agents of type " + type);
         }

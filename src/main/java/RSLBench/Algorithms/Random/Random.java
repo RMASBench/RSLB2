@@ -21,6 +21,8 @@ public class Random extends DCOPSolver {
         switch(type) {
             case FIRE_BRIGADE:
                 return new RandomFireAgent();
+            case POLICE_FORCE:
+                return new RandomPoliceAgent();
             default:
                 throw new UnsupportedOperationException("The Random solver does not support agents of type " + type);
         }

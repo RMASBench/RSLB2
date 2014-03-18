@@ -45,22 +45,23 @@ solver.class: RSLBench.Algorithms.BMS.BinaryMaxSum
 # be stopped and the latest computed allocation will be used
 solver.time: 1000
 
-# Here you can setup additional solvers to test
+# Additional solvers to test
 #
 # The allocations computed by these solvers will NOT be used for anything, but they
 # allow for fair comparisons in terms of the utilities obtained by each method
 #
 # Warning: the numbers must be in sequence!
-solver.1.class: RSLBench.Algorithms.MaxSum.MaxSum
-solver.1.time: 3000
-solver.2.class: RSLBench.Algorithms.DSA.DSA
-solver.2.time: 500
-solver.3.class: RSLBench.Algorithms.Random.Random
+solver.1.class: RSLBench.Algorithms.DSA.DSA
+solver.1.time: 500
+solver.2.class: RSLBench.Algorithms.Random.Random
+solver.2.time: 100
+solver.3.class: RSLBench.Algorithms.Greedy.Greedy
 solver.3.time: 100
-solver.4.class: RSLBench.Algorithms.Greedy.Greedy
+solver.4.class: RSLBench.Algorithms.Closest.Closest
 solver.4.time: 100
-solver.5.class: RSLBench.Algorithms.Closest.Closest
-solver.5.time: 100
+# MaxSum solver disabled for the interteam case because it cannot handle police forces
+#solver.5.class: RSLBench.Algorithms.MaxSum.MaxSum
+#solver.5.time: 3000
 
 # When should agents start acting
 experiment.start_time: 23

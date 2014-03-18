@@ -151,20 +151,20 @@ function processArgs {
         mkdir $RAYSDIR
     fi
 
-    # Check that the user has specified some algorithm to run
+    # Check that the user has specified some configuration file
     if [ -z "$CONFIGFILE" ]; then
-        echo "You must specify which algorithm to run."
+        echo "You must specify which config file to employ."
         printUsage
         exit 1
     fi
     
-    # Check that there exists a configuration file for the requested algorithm
+    # Check that there exists a configuration file for the requested configuration file
     if [ ! -f "$CONFIGDIR/$CONFIGFILE.cfg" ]; then
         if [ -f "$CONFIGDIR/$CONFIGFILE" ]; then
             CONFIGFILE="${CONFIGFILE%.cfg}"
         else
             echo "Unable to read file \"$DIR/config/$CONFIGFILE.cfg\"."
-            echo "No configuration file found for algorithm \"$CONFIGFILE\". Please create one."
+            echo "Configuration file \"$CONFIGFILE\" not found. Please create one."
             printUsage
             exit 1
         fi

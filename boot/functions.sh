@@ -41,7 +41,7 @@ function processArgs {
     while [[ ! -z "$1" ]]; do
         case "$1" in
             -c | --config)
-                ALGORITHM="$2"
+                CONFIGFILE="$2"
                 shift 2
                 ;;
             -b | --blockades)

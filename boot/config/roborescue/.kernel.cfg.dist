@@ -45,7 +45,7 @@ kernel.commandfilters +: rescuecore2.standard.kernel.SingleCommandFilter
 kernel.agents.registrar: rescuecore2.standard.kernel.StandardAgentRegistrar
 
 # The amount of time agents have to start up
-kernel.startup.connect-time: 300000 # 5 minute startup time
+kernel.startup.connect-time: 3600000 # 1 hour startup time
 # kernel.startup.connect-time: 10000 # 10 second startup time
 
 # Automatic choice of GIS

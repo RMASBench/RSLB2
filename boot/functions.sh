@@ -17,7 +17,7 @@ function printUsage {
     echo "-o    --only-rslb2              Run only RSLB2 (useful in combination with -n)"
     echo "-p    --plot                    Plot the run results."
     echo "-t    --team      <teamname>    Set the team name. Default is \"\""
-    echo "      --think-time <millis>     Set the max. agent think time in millis. Default is 1000."
+    echo "      --think-time <millis>     Set the max. agent think time in millis. Default is 100000 (100s)."
     echo "      --seed      <num>         Set the random seed to num. Default is 1.";
     echo "-s    --scenario  <scenario>    Set the scenario to run. Default is \"example\" (.xml appended automatically)."
     echo "      --start-time <step>       Set the experiment start time."

@@ -20,18 +20,17 @@ public class BlockadeScoringFunction extends AbstractScoringFunction {
         final int nAgents = scores.getAgentCount(target);
         CC();
 
-        // If there is already another police agent attending that blockade, the utility of also
-        // picking it is -inf
-        if (nAgents > 0) {
-            return Double.NEGATIVE_INFINITY;
-        }
-
-        // Otherwise we can pick it, and the value is given by the unary utility
+        // The cost of picking this blockade is given by the unary utility
         double utility = problem.getPoliceUtility(agent, target);
         if (problem.isPoliceAgentBlocked(agent, target)) {
             utility -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_POLICE_PENALTY);
         }
         CC();
+
+        // but if we are the first police picking it, then we gain the blockade's utility
+        if (nAgents == 0) {
+            utility += problem.getConfig().getFloatValue(Constants.KEY_POLICE_ETA);
+        }
 
         return utility;
     }

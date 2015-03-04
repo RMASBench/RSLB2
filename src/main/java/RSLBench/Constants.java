@@ -49,6 +49,9 @@ public class Constants {
     /** Key to the penalty applied when a target blockade is blocked (Q) */
     public static final String KEY_BLOCKED_POLICE_PENALTY = "util.blockade.police_penalty";
 
+    /** Key to the eta proportionality factor */
+    public static final String KEY_POLICE_ETA = "util.police.eta";
+
     /**
      * when true and there is no target assigned by the station, the agent
      * selects a target on his own (rather than doing nothing)

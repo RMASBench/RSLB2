@@ -36,7 +36,7 @@
  */
 package RSLBench.Algorithms.BMS;
 
-import RSLBench.Algorithms.BMS.factor.BMSConditionedSelectorFactor;
+import RSLBench.Algorithms.BMS.factor.BMSConditionedAtLeastOneFactor;
 import RSLBench.Algorithms.BMS.factor.BMSVariableFactor;
 import java.util.Collection;
 import java.util.ArrayList;
@@ -72,6 +72,7 @@ public class BMSTeamPoliceAgent implements DCOPAgent {
 
     // Configuration settings
     private double BLOCKED_PENALTY;
+    private double POLICE_ETA;
 
     private EntityID id;
     private ProblemDefinition problem;
@@ -93,6 +94,7 @@ public class BMSTeamPoliceAgent implements DCOPAgent {
         Logger.trace("Initializing agent {}", agentID);
 
         BLOCKED_PENALTY = problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_POLICE_PENALTY);
+        POLICE_ETA = problem.getConfig().getFloatValue(Constants.KEY_POLICE_ETA);
 
         this.id = agentID;
         this.targetId = null;
@@ -177,10 +179,12 @@ public class BMSTeamPoliceAgent implements DCOPAgent {
             final EntityID blockade = blockades.get(i);
 
             // Build the factor node
-            BMSConditionedSelectorFactor<NodeID> f = new BMSConditionedSelectorFactor<>();
+            BMSConditionedAtLeastOneFactor<NodeID> condition = new BMSConditionedAtLeastOneFactor<>();
+            WeightingFactor<NodeID> f = new WeightingFactor<>(condition);
             NodeID cVariableID = new NodeID(null, blockade);
             f.addNeighbor(cVariableID);
-            f.setConditionNeighbor(cVariableID);
+            condition.setConditionNeighbor(cVariableID);
+            f.setPotential(cVariableID, POLICE_ETA);
 
             // Link the blockade with all police agents
             for (EntityID policeAgent : policeAgents) {

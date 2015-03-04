@@ -93,47 +93,13 @@ dcop.greedy_correction: no
 #########################################
 
 # DSA probability of change
-dsa.probability: 0.6
+dsa.probability: 0.1
 
 # DSA initial target selection.
 # - random : choose a random initial target
 # - best : choose the best target according to their individual utility
 # - last : choose the target that the agent got in the last simulation step
-dsa.initial_target: best
+dsa.initial_target: last
 
 # Max-Sum damping factor, from 0 (no damping) to 1 (completely ignore messages)
-maxsum.damping: 0
-
-
-#########################################
-# UTILITY SETTINGS
-#########################################
-
-# Utility function to use
-util.class: RSLBench.Helpers.Utility.ThirdUtilityFunction
-
-# Trade-off between building utility and distance utility
-# The bigger the value the bigger the influence of distance.
-util.trade_off: 10
-
-# Area covered by a single fire brigade.
-# This is the major parameter when deciding the maximum number of agents
-# to assign to a single fire.
-util.fire_brigade_area: 200
-
-# Penalty applied to blocked target fires (M in the paper)
-util.blockade.fire_penalty: 100
-
-# Penalty applied to blocked target blockades (Q in the paper)
-util.blockade.police_penalty: 50
-
-# Hysteresis factor to prevent target switching due to pathing issues
-# The higher the factor, the higher the stickiness.
-util.hysteresis: 1.1
-
-# Parameters for the workload model.
-# Whenever a fire with a required number of agents M gets
-# N assigned agents and N>M, then there is a utility penalty
-# of k*(N-M)^alpha
-util.k: 2
-util.alpha: 1.4
+maxsum.damping: 0.9

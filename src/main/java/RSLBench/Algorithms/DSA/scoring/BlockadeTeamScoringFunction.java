@@ -24,30 +24,29 @@ public class BlockadeTeamScoringFunction extends AbstractScoringFunction {
         final int nAgents = scores.getAgentCount(target);
         CC();
 
-        // If there is already another police agent attending that blockade, the utility of also
-        // picking it is -inf
-        if (nAgents > 0) {
-            return Double.NEGATIVE_INFINITY;
-        }
-
-        // Otherwise we can pick it, and the value is given by the unary utility
+        // The cost of picking this blockade is given by the unary utility
         double utility = problem.getPoliceUtility(agent, target);
         if (problem.isPoliceAgentBlocked(agent, target)) {
             utility -= problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_POLICE_PENALTY);
         }
         CC();
 
-        // ... plus some possible penalty removals if fire agents are blocked by this blockade
-        for (Pair<EntityID, EntityID> info : problem.getFireAgentsBlockedByBlockade(target)) {
-            final EntityID fireAgent = info.first();
-            final EntityID fire = info.second();
+        // If we are the first police attending that blockade, we gain the blockade's utility
+        if (nAgents == 0) {
+            utility += problem.getConfig().getFloatValue(Constants.KEY_POLICE_ETA);
 
-            if (scores.getAssignment(fireAgent).equals(fire)) {
-                Logger.trace("Blockade {} is more attractive for {} because fire agent {} is blocked by it.",
-                        target, agent, fireAgent);
-                utility += problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_FIRE_PENALTY);
+            // ... plus some possible penalty removal incentives if fire agents are blocked by this blockade
+            for (Pair<EntityID, EntityID> info : problem.getFireAgentsBlockedByBlockade(target)) {
+                final EntityID fireAgent = info.first();
+                final EntityID fire = info.second();
+
+                if (scores.getAssignment(fireAgent).equals(fire)) {
+                    Logger.trace("Blockade {} is more attractive for {} because fire agent {} is blocked by it.",
+                            target, agent, fireAgent);
+                    utility += problem.getConfig().getFloatValue(Constants.KEY_BLOCKED_FIRE_PENALTY);
+                }
+                CC();
             }
-            CC();
         }
 
         return utility;

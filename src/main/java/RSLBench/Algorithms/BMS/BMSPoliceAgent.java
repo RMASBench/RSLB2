@@ -37,6 +37,7 @@
 package RSLBench.Algorithms.BMS;
 
 import RSLBench.Algorithms.BMS.factor.BMSAtMostOneFactor;
+import RSLBench.Algorithms.BMS.factor.BMSCardinalityFactor;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,6 +59,7 @@ import RSLBench.Comm.Message;
 import RSLBench.Comm.CommunicationLayer;
 import RSLBench.Constants;
 import RSLBench.Helpers.Utility.ProblemDefinition;
+import es.csic.iiia.bms.factors.CardinalityFactor;
 
 /**
  * This is a binary max-sum police agent.
@@ -68,6 +70,7 @@ public class BMSPoliceAgent implements DCOPAgent {
     private static final MaxOperator MAX_OPERATOR = new Maximize();
 
     private double BLOCKED_PENALTY;
+    private double POLICE_ETA;
 
     private EntityID id;
     private ProblemDefinition problem;
@@ -90,6 +93,7 @@ public class BMSPoliceAgent implements DCOPAgent {
 
         BLOCKED_PENALTY = problem.getConfig().getFloatValue(
                 Constants.KEY_BLOCKED_FIRE_PENALTY);
+        POLICE_ETA = problem.getConfig().getFloatValue(Constants.KEY_POLICE_ETA);
 
         this.id = agentID;
         this.targetId = null;
@@ -175,7 +179,13 @@ public class BMSPoliceAgent implements DCOPAgent {
             final EntityID blockade = blockades.get(i);
 
             // Build the factor node
-            BMSAtMostOneFactor<NodeID> f = new BMSAtMostOneFactor<>();
+            BMSCardinalityFactor<NodeID> f = new BMSCardinalityFactor<>();
+            f.setFunction(new CardinalityFactor.CardinalityFunction() {
+                @Override
+                public double getCost(int i) {
+                    return (i>0) ? POLICE_ETA : 0;
+                }
+            });
 
             // Link the blockade with all agents
             for (EntityID agent : agents) {

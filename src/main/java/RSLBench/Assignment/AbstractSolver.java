@@ -95,6 +95,7 @@ public abstract class AbstractSolver implements Solver
         keys.add(Constants.KEY_INTERTEAM_COORDINATION);
         keys.add(Constants.KEY_BLOCKED_FIRE_PENALTY);
         keys.add(Constants.KEY_BLOCKED_POLICE_PENALTY);
+        keys.add(Constants.KEY_POLICE_ETA);
         return keys;
     }
 
